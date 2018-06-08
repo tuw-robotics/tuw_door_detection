@@ -1,0 +1,9 @@
+<launch>
+  <arg name="laser_scan" default="/r0/laser0/scan"/>
+  <arg name="doordetection_pub" default="door_detection"/>
+  
+  <node name="door2d_detector_node" pkg="tuw_doordetection" type="door2d_detector_node" output="screen">
+    <remap from="scan" to="$(arg laser_scan)" />
+    <remap from="line_segments" to="$(arg doordetection_pub)" />
+  </node>
+</launch>
