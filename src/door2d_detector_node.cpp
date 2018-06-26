@@ -69,7 +69,7 @@ void Door2DDetectorNode::callbackConfig(tuw_geometry::Linesegment2DDetectorConfi
 
 void Door2DDetectorNode::callbackLaser(const sensor_msgs::LaserScan& _laser)
 {
-  ROS_INFO("callback laser");
+  //ROS_INFO("callback laser");
   sensor_msgs::LaserScan output_scan = sensor_msgs::LaserScan(_laser);
   int nr = (_laser.angle_max - _laser.angle_min) / _laser.angle_increment;
   measurement_laser_->range_max() = _laser.range_max;
@@ -185,8 +185,10 @@ void Door2DDetectorNode::callbackLaser(const sensor_msgs::LaserScan& _laser)
       }
     }
     std::cout << "Doors included " << nr_current_door_range << std::endl;
-    laser_pub_.publish(output_scan);
   }
+
+  ROS_INFO("publishing laser scan");
+  laser_pub_.publish(output_scan);
 
   if (display_window_ && line_segments_msg.segments.size() > 0)
   {

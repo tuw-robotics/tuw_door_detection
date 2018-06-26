@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(tuw_doordetection)
+project(tuw_door_detection)
 add_compile_options(-std=c++14) ## for c++ 2014
 
 ## Find catkin macros and libraries
