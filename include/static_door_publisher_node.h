@@ -1,6 +1,8 @@
 #ifndef STATIC_DOOR_PUBLISHER_NODE
 #define STATIC_DOOR_PUBLISHER_NODE
 
+#include <ros/ros.h>
+
 namespace tuw
 {
 /**
@@ -10,24 +12,16 @@ namespace tuw
   class StaticDoorPublisherNode
   {
   public:
-    StaticDoorPublisherNode();
+    StaticDoorPublisherNode(ros::NodeHandle &n);
+    void init();
 
   private:
-    enum FilterMode { FILTER_DOORS, FILTER_NON_DOORS };
-
     ros::NodeHandle nh_;
-    ros::NodeHandle nh_private_;
-    ros::Subscriber sub_laser_;  /// Subscriber to the laser measurements
+    std::string door_locations_file_;
+    std::vector<std::vector<double>> door_positions_;
 
-    std::pair<double,double> door_range;
-
-    /**
-     * @brief callback function for incoming laser scans
-     * @param _laser laser scan message
-     */
-    void callbackLaser(const sensor_msgs::LaserScan &_laser);
-
-    bool is_in_doorrange(tuw_geometry_msgs::LineSegment &line_segment);
+    void readFile();
+    void publishDoors();
   };
 };
 

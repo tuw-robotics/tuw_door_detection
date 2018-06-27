@@ -147,6 +147,13 @@ target_link_libraries(door2d_detector_node
    ${catkin_LIBRARIES}
 )
 
+add_executable(static_door_publisher_node src/static_door_publisher_node.cpp)
+add_dependencies(static_door_publisher_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+target_link_libraries(static_door_publisher_node
+    ${catkin_LIBRARIES}
+)
+
 #############
 ## Install ##
 #############
