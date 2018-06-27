@@ -95,7 +95,7 @@ void Door2DDetectorNode::callbackLaser(const sensor_msgs::LaserScan& _laser)
   // publish found line segments
   tuw_object_msgs::ObjectDetection detected_doors_msg;
   detected_doors_msg.header = _laser.header;
-  detected_doors_msg.type = tuw_object_msgs::ObjectDetection::OBJECT_TYPE_DOOR;
+  //detected_doors_msg.type = tuw_object_msgs::ObjectDetection::OBJECT_TYPE_DOOR;
   detected_doors_msg.sensor_type = tuw_object_msgs::ObjectDetection::SENSOR_TYPE_GENERIC_LASER_2D;
 
   int nr_door_detections = 0;
