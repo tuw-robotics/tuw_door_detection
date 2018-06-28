@@ -21,7 +21,6 @@ namespace tuw
   private:
     ros::NodeHandle nh_;
     ros::Publisher door_pub_;
-    //ros::Subscriber door_sub_;
     std::string door_locations_file_;
     std::vector<std::vector<double>> door_positions_;
     tuw_object_msgs::ObjectDetection door_detection_msg_;
