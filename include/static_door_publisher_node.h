@@ -3,6 +3,7 @@
 
 #include <ros/ros.h>
 #include <tuw_object_msgs/ObjectDetection.h>
+#include <eigen3/Eigen/Core>
 
 namespace tuw
 {
@@ -16,6 +17,8 @@ namespace tuw
     StaticDoorPublisherNode(ros::NodeHandle &n);
     void init();
     void publishDoors();
+    void rotate(int i, double rad);
+    void add_position(int i, Eigen::Vector3d position);
 
   private:
     ros::NodeHandle nh_;
@@ -26,6 +29,8 @@ namespace tuw
 
     void readFile();
     void prepareMsgs();
+    Eigen::Matrix3d rotation_matrix_z(double rad);
+    double deg2rad(int degrees);
   };
 };
 
