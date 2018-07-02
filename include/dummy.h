@@ -8,7 +8,7 @@ class Dummy
 {
   public:
     Dummy(ros::NodeHandle &n);
-    void callbackDoorDetection(tuw_object_msgs::ObjectDetection &obj_detection);
+    void callbackDoorDetection(const tuw_object_msgs::ObjectDetection &obj_detection);
 
   private:
     ros::NodeHandle nh_;

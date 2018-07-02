@@ -121,6 +121,7 @@ include_directories(
   ./include/
   ${catkin_INCLUDE_DIRS}
   ${PYTHON_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -152,6 +153,7 @@ add_dependencies(static_door_publisher_node ${${PROJECT_NAME}_EXPORTED_TARGETS} 
 
 target_link_libraries(static_door_publisher_node
     ${catkin_LIBRARIES}
+    ${Boost_LIBRARIES}
 )
 
 add_executable(dummy_node src/dummy.cpp)
@@ -159,6 +161,7 @@ add_dependencies(dummy_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTE
 
 target_link_libraries(dummy_node
     ${catkin_LIBRARIES}
+    ${Boost_LIBRARIES}
 )
 
 #############

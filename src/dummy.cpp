@@ -6,7 +6,7 @@ Dummy::Dummy(ros::NodeHandle &n)
   door_sub_ = nh_.subscribe("doors_detected", 1000, &Dummy::callbackDoorDetection, this);
 }
 
-void Dummy::callbackDoorDetection(tuw_object_msgs::ObjectDetection &obj_detection)
+void Dummy::callbackDoorDetection(const tuw_object_msgs::ObjectDetection &obj_detection)
 {
   for (tuw_object_msgs::ObjectWithCovariance obj : obj_detection.objects)
   {

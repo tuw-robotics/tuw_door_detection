@@ -16,7 +16,6 @@ namespace tuw
     StaticDoorPublisherNode(ros::NodeHandle &n);
     void init();
     void publishDoors();
-    void callbackObjectDetection(tuw_object_msgs::ObjectDetection &obj_detection);
 
   private:
     ros::NodeHandle nh_;
