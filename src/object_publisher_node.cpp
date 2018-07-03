@@ -27,10 +27,14 @@ void ObjectPublisher::init()
   std::vector<std::string> obj_types;
   std::vector<std::string> obj_file_locations;
   std::vector<std::string> obj_publisher_topic;
-  nh_.getParam("/package_dir", dir);
-  nh_.getParam("/object_types", obj_types);
-  nh_.getParam("/object_file_locations", obj_file_locations);
-  nh_.getParam("/object_publisher_topic", obj_publisher_topic);
+  bool params_correct = nh_.getParam("package_dir", dir);
+  params_correct &= nh_.getParam("object_types", obj_types);
+  params_correct &= nh_.getParam("object_file_locations", obj_file_locations);
+  params_correct &= nh_.getParam("object_publisher_topic", obj_publisher_topic);
+  if (!params_correct)
+  {
+    throw std::runtime_error("Error, supply correct parameters: package_dir [str], \n\r    object_types [list], \n\r    object_file_locations [list], \n\r    object_publisher_topic [list]");
+  }
 }
 
 void ObjectPublisher::rotate(int i, double rad)
