@@ -148,18 +148,10 @@ target_link_libraries(door2d_detector_node
    ${catkin_LIBRARIES}
 )
 
-add_executable(static_door_publisher_node src/static_door_publisher_node.cpp)
-add_dependencies(static_door_publisher_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_executable(object_publisher_node src/object_publisher_node.cpp src/base_pub_object.cpp src/door_object.cpp src/cone_object.cpp)
+add_dependencies(object_publisher_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(static_door_publisher_node
-    ${catkin_LIBRARIES}
-    ${Boost_LIBRARIES}
-)
-
-add_executable(dummy_node src/dummy.cpp)
-add_dependencies(dummy_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-target_link_libraries(dummy_node
+target_link_libraries(object_publisher_node
     ${catkin_LIBRARIES}
     ${Boost_LIBRARIES}
 )

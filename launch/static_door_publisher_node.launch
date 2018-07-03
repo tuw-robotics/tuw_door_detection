@@ -1,5 +1,0 @@
-<launch>
-<param name="doors_file" type="str" value="$(find tuw_door_detection)/files/doors.csv" />
-  <node name="static_door_publisher_node" pkg="tuw_door_detection" type="static_door_publisher_node" output="screen">
-  </node>
-</launch>

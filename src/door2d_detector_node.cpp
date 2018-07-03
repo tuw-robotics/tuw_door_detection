@@ -38,6 +38,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
+#include <eigen3/Eigen/Core>
 
 using namespace tuw;
 
@@ -138,9 +139,10 @@ void Door2DDetectorNode::callbackLaser(const sensor_msgs::LaserScan& _laser)
       obj.object.ids.emplace_back(nr_door_detections);
       obj.object.shape = tuw_object_msgs::Object::SHAPE_DOOR;
       obj.object.ids_confidence.emplace_back(1.0);
-      //TODO: need world space position here!!!!!!!!!!!!!!!!!!!!!!!!!!
-      obj.object.pose.position.x = line_segment_msg.p1.x - line_segment_msg.p0.x;
-      obj.object.pose.position.y = line_segment_msg.p1.y - line_segment_msg.p0.y;
+      Eigen::Vector3d pose_sensor(line_segment_msg.p0.x, line_segment_msg.p0.y, 0.0);
+
+      obj.object.pose.position.x = line_segment_msg.p0.x;
+      obj.object.pose.position.y = line_segment_msg.p0.y;
       obj.object.pose.position.z = 0;
       obj.object.pose.orientation.x = 0;
       obj.object.pose.orientation.y = 0;
