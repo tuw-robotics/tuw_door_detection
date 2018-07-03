@@ -15,6 +15,10 @@ StaticDoorPublisherNode::StaticDoorPublisherNode(ros::NodeHandle &n)
 
 void StaticDoorPublisherNode::init()
 {
+  if (!nh_.getParam("/doors_file",door_locations_file_))
+  {
+    throw std::runtime_error("doors.csv not present. exiting");
+  }
   StaticDoorPublisherNode::readFile();
   StaticDoorPublisherNode::prepareMsgs();
 }
@@ -86,7 +90,7 @@ Eigen::Matrix3d StaticDoorPublisherNode::rotation_matrix_z(double rad)
 
 void StaticDoorPublisherNode::readFile()
 {
-  door_locations_file_ = "/home/felix/projects/catkin/tuw/src/tuw_door_detection/files/doors.csv";
+  //door_locations_file_ = "/home/felix/projects/catkin/tuw/src/tuw_door_detection/files/doors.csv";
   using namespace boost;
   using namespace std;
 
