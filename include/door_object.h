@@ -8,7 +8,7 @@ namespace tuw {
   class DoorObject : public tuw::BasePubObject
   {
     public:
-      DoorObject(std::string &type, std::string &file_path);
+      DoorObject(std::string &type, std::string &file_path, std::string &publisher_topic);
       virtual ~DoorObject();
       virtual bool createMsg();
 

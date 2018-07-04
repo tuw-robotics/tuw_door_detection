@@ -4,7 +4,7 @@
 
 using namespace tuw;
 
-DoorObject::DoorObject(std::string &type,std::string &file_path) : BasePubObject(type, file_path)
+DoorObject::DoorObject(std::string &type,std::string &file_path, std::string &publisher_topic) : BasePubObject(type, file_path, publisher_topic)
 {
   nr_line_parameters = 7;
 }

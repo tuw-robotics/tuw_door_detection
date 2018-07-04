@@ -3,7 +3,7 @@
 
 using namespace tuw;
 
-ConeObject::ConeObject(std::string &type, std::string &file_path) : BasePubObject(type, file_path)
+ConeObject::ConeObject(std::string &type, std::string &file_path, std::string &publisher_topic) : BasePubObject(type, file_path, publisher_topic)
 {}
 
 ConeObject::~ConeObject() {}
@@ -27,7 +27,7 @@ bool ConeObject::createMsg()
                 [this,&count](std::vector<double> &pose)
   {
     tuw_object_msgs::ObjectWithCovariance obj;
-    obj.object.shape = tuw_object_msgs::Object::SHAPE_CONE;
+    obj.object.shape = tuw_object_msgs::Object::SHAPE_TRAFFIC_CONE;
     obj.object.pose.position.x = pose[0];
     obj.object.pose.position.y = pose[1];
     obj.object.pose.position.z = pose[2];

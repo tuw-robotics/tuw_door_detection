@@ -5,11 +5,21 @@
 typedef boost::tokenizer<boost::escaped_list_separator<char>> Tokenizer;
 using namespace tuw;
 
-BasePubObject::BasePubObject(std::string &type, std::string &file_path) : type_(type), file_path_(file_path), nr_line_parameters(0)
+BasePubObject::BasePubObject(std::string &type, std::string &file_path, std::string &publisher_topic) : type_(type), file_path_(file_path), publisher_topic_name_(publisher_topic), nr_line_parameters(0)
 {}
 
 BasePubObject::~BasePubObject()
 {}
+
+void BasePubObject::setPublisher(ros::NodeHandle &nh)
+{
+  pub_ = nh.advertise<tuw_object_msgs::ObjectDetection>(publisher_topic_name_, 5);
+}
+
+void BasePubObject::publish()
+{
+  pub_.publish(msg_);
+}
 
 bool BasePubObject::read()
 {
@@ -20,6 +30,7 @@ bool BasePubObject::read()
   if (!in.is_open())
   {
     std::cout << "Object read: File path is wrong" << std::endl;
+    return false;
   }
 
   string line;

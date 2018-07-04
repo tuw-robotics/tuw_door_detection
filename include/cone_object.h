@@ -8,7 +8,7 @@ namespace tuw {
     class ConeObject : public BasePubObject
     {
         public:
-            ConeObject(std::string &type, std::string &file_path);
+            ConeObject(std::string &type, std::string &file_path, std::string &publisher_topic);
             virtual ~ConeObject();
             virtual bool createMsg();
         private:

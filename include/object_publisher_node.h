@@ -4,6 +4,7 @@
 #include <ros/ros.h>
 #include <tuw_object_msgs/ObjectDetection.h>
 #include <eigen3/Eigen/Core>
+#include <base_pub_object.h>
 
 namespace tuw
 {
@@ -16,16 +17,16 @@ namespace tuw
   public:
     ObjectPublisher(ros::NodeHandle &n);
     void init();
-    void publishDoors();
-    void rotate(int i, double rad);
-    void add_position(int i, Eigen::Vector3d position);
+    void publish();
+//    void rotate(int i, double rad);
+//    void add_position(int i, Eigen::Vector3d position);
 
   private:
     ros::NodeHandle nh_;
     ros::Publisher door_pub_;
     std::string door_locations_file_;
-    std::vector<std::vector<double>> door_positions_;
-    tuw_object_msgs::ObjectDetection door_detection_msg_;
+    std::vector<std::unique_ptr<tuw::BasePubObject>> objects_;
+    unsigned int nr_objects;
   };
 };
 
