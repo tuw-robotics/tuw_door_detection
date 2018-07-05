@@ -38,6 +38,10 @@ bool BasePubObject::read()
 
   while(getline(in,line))
   {
+    if (line[0] == '#')
+    {
+      continue; // allows simple comments
+    }
     file_contents_.push_back(vector<string>());
     Tokenizer tok(line);
 
