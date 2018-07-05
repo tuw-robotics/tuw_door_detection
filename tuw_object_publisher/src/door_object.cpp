@@ -46,7 +46,7 @@ bool DoorObject::createMsg()
     obj.object.pose.orientation.w = q_obj.w();
     obj.object.ids = {count};
     obj.object.ids_confidence = {1.0};
-    obj.object.shape_variables = {pose[3], pose[4], pose[5], pose[6]}; //width, height, opening angle, nr door leafs
+    obj.object.shape_variables = {pose[3], pose[4], pose[5], pose[6], pose[7]}; //width, height, opening angle, nr door leafs, clockwise, counterclockwise
     msg_.objects.push_back(obj);
     count++;
   });
