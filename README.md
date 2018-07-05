@@ -10,5 +10,5 @@ The objects position and orientation as well as their shape parameters are read 
 
 ## Extension to other object classes:
 1. Modify the config.yaml to include the new csv file describing the objects location and other shape parameters.
-2. Create a new C++ class that inherits from BasePubObject and implement the generateMsg() method. Additionally you can also override the read method if you want to change this behaviour.
+2. Create a new C++ class that inherits from BasePubObject and implement the createMsg() method. Additionally you can also override the read method if you want to change this behaviour.
 3. In the object_facade.h include a construction mechanism for the new class, the objects are then automatically handled by the framework supposing the yaml file has been adapted correctly.
