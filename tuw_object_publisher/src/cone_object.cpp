@@ -1,17 +1,14 @@
-#include "door_object.h"
-#include <ros/ros.h>
+#include "cone_object.h"
 #include <eigen3/Eigen/Geometry>
 
 using namespace tuw;
 
-DoorObject::DoorObject(std::string &type,std::string &file_path, std::string &publisher_topic) : BasePubObject(type, file_path, publisher_topic)
-{
-  nr_line_parameters = 7;
-}
+ConeObject::ConeObject(std::string &type, std::string &file_path, std::string &publisher_topic) : BasePubObject(type, file_path, publisher_topic)
+{}
 
-DoorObject::~DoorObject(){}
+ConeObject::~ConeObject() {}
 
-bool DoorObject::createMsg()
+bool ConeObject::createMsg()
 {
   for (auto line : file_contents_)
   {
@@ -30,18 +27,17 @@ bool DoorObject::createMsg()
                 [this,&count](std::vector<double> &pose)
   {
     tuw_object_msgs::ObjectWithCovariance obj;
-    obj.object.shape = tuw_object_msgs::Object::SHAPE_DOOR;
+    obj.object.shape = tuw_object_msgs::Object::SHAPE_TRAFFIC_CONE;
     obj.object.pose.position.x = pose[0];
     obj.object.pose.position.y = pose[1];
     obj.object.pose.position.z = pose[2];
-    Eigen::Quaterniond q_obj = Eigen::Quaterniond(rotation_matrix_z(deg2rad(pose[5])));
-    obj.object.pose.orientation.x = q_obj.x();
-    obj.object.pose.orientation.y = q_obj.y();
-    obj.object.pose.orientation.z = q_obj.z();
-    obj.object.pose.orientation.w = q_obj.w();
+    obj.object.pose.orientation.x = 0;
+    obj.object.pose.orientation.y = 0;
+    obj.object.pose.orientation.z = 0;
+    obj.object.pose.orientation.w = 1.0;
     obj.object.ids = {count};
     obj.object.ids_confidence = {1.0};
-    obj.object.shape_variables = {pose[3], pose[4], pose[5], pose[6]}; //width, height, opening angle, nr door leafs
+    obj.object.shape_variables = {pose[3], pose[4], pose[5]}; //radius, color, height
     msg_.objects.push_back(obj);
     count++;
   });

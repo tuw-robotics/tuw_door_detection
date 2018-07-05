@@ -147,15 +147,6 @@ add_dependencies(door2d_detector_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catk
 target_link_libraries(door2d_detector_node
    ${catkin_LIBRARIES}
 )
-
-add_executable(object_publisher_node src/object_publisher_node.cpp src/base_pub_object.cpp src/door_object.cpp src/cone_object.cpp)
-add_dependencies(object_publisher_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-target_link_libraries(object_publisher_node
-    ${catkin_LIBRARIES}
-    ${Boost_LIBRARIES}
-)
-
 #############
 ## Install ##
 #############

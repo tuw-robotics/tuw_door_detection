@@ -14,14 +14,6 @@ ObjectPublisher::ObjectPublisher(ros::NodeHandle &n)
   nh_ = n;
 }
 
-template<typename T>
-void print_v(std::vector<T> &v)
-{
-  for (auto e : v)
-    std::cout << ", " << e;
-  std::cout << std::endl;
-}
-
 void ObjectPublisher::init()
 {
   std::string dir;
@@ -41,8 +33,10 @@ void ObjectPublisher::init()
   objects_.clear();
 
   for (int i=0; i < nr_objects; i++)
+  {
     objects_.push_back(ObjectFacade::construct(obj_types[i], dir + obj_file_locations[i], obj_publisher_topic[i]));
-  std::cout << "construct finished" << std::endl;
+  }
+
   for (const std::unique_ptr<BasePubObject> &obj : objects_)
   {
     obj->read();
@@ -55,24 +49,23 @@ void ObjectPublisher::init()
 void ObjectPublisher::publish()
 {
   for (const std::unique_ptr<BasePubObject> &obj : objects_)
+  {
     obj->publish();
+  }
 }
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "static_door_publisher_node");
+  ros::init(argc, argv, "object_publisher_node");
   ros::NodeHandle n;
-  ObjectPublisher static_door_publisher_node(n);
-  static_door_publisher_node.init();
+  ObjectPublisher object_publisher_node(n);
+  object_publisher_node.init();
   ros::Rate rate(1);
 
   while (ros::ok())
   {
     ros::spinOnce();
-    //static_door_publisher_node.init();
-    static_door_publisher_node.publish();
-    //static_door_publisher_node.add_position(0, Eigen::Vector3d(0.1,0.1,0.0));
-    //static_door_publisher_node.rotate(0,2.0 * (M_PI / 180.0));
+    object_publisher_node.publish();
     rate.sleep();
   }
 

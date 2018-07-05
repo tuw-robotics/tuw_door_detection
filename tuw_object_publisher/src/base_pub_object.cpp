@@ -5,7 +5,7 @@
 typedef boost::tokenizer<boost::escaped_list_separator<char>> Tokenizer;
 using namespace tuw;
 
-BasePubObject::BasePubObject(std::string &type, std::string &file_path, std::string &publisher_topic) : type_(type), file_path_(file_path), publisher_topic_name_(publisher_topic), nr_line_parameters(0)
+BasePubObject::BasePubObject(std::string &type, std::string &file_path, std::string &publisher_topic) : type_(type), file_path_(file_path), publisher_topic_name_(publisher_topic)
 {}
 
 BasePubObject::~BasePubObject()
@@ -49,18 +49,4 @@ bool BasePubObject::read()
     });
   }
   return true;
-}
-
-double BasePubObject::deg2rad(int degrees)
-{
-  return degrees * (M_PI / 180.0);
-}
-
-Eigen::Matrix3d BasePubObject::rotation_matrix_z(double rad)
-{
-  Eigen::Matrix3d R;
-  R << cos(rad), -sin(rad), 0,
-       sin(rad), cos(rad), 0,
-       0,   0,    1;
-  return R;
 }

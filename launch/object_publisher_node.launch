@@ -1,8 +1,0 @@
-<launch>
-<!--<param name="csv_folder" type="str" value="$(find tuw_door_detection)/files" />
- <param name="object_types" type="str" value="doors, cones" /> -->
- <param name="package_dir" type="str" value="$(find tuw_door_detection)" />
- <rosparam command="load" file="$(find tuw_door_detection)/launch/config.yaml" />
-  <node name="object_publisher_node" pkg="tuw_door_detection" type="object_publisher_node" output="screen">
-  </node>
-</launch>

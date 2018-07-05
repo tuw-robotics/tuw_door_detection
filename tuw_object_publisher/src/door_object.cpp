@@ -1,14 +1,15 @@
-#include "cone_object.h"
+#include "door_object.h"
+#include <ros/ros.h>
 #include <eigen3/Eigen/Geometry>
 
 using namespace tuw;
 
-ConeObject::ConeObject(std::string &type, std::string &file_path, std::string &publisher_topic) : BasePubObject(type, file_path, publisher_topic)
+DoorObject::DoorObject(std::string &type,std::string &file_path, std::string &publisher_topic) : BasePubObject(type, file_path, publisher_topic)
 {}
 
-ConeObject::~ConeObject() {}
+DoorObject::~DoorObject(){}
 
-bool ConeObject::createMsg()
+bool DoorObject::createMsg()
 {
   for (auto line : file_contents_)
   {
@@ -27,11 +28,18 @@ bool ConeObject::createMsg()
                 [this,&count](std::vector<double> &pose)
   {
     tuw_object_msgs::ObjectWithCovariance obj;
-    obj.object.shape = tuw_object_msgs::Object::SHAPE_TRAFFIC_CONE;
+    obj.object.shape = tuw_object_msgs::Object::SHAPE_DOOR;
     obj.object.pose.position.x = pose[0];
     obj.object.pose.position.y = pose[1];
     obj.object.pose.position.z = pose[2];
-    Eigen::Quaterniond q_obj = Eigen::Quaterniond(rotation_matrix_z(deg2rad(pose[5])));
+
+    double c_theta = cos(pose[5] * (M_PI / 180.0));
+    double s_theta = sin(pose[5] * (M_PI / 180.0));
+    Eigen::Matrix3d R;
+    R << c_theta, -s_theta, 0,
+         s_theta, c_theta, 0,
+         0, 0, 1;
+    Eigen::Quaterniond q_obj(R);
     obj.object.pose.orientation.x = q_obj.x();
     obj.object.pose.orientation.y = q_obj.y();
     obj.object.pose.orientation.z = q_obj.z();
