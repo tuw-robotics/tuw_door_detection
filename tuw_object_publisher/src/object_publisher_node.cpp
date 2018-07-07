@@ -45,6 +45,10 @@ void ObjectPublisher::init()
   }
 }
 
+std::vector<std::unique_ptr<BasePubObject>> &ObjectPublisher::getObjects()
+{
+  return objects_;
+}
 
 void ObjectPublisher::publish()
 {
@@ -66,6 +70,11 @@ int main(int argc, char** argv)
   {
     ros::spinOnce();
     object_publisher_node.publish();
+    for (const std::unique_ptr<BasePubObject> &obj : object_publisher_node.getObjects())
+    {
+      obj->read();
+      obj->createMsg();
+    }
     rate.sleep();
   }
 

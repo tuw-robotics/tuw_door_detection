@@ -10,6 +10,7 @@ ConeObject::~ConeObject() {}
 
 bool ConeObject::createMsg()
 {
+  file_contents_parsed_.clear();
   for (auto line : file_contents_)
   {
     std::vector<double> v(line.size());

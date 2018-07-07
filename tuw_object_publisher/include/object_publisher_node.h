@@ -18,6 +18,7 @@ namespace tuw
     ObjectPublisher(ros::NodeHandle &n);
     void init();
     void publish();
+    std::vector<std::unique_ptr<tuw::BasePubObject>> &getObjects();
 //    void rotate(int i, double rad);
 //    void add_position(int i, Eigen::Vector3d position);
 
