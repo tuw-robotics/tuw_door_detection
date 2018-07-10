@@ -92,7 +92,7 @@ void Door2DDetectorNode::callbackLaser(const sensor_msgs::LaserScan& _laser)
     measurement_local_scanpoints_[i] = measurement_laser_->operator[](i).end_point;
   }
   measurement_linesegments_.clear();
-  start(measurement_local_scanpoints_, measurement_linesegments_);
+  //start(measurement_local_scanpoints_, measurement_linesegments_);
   // publish found line segments
   tuw_object_msgs::ObjectDetection detected_doors_msg;
   detected_doors_msg.header = _laser.header;

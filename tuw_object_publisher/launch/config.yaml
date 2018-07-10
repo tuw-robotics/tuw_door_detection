@@ -1,3 +1,3 @@
 object_types: ['door', 'traffic_cone']
 object_file_locations: ['/files/doors.csv', '/files/traffic_cones.csv']
-object_publisher_topic: ['detected_doors', 'detected_cones']
+object_publisher_topic: ['map_doors', 'detected_cones']
