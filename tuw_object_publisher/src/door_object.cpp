@@ -46,7 +46,7 @@ bool DoorObject::createMsg()
     obj.object.pose.orientation.y = q_obj.y();
     obj.object.pose.orientation.z = q_obj.z();
     obj.object.pose.orientation.w = q_obj.w();
-    obj.object.ids = {count};
+    obj.object.ids = {count+1};
     obj.object.ids_confidence = {1.0};
     obj.object.shape_variables = {pose[static_cast<int>(DoorObjectConstants::width)],
                                   pose[static_cast<int>(DoorObjectConstants::height)],
