@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   tuw_geometry
   tuw_geometry_msgs
   dynamic_reconfigure
+  tf
 )
 
 ## System dependencies are found with CMake's conventions
@@ -103,7 +104,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 catkin_package(
   INCLUDE_DIRS include
 #  LIBRARIES tuw_linedetection
-  CATKIN_DEPENDS tuw_geometry tuw_geometry_msgs
+  CATKIN_DEPENDS tuw_geometry tuw_geometry_msgs tf
 #  DEPENDS system_lib
 )
 

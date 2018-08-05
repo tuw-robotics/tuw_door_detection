@@ -24,17 +24,28 @@ void ObjectPublisher::init()
   params_correct &= nh_.getParam("object_types", obj_types);
   params_correct &= nh_.getParam("object_file_locations", obj_file_locations);
   params_correct &= nh_.getParam("object_publisher_topic", obj_publisher_topic);
+  params_correct &= nh_.getParam("robot_perspective", robot_perspective_);
+  params_correct &= nh_.getParam("debug", debug_);
+
   if (!params_correct)
   {
     throw std::runtime_error("Error, supply correct parameters: package_dir [str], \n\r    object_types [list], \n\r    object_file_locations [list], \n\r    object_publisher_topic [list]");
   }
-  nr_objects = std::min(std::min(obj_types.size(), obj_file_locations.size()), obj_publisher_topic.size());
+  nr_objects_ = std::min(std::min(obj_types.size(), obj_file_locations.size()), obj_publisher_topic.size());
 
   objects_.clear();
 
-  for (int i=0; i < nr_objects; i++)
+  for (unsigned int i=0; i < nr_objects_; i++)
   {
     objects_.push_back(ObjectFacade::construct(obj_types[i], dir + obj_file_locations[i], obj_publisher_topic[i]));
+  }
+
+  tf::StampedTransform tf_des;
+  if (robot_perspective_)
+  {
+    std::string target_frame = tf::resolve("", "r0/laser0");
+    std::string source_frame = tf::resolve("", "/map");
+    waitForTransform(tf_des, target_frame, source_frame, ros::Time(0), ros::Duration(10,0));
   }
 
   for (const std::unique_ptr<BasePubObject> &obj : objects_)
@@ -42,6 +53,10 @@ void ObjectPublisher::init()
     obj->read();
     obj->createMsg();
     obj->setPublisher(nh_);
+    if (robot_perspective_)
+    {
+      obj->multiply_tf(tf_des);
+    }
   }
 }
 
@@ -56,6 +71,34 @@ void ObjectPublisher::publish()
   {
     obj->publish();
   }
+}
+
+bool ObjectPublisher::waitForTransform(
+    tf::StampedTransform &des, const std::string& target_frame,
+    const std::string& source_frame, const ros::Time& time, const ros::Duration& polling_sleep_duration)
+{
+    try
+    {
+        if (debug_)
+            ROS_INFO(
+                "debug: waitForTransform(): target_frame='%s' "
+                "source_frame='%s'",
+                target_frame.c_str(), source_frame.c_str());
+
+        listenerTF_.waitForTransform(
+            target_frame, source_frame, time, polling_sleep_duration);
+        listenerTF_.lookupTransform(
+            target_frame, source_frame, time, des);
+    }
+    catch (tf::TransformException)
+    {
+        ROS_INFO(
+            "Failed to get transform target_frame (%s) to source_frame (%s)",
+            target_frame.c_str(), source_frame.c_str());
+        return false;
+    }
+
+    return true;
 }
 
 int main(int argc, char** argv)

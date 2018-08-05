@@ -54,3 +54,27 @@ bool BasePubObject::read()
   }
   return true;
 }
+
+bool BasePubObject::multiply_tf(tf::StampedTransform &_tf)
+{
+  for (auto &obj : msg_.objects)
+  {
+    geometry_msgs::Pose &p = obj.object.pose;
+    tf::Transform tf_object;
+    tf::Vector3 t(p.position.x, p.position.y, p.position.z);
+    tf::Quaternion q(p.orientation.x, p.orientation.y, p.orientation.z, p.orientation.w);
+
+    tf_object.setOrigin(t);
+    tf_object.setRotation(q);
+    tf_object.mult(_tf, tf_object);
+
+    p.position.x = tf_object.getOrigin().getX();
+    p.position.y = tf_object.getOrigin().getY();
+    p.position.z = tf_object.getOrigin().getZ();
+
+    p.orientation.x = tf_object.getRotation().getX();
+    p.orientation.y = tf_object.getRotation().getY();
+    p.orientation.z = tf_object.getRotation().getZ();
+    p.orientation.w = tf_object.getRotation().getW();
+  }
+}

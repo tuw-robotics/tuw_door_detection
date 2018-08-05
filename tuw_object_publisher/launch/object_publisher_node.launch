@@ -2,6 +2,8 @@
 <!--<param name="csv_folder" type="str" value="$(find tuw_object_publisher)/files" />
  <param name="object_types" type="str" value="doors, cones" /> -->
  <param name="package_dir" type="str" value="$(find tuw_object_publisher)" />
+ <param name="robot_perspective" type="bool" value="false"/>
+ <param name="debug_" type="bool" value="true"/>
  <rosparam command="load" file="$(find tuw_object_publisher)/launch/config.yaml" />
   <node name="object_publisher_node" pkg="tuw_object_publisher" type="object_publisher_node" output="screen">
   </node>

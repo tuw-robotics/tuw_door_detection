@@ -6,6 +6,7 @@
 #include <tuw_object_msgs/ObjectDetection.h>
 #include <eigen3/Eigen/Core>
 #include <ros/ros.h>
+#include <tf/transform_datatypes.h>
 
 namespace tuw {
   class BasePubObject {
@@ -18,6 +19,8 @@ namespace tuw {
 
       virtual bool read();
       virtual bool createMsg() = 0;
+
+      virtual bool multiply_tf(tf::StampedTransform &_tf);
 
     protected:
       std::string file_path_;
