@@ -1,16 +1,35 @@
 <launch>
-<!--<param name="csv_folder" type="str" value="$(find tuw_object_publisher)/files" />
- <param name="object_types" type="str" value="doors, cones" /> -->
+
  <arg name="bag_file" default="/media/felix/c8b268c7-3328-46f6-abfc-6cff02c5326c/old/felix/bag_files/door_test_bags/driving_with_open_doors3.bag"/>
  <arg name="use_robot_perspective" default="false"/>
  <arg name="skip" default="0"/>
+ <arg name="record_rawlog" default="false"/>
+
  <param name="robot_perspective" type="bool" value="$(arg use_robot_perspective)"/>
  <param name="package_dir" type="str" value="$(find tuw_object_publisher)" />
  <param name="debug" type="bool" value="true"/>
+
  <rosparam command="load" file="$(find tuw_object_publisher)/launch/config.yaml" />
-  <node name="object_publisher_node" pkg="tuw_object_publisher" type="object_publisher_node" output="screen">
-  </node>
+ <node name="object_publisher_node" pkg="tuw_object_publisher" type="object_publisher_node" output="screen">
+ </node>
+
  <group if="$(arg use_robot_perspective)">
- 	<node pkg="rosbag" type="play" name="player" output="screen" args="--clock -d 4 -s $(arg skip) $(arg bag_file)"/>
+    <node pkg="rosbag" type="play" name="player" output="screen" args="--clock -d 4 -s $(arg skip) $(arg bag_file)"/>
  </group>
+
+ <group if="$(arg record_rawlog)">
+    <node pkg="mrpt_object_converter" type="mrpt_object_converter_node" name="mrpt_object_converter_node" output="screen">
+        <param name="base_frame_id" value="map"/>
+        <param name="frame_id" value="/r0/laser0"/>
+        <param name="debug" type="bool" value="true"/>
+    </node>
+
+    <node pkg="mrpt_rawlog" type="rawlog_record_node" name="rawlog" output="screen">
+        <remap from="odom" to="r0/odom"/>
+        <remap from="scan" to="r0/laser0"/>
+        <remap from="bearing" to="/bearing_gt"/>
+        <param name="raw_log_folder" value="$(find mrpt_map)/tutorial"/>
+    </node>
+ </group>
+
 </launch>
