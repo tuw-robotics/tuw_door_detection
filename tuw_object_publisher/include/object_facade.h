@@ -19,5 +19,13 @@ namespace tuw {
         return std::make_unique<tuw::ConeObject>(type, file_path, publisher_topic);
       }
     }
+
+    static std::shared_ptr<BasePubObject> create(std::string type, tf::StampedTransform &_tf)
+    {
+      if (type == tuw_object_msgs::ObjectDetection::OBJECT_TYPE_DOOR)
+      {
+        return std::make_shared<tuw::DoorObject>(type, _tf);
+      }
+    }
   };
 }

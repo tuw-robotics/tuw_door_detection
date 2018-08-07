@@ -30,6 +30,7 @@ namespace tuw
     ros::Publisher door_pub_;
     std::string door_locations_file_;
     std::vector<std::unique_ptr<tuw::BasePubObject>> objects_;
+    std::shared_ptr<tuw::BasePubObject> dummy_;
     bool robot_perspective_;
     bool debug_;
     unsigned int nr_objects_;

@@ -6,15 +6,14 @@
 #include <eigen3/Eigen/Geometry>
 #include "object_facade.h"
 
-using namespace tuw;
 typedef boost::tokenizer<boost::escaped_list_separator<char>> Tokenizer;
 
-ObjectPublisher::ObjectPublisher(ros::NodeHandle &n)
+tuw::ObjectPublisher::ObjectPublisher(ros::NodeHandle &n)
 {
   nh_ = n;
 }
 
-void ObjectPublisher::init()
+void tuw::ObjectPublisher::init()
 {
   std::string dir;
   std::vector<std::string> obj_types;
@@ -40,12 +39,11 @@ void ObjectPublisher::init()
     objects_.push_back(ObjectFacade::construct(obj_types[i], dir + obj_file_locations[i], obj_publisher_topic[i]));
   }
 
-  tf::StampedTransform tf_des;
   if (robot_perspective_)
   {
-    std::string target_frame = tf::resolve("", "r0/laser0");
-    std::string source_frame = tf::resolve("", "/map");
-    waitForTransform(tf_des, target_frame, source_frame, ros::Time(0), ros::Duration(10,0));
+    tf::StampedTransform tf;
+    dummy_ = tuw::ObjectFacade::create(tuw_object_msgs::ObjectDetection::OBJECT_TYPE_DOOR, tf);
+    dummy_->setPublisher(nh_);
   }
 
   for (const std::unique_ptr<BasePubObject> &obj : objects_)
@@ -53,27 +51,51 @@ void ObjectPublisher::init()
     obj->read();
     obj->createMsg();
     obj->setPublisher(nh_);
-    if (robot_perspective_)
-    {
-      obj->multiply_tf(tf_des);
-    }
   }
+  ROS_INFO("init done, objects are being published");
 }
 
-std::vector<std::unique_ptr<BasePubObject>> &ObjectPublisher::getObjects()
+std::vector<std::unique_ptr<tuw::BasePubObject>> &tuw::ObjectPublisher::getObjects()
 {
   return objects_;
 }
 
-void ObjectPublisher::publish()
+void tuw::ObjectPublisher::publish()
 {
+  tf::StampedTransform tf_des;
+  std::string target_frame = tf::resolve("", "r0/laser0");
+
+  if (robot_perspective_)
+  {
+    std::string source_frame = tf::resolve("", "/map");
+    if (debug_)
+    {
+      ROS_INFO("tf t: (%lf,%lf,%lf)", tf_des.getOrigin().getX(), tf_des.getOrigin().getY(), tf_des.getOrigin().getZ());
+      ROS_INFO("tf q: (%lf,%lf,%lf,%lf)", tf_des.getRotation().getX(), tf_des.getRotation().getY(), tf_des.getRotation().getZ(), tf_des.getRotation().getW());
+    }
+    //T_LM -> transformation from map to laser (from source to target)
+    waitForTransform(tf_des, target_frame, source_frame, ros::Time(0), ros::Duration(10,0));
+  }
+
   for (const std::unique_ptr<BasePubObject> &obj : objects_)
   {
+    if (robot_perspective_)
+    {
+      obj->multiply_tf(tf_des, true);
+      obj->getMsg().header.frame_id = target_frame;
+      obj->getMsg().header.stamp = tf_des.stamp_;
+    }
+
     obj->publish();
+
+    if (robot_perspective_)
+    {
+      obj->restore_tf();
+    }
   }
 }
 
-bool ObjectPublisher::waitForTransform(
+bool tuw::ObjectPublisher::waitForTransform(
     tf::StampedTransform &des, const std::string& target_frame,
     const std::string& source_frame, const ros::Time& time, const ros::Duration& polling_sleep_duration)
 {
@@ -105,7 +127,7 @@ int main(int argc, char** argv)
 {
   ros::init(argc, argv, "object_publisher_node");
   ros::NodeHandle n;
-  ObjectPublisher object_publisher_node(n);
+  tuw::ObjectPublisher object_publisher_node(n);
   object_publisher_node.init();
   ros::Rate rate(1);
 
@@ -113,7 +135,7 @@ int main(int argc, char** argv)
   {
     ros::spinOnce();
     object_publisher_node.publish();
-    for (const std::unique_ptr<BasePubObject> &obj : object_publisher_node.getObjects())
+    for (const std::unique_ptr<tuw::BasePubObject> &obj : object_publisher_node.getObjects())
     {
       obj->read();
       obj->createMsg();

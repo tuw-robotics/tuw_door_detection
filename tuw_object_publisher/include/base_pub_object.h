@@ -7,6 +7,7 @@
 #include <eigen3/Eigen/Core>
 #include <ros/ros.h>
 #include <tf/transform_datatypes.h>
+#include <ostream>
 
 namespace tuw {
   class BasePubObject {
@@ -20,7 +21,16 @@ namespace tuw {
       virtual bool read();
       virtual bool createMsg() = 0;
 
-      virtual bool multiply_tf(tf::StampedTransform &_tf);
+      bool multiply_tf(tf::StampedTransform &_tf, bool _keep_old);
+      bool restore_tf();
+      void tf2pose(tf::Transform &_tf, geometry_msgs::Pose &p);
+      void pose2tf(geometry_msgs::Pose &p, tf::Transform &_tf);
+      void set_pose_from_tf(tf::StampedTransform &_tf);
+
+      const std::string as_string();
+
+      const tuw_object_msgs::ObjectDetection &getMsg() const { return msg_; }
+      tuw_object_msgs::ObjectDetection &getMsg() { return msg_; }
 
     protected:
       std::string file_path_;
@@ -29,6 +39,7 @@ namespace tuw {
       ros::Publisher pub_;
       std::vector<std::vector<std::string>> file_contents_;
       tuw_object_msgs::ObjectDetection msg_;
+      std::vector<geometry_msgs::Pose> old_tfs_;
 
       double deg2rad(int degrees);
   };
