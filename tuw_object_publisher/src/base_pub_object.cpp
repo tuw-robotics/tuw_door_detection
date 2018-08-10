@@ -84,7 +84,7 @@ bool tuw::BasePubObject::restore_tf()
 
   int obj_idx=0;
 
-  for (auto obj_it : msg_.objects)
+  for (auto &obj_it : msg_.objects)
   {
     obj_it.object.pose = old_tfs_[obj_idx];
     ++obj_idx;
@@ -124,7 +124,7 @@ bool tuw::BasePubObject::multiply_tf(tf::StampedTransform &_tf, bool _keep_old)
 
     if (_keep_old)
     {
-      old_tfs_[obj_idx] = obj_it.object.pose;
+      old_tfs_[obj_idx] = geometry_msgs::Pose(obj_it.object.pose);
     }
 
     //tf_object.getOrigin() += _tf.getOrigin();
