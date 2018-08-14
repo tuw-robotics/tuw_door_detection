@@ -1,9 +1,12 @@
 <launch>
 
  <arg name="bag_file" default="/media/felix/c8b268c7-3328-46f6-abfc-6cff02c5326c/old/felix/bag_files/door_test_bags/driving_with_open_doors3.bag"/>
- <arg name="use_robot_perspective" default="false"/>
+ <arg name="use_robot_perspective" default="true"/>
  <arg name="skip" default="0"/>
- <arg name="record_rawlog" default="false"/>
+ <arg name="record_rawlog" default="true"/>
+ <arg name="robot_name" default="r0"/>
+ <arg name="bearing_topic_name" default="/bearing_gt"/>
+ <arg name="object_detections_topic_name" default="/map_doors"/>
 
  <param name="robot_perspective" type="bool" value="$(arg use_robot_perspective)"/>
  <param name="package_dir" type="str" value="$(find tuw_object_publisher)" />
@@ -20,15 +23,23 @@
  <group if="$(arg record_rawlog)">
     <node pkg="mrpt_object_converter" type="mrpt_object_converter_node" name="mrpt_object_converter_node" output="screen">
         <param name="base_frame_id" value="map"/>
-        <param name="frame_id" value="/r0/laser0"/>
+        <param name="frame_id" value="$(arg robot_name)/laser0"/> <!-- assume that the bearings are stored in robot space (as seen from robot) -->
+        <param name="publisher_topic_name" value="$(arg bearing_topic_name)"/>
+        <param name="subscriber_topic_name" value="$(arg object_detections_topic_name)"/>
         <param name="debug" type="bool" value="true"/>
     </node>
 
     <node pkg="mrpt_rawlog" type="rawlog_record_node" name="rawlog" output="screen">
-        <remap from="odom" to="r0/odom"/>
-        <remap from="scan" to="r0/laser0"/>
-        <remap from="bearing" to="/bearing_gt"/>
+        <remap from="odom" to="$(arg robot_name)/odom"/>
+        <remap from="scan" to="$(arg robot_name)/laser0/scan"/>
+        <remap from="bearing" to="$(arg bearing_topic_name)"/>
+        <param name="base_frame_id" value="r0/base_link"/>
         <param name="raw_log_folder" value="$(find mrpt_map)/tutorial"/>
+        <param name="record_range_scan" value="true"/>
+        <param name="record_bearing_range" value="true"/>
+        <param name="record_beacon_range" value="false"/>
+        <param name="rate" value="45"/>
+        <param name="debug" value="true"/>
     </node>
  </group>
 
