@@ -1,16 +1,16 @@
 <launch>
 
- <arg name="bag_file" default="/media/felix/c8b268c7-3328-46f6-abfc-6cff02c5326c/old/felix/bag_files/door_test_bags/driving_with_open_doors3.bag"/>
+ <arg name="bag_file" default="/home/felix/pCloudDrive/bag_files/robot_standing.bag"/>
  <arg name="use_robot_perspective" default="true"/>
  <arg name="skip" default="0"/>
  <arg name="record_rawlog" default="true"/>
  <arg name="robot_name" default="r0"/>
  <arg name="bearing_topic_name" default="/bearing_gt"/>
  <arg name="object_detections_topic_name" default="/map_doors"/>
-
+ <arg name="map_service" default="false"/>
  <param name="robot_perspective" type="bool" value="$(arg use_robot_perspective)"/>
  <param name="package_dir" type="str" value="$(find tuw_object_publisher)" />
- <param name="debug" type="bool" value="true"/>
+ <param name="debug" type="bool" value="false"/>
 
  <rosparam command="load" file="$(find tuw_object_publisher)/launch/config.yaml" />
  <node name="object_publisher_node" pkg="tuw_object_publisher" type="object_publisher_node" output="screen">
@@ -20,14 +20,33 @@
     <node pkg="rosbag" type="play" name="player" output="screen" args="--clock -d 4 -s $(arg skip) $(arg bag_file)"/>
  </group>
 
- <group if="$(arg record_rawlog)">
-    <node pkg="mrpt_object_converter" type="mrpt_object_converter_node" name="mrpt_object_converter_node" output="screen">
+  <node pkg="mrpt_object_converter" type="mrpt_object_converter_node" name="mrpt_object_converter_node" output="screen">
         <param name="base_frame_id" value="map"/>
         <param name="frame_id" value="$(arg robot_name)/laser0"/> <!-- assume that the bearings are stored in robot space (as seen from robot) -->
         <param name="publisher_topic_name" value="$(arg bearing_topic_name)"/>
         <param name="subscriber_topic_name" value="$(arg object_detections_topic_name)"/>
-        <param name="debug" type="bool" value="true"/>
-    </node>
+        <param name="debug" type="bool" value="false"/>
+  </node>
+
+ <group if="$(arg map_service)">
+    <node pkg="mrpt_map" type="mrpt_map_creator_node" name="mrpt_map_creator_node" output="screen">
+
+      <param name="frame_id" value="map"/>
+      <param name="frequency" value="1"/>
+      <!--<param name="ini_file" value="$(find mrpt_map)/tutorial/map.ini"/>-->
+      <param name="simplemap_file" value="$(find mrpt_map)/tutorial/constructed_map.multimetricmap"/>
+      <param name="bitmap_file" value="$(find mrpt_map)/tutorial/constructed_map.bmp"/>
+      <param name="ini_file" value="$(find mrpt_map)/tutorial/constructed_map.ini"/>
+      <param name="load_map" type="bool" value="false"/>
+      <param name="update_map" type="bool" value="true"/>
+      <param name="publish_bearings" type="bool" value="true"/>
+      <param name="insert_as_simplemap" type="bool" value="false"/>
+      <param name="base_frame_id" value="map"/>
+      <remap from="bearings" to="$(arg bearing_topic_name)"/>
+   </node>
+ </group>
+
+ <group if="$(arg record_rawlog)">
 
     <node pkg="mrpt_rawlog" type="rawlog_record_node" name="rawlog" output="screen">
         <remap from="odom" to="$(arg robot_name)/odom"/>
@@ -39,7 +58,7 @@
         <param name="record_bearing_range" value="true"/>
         <param name="record_beacon_range" value="false"/>
         <param name="rate" value="45"/>
-        <param name="debug" value="true"/>
+        <param name="debug" value="false"/>
     </node>
  </group>
 
