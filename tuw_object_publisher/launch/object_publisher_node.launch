@@ -59,6 +59,7 @@
         <param name="record_beacon_range" value="false"/>
         <param name="rate" value="45"/>
         <param name="debug" value="false"/>
+        <param name="ignore_timestamp_difference" value="true"/>
     </node>
  </group>
 

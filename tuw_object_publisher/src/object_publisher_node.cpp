@@ -28,7 +28,7 @@ void tuw::ObjectPublisher::init()
 
   if (!params_correct)
   {
-    throw std::runtime_error("Error, supply correct parameters: package_dir [str], \n\r    object_types [list], \n\r    object_file_locations [list], \n\r    object_publisher_topic [list]");
+    throw std::runtime_error("Error, supply correct parameters: package_dir [str], \n\r    object_types [list], \n\r    object_file_locations [list], \n\r    object_publisher_topic [list]\n\r		robot_perspective [bool]\n\r	debug [bool]\n\r");
   }
   nr_objects_ = std::min(std::min(obj_types.size(), obj_file_locations.size()), obj_publisher_topic.size());
 
