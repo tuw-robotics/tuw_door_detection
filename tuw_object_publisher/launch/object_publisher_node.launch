@@ -1,6 +1,6 @@
 <launch>
 
- <arg name="bag_file" default="/home/felix/pCloudDrive/bag_files/robot_standing.bag"/>
+ <arg name="bag_file" default="/home/felix/pCloudDrive/bag_files/robot_moving_01.bag"/>
  <arg name="use_robot_perspective" default="true"/>
  <arg name="skip" default="0"/>
  <arg name="record_rawlog" default="true"/>
@@ -51,7 +51,7 @@
  <group if="$(arg record_rawlog)">
 
     <node pkg="mrpt_rawlog" type="rawlog_record_node" name="rawlog" output="screen">
-        <remap from="odom" to="$(arg robot_name)/odom"/>
+        <remap from="odom" to="$(arg robot_name)/aria/odom"/>
         <remap from="scan" to="$(arg robot_name)/laser0/scan"/>
         <remap from="bearing" to="$(arg bearing_topic_name)"/>
         <param name="base_frame_id" value="r0/base_link"/>
