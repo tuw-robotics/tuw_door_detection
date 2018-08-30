@@ -26,6 +26,8 @@
         <param name="publisher_topic_name" value="$(arg bearing_topic_name)"/>
         <param name="subscriber_topic_name" value="$(arg object_detections_topic_name)"/>
         <param name="debug" type="bool" value="false"/>
+        <param name="contour_filtering" value="true"/>
+        <remap from="scan" to="$(arg robot_name)/laser0/scan"/>
   </node>
 
  <group if="$(arg map_service)">
