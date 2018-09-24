@@ -8,6 +8,9 @@
  <arg name="bearing_topic_name" default="/bearing_gt"/>
  <arg name="object_detections_topic_name" default="/map_doors"/>
  <arg name="map_service" default="false"/>
+ <arg name="contour_filtering" default="false"/>
+ <arg name="contour_offset" default="0.5"/>
+
  <param name="robot_perspective" type="bool" value="$(arg use_robot_perspective)"/>
  <param name="package_dir" type="str" value="$(find tuw_object_publisher)" />
  <param name="debug" type="bool" value="false"/>
@@ -26,7 +29,8 @@
         <param name="publisher_topic_name" value="$(arg bearing_topic_name)"/>
         <param name="subscriber_topic_name" value="$(arg object_detections_topic_name)"/>
         <param name="debug" type="bool" value="false"/>
-        <param name="contour_filtering" value="false"/>
+        <param name="contour_filtering" value="$(arg contour_filtering)"/>
+        <param name="contour_offset" value="$(arg contour_offset)"/>
         <remap from="scan" to="$(arg robot_name)/laser0/scan"/>
   </node>
 
