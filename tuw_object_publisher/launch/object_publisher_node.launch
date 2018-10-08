@@ -1,6 +1,7 @@
 <launch>
 
  <arg name="bag_file" default="/home/felix/pCloudDrive/bag_files/robot_moving_01.bag"/>
+ <arg name="map_file" default="/home/felix/pCloudDrive/bag_files/map.yaml"/>
  <arg name="use_robot_perspective" default="true"/>
  <arg name="skip" default="0"/>
  <arg name="record_rawlog" default="true"/>
@@ -18,6 +19,8 @@
  <rosparam command="load" file="$(find tuw_object_publisher)/launch/config.yaml" />
  <node name="object_publisher_node" pkg="tuw_object_publisher" type="object_publisher_node" output="screen">
  </node>
+
+ <node pkg="map_server" type="map_server" name="map_server" output="screen" args="$(arg map_file)"/>
 
  <group if="$(arg use_robot_perspective)">
     <node pkg="rosbag" type="play" name="player" output="screen" args="--clock -d 4 -s $(arg skip) $(arg bag_file)"/>
@@ -61,7 +64,8 @@
         <param name="base_frame_id" value="r0/base_link"/>
         <param name="raw_log_folder" value="$(find mrpt_map)/tutorial"/>
         <param name="record_range_scan" value="true"/>
-        <param name="record_bearing_range" value="true"/>
+        <param name="record_bearing_range" value="false"/>
+        <param name="record_object_observation" value="true"/>
         <param name="record_beacon_range" value="false"/>
         <param name="rate" value="45"/>
         <param name="debug" value="false"/>
