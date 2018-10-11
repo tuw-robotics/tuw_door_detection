@@ -34,6 +34,8 @@
         <param name="debug" type="bool" value="false"/>
         <param name="contour_filtering" value="$(arg contour_filtering)"/>
         <param name="contour_offset" value="$(arg contour_offset)"/>
+        <param name="world_frame" value="map"/>
+        <param name="source_frame" value="$(arg robot_name)/laser0"/>
         <remap from="scan" to="$(arg robot_name)/laser0/scan"/>
   </node>
 
@@ -60,8 +62,8 @@
     <node pkg="mrpt_rawlog" type="rawlog_record_node" name="rawlog" output="screen">
         <remap from="odom" to="$(arg robot_name)/aria/odom"/>
         <remap from="scan" to="$(arg robot_name)/laser0/scan"/>
-        <remap from="bearing" to="$(arg bearing_topic_name)"/>
-        <param name="base_frame_id" value="r0/base_link"/>
+        <remap from="objects" to="$(arg bearing_topic_name)"/>
+        <param name="base_frame_id" value="$(arg robot_name)/base_link"/>
         <param name="raw_log_folder" value="$(find mrpt_map)/tutorial"/>
         <param name="record_range_scan" value="true"/>
         <param name="record_bearing_range" value="false"/>

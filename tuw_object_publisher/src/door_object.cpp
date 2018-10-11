@@ -24,6 +24,18 @@ DoorObject::DoorObject(std::string &type, tf::Transform &_tf) : tuw::DoorObject(
 
 DoorObject::~DoorObject(){}
 
+bool DoorObject::createMsgFromView(Eigen::Vector3d &position, Eigen::Quaterniond &orientation)
+{
+  file_contents_parsed_.clear();
+  for (auto line : file_contents_)
+  {
+    std::vector<double> v(line.size());
+    for (int j=0; j < v.size(); j++)
+      v[j] = std::stod(line[j]);
+    file_contents_parsed_.push_back(v);
+  }
+}
+
 bool DoorObject::createMsg()
 {
   file_contents_parsed_.clear();
@@ -56,7 +68,15 @@ bool DoorObject::createMsg()
     R_wd << c_theta, -s_theta, 0,
          s_theta, c_theta, 0,
          0, 0, 1;
-    Eigen::Quaterniond q_obj(R_wd);
+    
+    c_theta = cos(d_angle);
+    s_theta = sin(d_angle);
+    Eigen::Matrix3d R_dd;
+    R_dd << c_theta, -s_theta, 0,
+        		s_theta, c_theta, 0,
+            0, 0, 1;
+    
+    Eigen::Quaterniond q_obj(R_wd * R_dd);
     obj.object.pose.orientation.x = q_obj.x();
     obj.object.pose.orientation.y = q_obj.y();
     obj.object.pose.orientation.z = q_obj.z();

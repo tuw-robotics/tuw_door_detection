@@ -3,6 +3,7 @@
 
 #include "base_pub_object.h"
 #include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Geometry>
 
 namespace tuw {
 
@@ -32,6 +33,7 @@ namespace tuw {
       DoorObject(std::string &type, tf::Transform &_tf);
       virtual ~DoorObject();
       virtual bool createMsg();
+      virtual bool createMsgFromView(Eigen::Vector3d &position, Eigen::Quaterniond &orientation);
 
     private:
       std::vector<std::vector<double>> file_contents_parsed_;
