@@ -11,10 +11,11 @@
  <arg name="map_service" default="false"/>
  <arg name="contour_filtering" default="false"/>
  <arg name="contour_offset" default="0.5"/>
+ <arg name="debug_mode" default="false"/>
 
  <param name="robot_perspective" type="bool" value="$(arg use_robot_perspective)"/>
  <param name="package_dir" type="str" value="$(find tuw_object_publisher)" />
- <param name="debug" type="bool" value="false"/>
+ <param name="debug" type="bool" value="$(arg debug_mode)"/>
 
  <rosparam command="load" file="$(find tuw_object_publisher)/launch/config.yaml" />
  <node name="object_publisher_node" pkg="tuw_object_publisher" type="object_publisher_node" output="screen">
@@ -26,18 +27,18 @@
     <node pkg="rosbag" type="play" name="player" output="screen" args="--clock -d 4 -s $(arg skip) $(arg bag_file)"/>
  </group>
 
-  <node pkg="mrpt_object_converter" type="mrpt_object_converter_node" name="mrpt_object_converter_node" output="screen">
-        <param name="base_frame_id" value="map"/>
-        <param name="frame_id" value="$(arg robot_name)/laser0"/> <!-- assume that the bearings are stored in robot space (as seen from robot) -->
-        <param name="publisher_topic_name" value="$(arg bearing_topic_name)"/>
-        <param name="subscriber_topic_name" value="$(arg object_detections_topic_name)"/>
-        <param name="debug" type="bool" value="false"/>
-        <param name="contour_filtering" value="$(arg contour_filtering)"/>
-        <param name="contour_offset" value="$(arg contour_offset)"/>
-        <param name="world_frame" value="map"/>
-        <param name="source_frame" value="$(arg robot_name)/laser0"/>
-        <remap from="scan" to="$(arg robot_name)/laser0/scan"/>
-  </node>
+ <node pkg="mrpt_object_converter" type="mrpt_object_converter_node" name="mrpt_object_converter_node" output="screen">
+       <param name="base_frame_id" value="map"/>
+       <param name="frame_id" value="$(arg robot_name)/laser0"/> <!-- assume that the bearings are stored in robot space (as seen from robot) -->
+       <param name="publisher_topic_name" value="$(arg bearing_topic_name)"/>
+       <param name="subscriber_topic_name" value="$(arg object_detections_topic_name)"/>
+       <param name="debug" type="bool" value="$(arg debug_mode)"/>
+       <param name="contour_filtering" value="$(arg contour_filtering)"/>
+       <param name="contour_offset" value="$(arg contour_offset)"/>
+       <param name="world_frame" value="map"/>
+       <param name="source_frame" value="$(arg robot_name)/laser0"/>
+       <remap from="scan" to="$(arg robot_name)/laser0/scan"/>
+ </node>
 
  <group if="$(arg map_service)">
     <node pkg="mrpt_map" type="mrpt_map_creator_node" name="mrpt_map_creator_node" output="screen">
@@ -53,6 +54,7 @@
       <param name="publish_bearings" type="bool" value="true"/>
       <param name="insert_as_simplemap" type="bool" value="false"/>
       <param name="base_frame_id" value="map"/>
+      <param name="debug" value="$(arg debug_mode)"/>
       <remap from="bearings" to="$(arg bearing_topic_name)"/>
    </node>
  </group>
@@ -70,7 +72,7 @@
         <param name="record_object_observation" value="true"/>
         <param name="record_beacon_range" value="false"/>
         <param name="rate" value="45"/>
-        <param name="debug" value="false"/>
+        <param name="debug" value="$(arg debug_mode)"/>
         <param name="ignore_timestamp_difference" value="true"/>
     </node>
  </group>
