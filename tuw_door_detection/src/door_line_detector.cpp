@@ -6,7 +6,7 @@
 
 using namespace tuw;
 
-DoorLineDetector::DoorLineDetector() : DoorDetector()
+DoorLineDetector::DoorLineDetector(ros::NodeHandle &_nh) : DoorDetector(_nh)
 {
   reconfigure_fnc_ = boost::bind(&DoorLineDetector::callbackConfig, this, _1, _2);
   reconfigure_server_.setCallback(reconfigure_fnc_);
@@ -27,7 +27,7 @@ void DoorLineDetector::callbackConfig(tuw_geometry::Linesegment2DDetectorConfig&
   door_range.second = 1.0;
 }
 
-void DoorLineDetector::processLaser(const sensor_msgs::LaserScan& _laser)
+bool DoorLineDetector::processLaser(const sensor_msgs::LaserScan& _laser)
 {
   //ROS_INFO("callback laser");
   sensor_msgs::LaserScan output_scan = sensor_msgs::LaserScan(_laser);

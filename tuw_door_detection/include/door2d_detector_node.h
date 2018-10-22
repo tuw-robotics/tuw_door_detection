@@ -34,6 +34,7 @@
 #ifndef LINESEGMENT2D_DETECTOR_NODE_H
 #define LINESEGMENT2D_DETECTOR_NODE_H
 
+#include "door_detector.h"
 #include <ros/ros.h>
 #include <sensor_msgs/LaserScan.h>
 #include <tuw_geometry/measurement_laser.h>
@@ -43,6 +44,7 @@
 #include <tuw_object_msgs/ObjectDetection.h>
 #include <dynamic_reconfigure/server.h>
 #include <tuw_linedetection/Linesegment2DDetectorConfig.h>
+#include <unordered_map>
 
 namespace tuw
 {
@@ -50,41 +52,38 @@ namespace tuw
  * @brief ROS wrapper node for LineSegment2DDetector
  * @class Door2DDetectorNode
  */
-class Door2DDetectorNode : public LineSegment2DDetector
+class Door2DDetectorNode 
 {
 public:
-  Door2DDetectorNode();
+	struct ParametersNode
+	{			
+		ParametersNode();
+  	enum FilterMode { LINES, DEPTH };
+		std::unordered_map<std::string, FilterMode> enumResolver{
+																															{"lines", FilterMode::LINES},
+																															{"depth", FilterMode::DEPTH},
+																															{"LINES", FilterMode::LINES},
+																															{"DEPTH", FilterMode::DEPTH}
+																														};
+		FilterMode mode;
+		ros::NodeHandle node;
+	};
 
+  Door2DDetectorNode();
+  ~Door2DDetectorNode();
+
+  void publish();
+  
 private:
-  enum FilterMode { FILTER_DOORS, FILTER_NON_DOORS };
 
   ros::NodeHandle nh_;
-  ros::NodeHandle nh_private_;
-  ros::Subscriber sub_laser_;  /// Subscriber to the laser measurements
-  ros::Publisher line_pub_;
-  ros::Publisher door_pub_;
-  ros::Publisher laser_pub_;
+	ParametersNode params_;
+	ros::Subscriber sub_laser_;
+	std::unique_ptr<DoorDetector> door_detector_;
   MeasurementLaserPtr measurement_laser_;                /// laser measurements
-  std::vector<Point2D> measurement_local_scanpoints_;    /// laser beam endpoints for line detection
-  std::vector<LineSegment> measurement_linesegments_;  /// detected line segments in sensor coordinates
   bool display_window_;
   bool modify_laser_scan_;
-  FilterMode doors_filter_mode_;
 
-  std::pair<double,double> door_range;
-
-  ///// parameter server for dynamic detector configuration
-  //dynamic_reconfigure::Server<tuw_geometry::Linesegment2DDetectorConfig> reconfigure_server_;
-
-  ///// parameter server callback
-  //dynamic_reconfigure::Server<tuw_geometry::Linesegment2DDetectorConfig>::CallbackType reconfigure_fnc_;
-
-  ///**
-  // * @brief callback function on incoming parameter changes
-  // * @param config the configuration message
-  // * @param level not used here, but required for dynamic reconfigure callbacks
-  // */
-  //void callbackConfig(tuw_geometry::Linesegment2DDetectorConfig &config, uint32_t level);
   /**
    * @brief callback function for incoming laser scans
    * @param _laser laser scan message

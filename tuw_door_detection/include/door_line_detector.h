@@ -14,10 +14,10 @@
 
 namespace tuw {
 
-class DoorLineDetector : public LineSegment2DDetector, DoorDetector
+class DoorLineDetector : public LineSegment2DDetector, public DoorDetector
 {
 public:
-	DoorLineDetector();
+	DoorLineDetector(ros::NodeHandle &_nh);
 	virtual ~DoorLineDetector();
 
 protected:
@@ -25,7 +25,7 @@ protected:
    * @brief callback function for incoming laser scans
    * @param _laser laser scan message
    */
-  void processLaser(const sensor_msgs::LaserScan &_laser) override;
+  bool processLaser(const sensor_msgs::LaserScan &_laser) override;
 
 private:
   enum FilterMode { FILTER_DOORS, FILTER_NON_DOORS };

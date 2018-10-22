@@ -32,6 +32,8 @@
  ***************************************************************************/
 
 #include "door2d_detector_node.h"
+#include "door_line_detector.h"
+#include "door_depth_detector.h"
 
 #include <tuw_geometry_msgs/LineSegment.h>
 #include <tuw_geometry_msgs/LineSegments.h>
@@ -42,17 +44,49 @@
 
 using namespace tuw;
 
-Door2DDetectorNode::Door2DDetectorNode() : nh_private_("~"), display_window_(true), modify_laser_scan_(true), doors_filter_mode_(Door2DDetectorNode::FilterMode::FILTER_DOORS)
+Door2DDetectorNode::ParametersNode::ParametersNode() : node("~")
+{
+	std::string mode_str;
+	node.param<std::string>("mode", mode_str, std::string("depth")); 
+	try {
+		mode = enumResolver.at(mode_str);
+	} 
+	catch(std::exception &e)
+	{
+		ROS_ERROR("ERROR: %s is not a valid detector mode.", mode_str.c_str());
+	}
+}
+
+Door2DDetectorNode::Door2DDetectorNode() : nh_(""), display_window_(true), modify_laser_scan_(true)
 {
   sub_laser_ = nh_.subscribe("scan", 1000, &Door2DDetectorNode::callbackLaser, this);
-  line_pub_ = nh_.advertise<tuw_geometry_msgs::LineSegments>("line_segments", 1000);
-  door_pub_ = nh_.advertise<tuw_object_msgs::ObjectDetection>("object_detection", 1000);
-  laser_pub_ = nh_.advertise<sensor_msgs::LaserScan>("/r0/laser0/scan/filtered", 1000);
+  //line_pub_ = nh_.advertise<tuw_geometry_msgs::LineSegments>("line_segments", 1000);
+  //door_pub_ = nh_.advertise<tuw_object_msgs::ObjectDetection>("object_detection", 1000);
   measurement_laser_ = std::make_shared<tuw::MeasurementLaser>();
+	params_ = ParametersNode();
+	
+	if (params_.mode == ParametersNode::FilterMode::DEPTH)
+	{
+		door_detector_.reset(new DoorDepthDetector(nh_)); 
+	}
+	else
+	{
+		door_detector_.reset(new DoorLineDetector(nh_));
+	}
+}
+
+Door2DDetectorNode::~Door2DDetectorNode()
+{
+}
+
+void Door2DDetectorNode::publish()
+{
+	door_detector_->publish();
 }
 
 void Door2DDetectorNode::callbackLaser(const sensor_msgs::LaserScan& _laser)
 {
+	door_detector_->processLaser(_laser);
 }
 
 int main(int argc, char** argv)
@@ -61,7 +95,10 @@ int main(int argc, char** argv)
 
   Door2DDetectorNode detector_node;
 
-  ros::spin();
-
+  while (ros::ok())
+  {
+  	ros::spinOnce();
+		detector_node.publish();
+	}
   return 0;
 }

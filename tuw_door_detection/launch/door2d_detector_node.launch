@@ -1,0 +1,22 @@
+<launch>
+  <arg name="laser_scan" default="/r0/laser0/scan"/>
+  <arg name="publisher_topic" default="door_objects"/>
+  <arg name="source_frame" default="/r0/laser0" />
+  <arg name="world_frame" default="/map" />
+  <arg name="launch_rosbag" default="true" />
+  <arg name="skip_rosbag" default="0"/>
+  <arg name="bag_file" default="/home/felix/pCloudDrive/bag_files/robot_moving_01.bag"/>
+  
+	 <group if="$(arg launch_rosbag)">
+	 		<node pkg="rosbag" type="play" name="player" output="screen" args="--clock -d 4 -s $(arg skip_rosbag) $(arg bag_file)"/>
+	 </group>
+  
+  <node name="door2d_detector_node" pkg="tuw_door_detection" type="door2d_detector_node" output="screen">
+    <remap from="scan" to="$(arg laser_scan)" />
+    <param name="mode" value="depth"/>
+    <param name="publisher_topic" value="$(arg publisher_topic)" />
+    <param name="source_frame" value="$(arg source_frame)"/>
+				<param name="world_frame" value="$(arg world_frame)"/>
+				<param name="debug" value="true"/>
+  </node>
+</launch>

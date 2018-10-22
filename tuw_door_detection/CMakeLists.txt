@@ -6,6 +6,8 @@ add_compile_options(-std=c++14) ## for c++ 2014
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+		tf
+		tf_conversions
   roscpp
   rospy
   std_msgs
@@ -108,7 +110,7 @@ generate_dynamic_reconfigure_options(
 catkin_package(
   INCLUDE_DIRS include
 #  LIBRARIES tuw_linedetection
-  CATKIN_DEPENDS tuw_geometry tuw_geometry_msgs
+  CATKIN_DEPENDS tuw_geometry tuw_geometry_msgs tf tf_conversions
 #  DEPENDS system_lib
 )
 
@@ -138,7 +140,10 @@ include_directories(
 
 ## Declare a C++ executable
 # add_executable(tuw_linedetection_node src/tuw_linedetection_node.cpp)
-add_executable(door2d_detector_node src/door2d_detector_node.cpp src/door_line_detector.cpp src/door_depth_detector.cpp)
+add_executable(door2d_detector_node src/door2d_detector_node.cpp 
+																																				src/door_detector.cpp
+																																				src/door_line_detector.cpp 
+																																				src/door_depth_detector.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
