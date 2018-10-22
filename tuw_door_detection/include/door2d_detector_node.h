@@ -73,25 +73,24 @@ private:
 
   std::pair<double,double> door_range;
 
-  /// parameter server for dynamic detector configuration
-  dynamic_reconfigure::Server<tuw_geometry::Linesegment2DDetectorConfig> reconfigure_server_;
+  ///// parameter server for dynamic detector configuration
+  //dynamic_reconfigure::Server<tuw_geometry::Linesegment2DDetectorConfig> reconfigure_server_;
 
-  /// parameter server callback
-  dynamic_reconfigure::Server<tuw_geometry::Linesegment2DDetectorConfig>::CallbackType reconfigure_fnc_;
+  ///// parameter server callback
+  //dynamic_reconfigure::Server<tuw_geometry::Linesegment2DDetectorConfig>::CallbackType reconfigure_fnc_;
 
-  /**
-   * @brief callback function on incoming parameter changes
-   * @param config the configuration message
-   * @param level not used here, but required for dynamic reconfigure callbacks
-   */
-  void callbackConfig(tuw_geometry::Linesegment2DDetectorConfig &config, uint32_t level);
+  ///**
+  // * @brief callback function on incoming parameter changes
+  // * @param config the configuration message
+  // * @param level not used here, but required for dynamic reconfigure callbacks
+  // */
+  //void callbackConfig(tuw_geometry::Linesegment2DDetectorConfig &config, uint32_t level);
   /**
    * @brief callback function for incoming laser scans
    * @param _laser laser scan message
    */
   void callbackLaser(const sensor_msgs::LaserScan &_laser);
 
-  bool is_in_doorrange(tuw_geometry_msgs::LineSegment &line_segment);
 };
 };
 

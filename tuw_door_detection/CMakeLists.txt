@@ -18,6 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
 
+find_package(Eigen3 REQUIRED)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -122,6 +123,7 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   ${PYTHON_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIR} 
 )
 
 ## Declare a C++ library
@@ -136,7 +138,7 @@ include_directories(
 
 ## Declare a C++ executable
 # add_executable(tuw_linedetection_node src/tuw_linedetection_node.cpp)
-add_executable(door2d_detector_node src/door2d_detector_node.cpp)
+add_executable(door2d_detector_node src/door2d_detector_node.cpp src/door_line_detector.cpp src/door_depth_detector.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
