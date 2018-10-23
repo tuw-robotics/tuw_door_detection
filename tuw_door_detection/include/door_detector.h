@@ -35,12 +35,15 @@ protected:
 	ros::Publisher pubObjectDetections_;
 	ros::NodeHandle &nh_;
 	tf::TransformListener listenerTF_;
-	std_msgs::Header last_header_;
+	std::unique_ptr<std_msgs::Header> last_header_;
 	
 	Eigen::Matrix<double,4,4> tf2EigenMat(const tf::Transform &_tf);
 	
 	virtual bool getTF(const std::string &world_frame, const std::string &source_frame, tf::StampedTransform &_pose, bool debug=false);
+	
+	Eigen::Vector2d range2Eigen(const sensor_msgs::LaserScan &_scan, int idx);
 };
+
 
 }
 

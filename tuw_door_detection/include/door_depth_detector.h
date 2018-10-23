@@ -17,6 +17,7 @@ public:
 		std::string world_frame;
 		std::string source_frame;
 		std::string publisher_topic;
+		std::string internal_mode;
 	};
 	
 	std::unique_ptr<ParametersNode> params_;
@@ -29,10 +30,12 @@ protected:
 
 private:
 	
-	float thresh_{0.2};
+	float thresh_{0.3};
 	ros::Publisher pubObjectDetections_;
 
 	std::unique_ptr<ParametersNode> &params() { return params_; }
+	bool structureMode(const sensor_msgs::LaserScan &_laser, std::vector<Eigen::Vector2d> &_detections);
+	bool kernelMode(const sensor_msgs::LaserScan &_laser, std::vector<Eigen::Vector2d> &_detections);
 };
 }
 

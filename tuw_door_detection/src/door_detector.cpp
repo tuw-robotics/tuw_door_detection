@@ -3,7 +3,7 @@
 
 using namespace tuw;
 
-DoorDetector::DoorDetector(ros::NodeHandle &_nh) : nh_(_nh)
+DoorDetector::DoorDetector(ros::NodeHandle &_nh) : nh_(_nh), last_header_(nullptr)
 {
 }
 
@@ -15,16 +15,31 @@ void DoorDetector::init(const std::string &pub_topic)
 	pubObjectDetections_ = nh_.advertise<tuw_object_msgs::ObjectDetection>(pub_topic, 1, true);
 }
 
+Eigen::Vector2d DoorDetector::range2Eigen(const sensor_msgs::LaserScan &_scan, int idx)
+{
+	assert(_scan.ranges.size() > idx);
+	
+	Eigen::Vector2d v(0,0);
+	double angle = _scan.angle_min + ( _scan.angle_increment * idx);
+	double range = _scan.ranges[idx];
+	
+	v[0] = cos ( angle ) * range;
+	v[1] = sin ( angle ) * range;
+	
+	return std::move(v);
+}
+
 void DoorDetector::publish()
 {
-	if (!objects_.size())
+	if (!objects_.size() || last_header_ == nullptr)
 	{
 		return;
 	}
 	
 	tuw_object_msgs::ObjectDetection obj_detections;
 	//obj_detections.header = _scan.header;
-	obj_detections.header = last_header_;
+	obj_detections.header = *last_header_;
+	obj_detections.type = tuw_object_msgs::ObjectDetection::OBJECT_TYPE_TRAFFIC_CONE;
 	obj_detections.objects.resize(objects_.size());
 
 	std::size_t obj_count = 0;
@@ -65,7 +80,7 @@ bool DoorDetector::getTF(const std::string &world_frame, const std::string &sour
   try
   {
     listenerTF_.lookupTransform(
-        target_frame_id, source_frame_id, ros::Time(0), _pose);
+        source_frame_id, target_frame_id, ros::Time(0), _pose);
   }
   catch (tf::TransformException ex)
   {
