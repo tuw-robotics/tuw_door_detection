@@ -31,6 +31,7 @@ protected:
 private:
 	
 	float thresh_{0.3};
+	std::size_t KERNEL_SIZE={16};
 	ros::Publisher pubObjectDetections_;
 
 	std::unique_ptr<ParametersNode> &params() { return params_; }

@@ -22,9 +22,63 @@ DoorDepthDetector::~DoorDepthDetector()
 {
 }
 
+//Border mode only same supported
 bool DoorDepthDetector::kernelMode(const sensor_msgs::LaserScan &_scan, std::vector<Eigen::Vector2d> &_detections)
 {
+	assert (KERNEL_SIZE % 2 == 0);
 	
+	std::vector<float> ranges = std::vector<float>(_scan.ranges);
+	
+	std::vector<float> kernel(KERNEL_SIZE);
+	size_t half_size = static_cast<std::size_t>(KERNEL_SIZE / 2.0);
+	
+	//TODO: preallocate
+	//Same border mode
+	for (int i=0; i < KERNEL_SIZE; ++i)
+	{
+		if (i < half_size)
+		{
+			kernel[i] = 0.0f;
+			//slow
+			ranges.insert(ranges.begin(), ranges[0]);
+		}
+		else 
+		{
+			kernel[i] = 1.0f;
+			ranges.insert(ranges.begin(), ranges.back());
+		}
+	}
+	size_t N = ranges.size() - half_size;
+	std::vector<float> responses;
+	
+	for (int i=half_size; i < N; ++i)
+	{
+		float length = ranges[i];
+
+    if ( ( length < _scan.range_max ) && isfinite ( length ) ) 
+		{
+	     float sum = 0.0;
+	     size_t total_inner_loop = KERNEL_SIZE;
+	     for (int j = 0; j < KERNEL_SIZE; ++j)
+	     {
+		     float curr_range = ranges[(i - half_size) + j];
+		     //HOW TO DEAL WITH THIS APPROPRIATELY
+		     if (!isfinite(curr_range))
+		     {
+			     total_inner_loop--;
+			     continue;
+		     }               
+		     sum += (kernel[j] * curr_range);
+	     }
+	     sum /= static_cast<float>(total_inner_loop);
+	     responses.push_back(sum);
+		}
+	}
+	
+	std::cout << "(" << std::endl;
+	for (const auto val : responses)
+		std::cout << val << ", ";
+	std::cout << ")" << std::endl;
 }
 
 bool DoorDepthDetector::structureMode(const sensor_msgs::LaserScan &_scan, std::vector<Eigen::Vector2d> &_detections)
@@ -33,7 +87,6 @@ bool DoorDepthDetector::structureMode(const sensor_msgs::LaserScan &_scan, std::
 	//std::cout << "robot pose: (" << tf_laser2world(0,3) << ", " << tf_laser2world(1,3) << ")" << std::endl;
 	
 	size_t N = _scan.ranges.size();
-	std::cout << "ranges size: " << N << std::endl;
 	
 	int i=0;
 	float last_range = _scan.ranges[0];
