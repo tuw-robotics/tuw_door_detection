@@ -1,6 +1,12 @@
 #include "door_depth_detector.h"
 #include <geometry_msgs/PoseWithCovariance.h>
 #include <tuw_object_msgs/ObjectWithCovariance.h>
+#include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/plot.hpp>
+#include <tuw_geometry/figure.h>
+#include <tuw_geometry/point2d.h>
 
 using namespace tuw;
 
@@ -13,13 +19,85 @@ DoorDepthDetector::ParametersNode::ParametersNode() : node("~")
 	node.param<std::string>("internal_mode", internal_mode, "kernel");
 }
 
-DoorDepthDetector::DoorDepthDetector(ros::NodeHandle &_nh) : params_(new DoorDepthDetector::ParametersNode()), DoorDetector(_nh)
+DoorDepthDetector::DoorDepthDetector(ros::NodeHandle &_nh) : params_(new DoorDepthDetector::ParametersNode()), DoorDetector(_nh), figure_local_("KernelResponses")
 {
 	init(params_->publisher_topic);
+	
+	figure_local_.init(config_.map_pix_x, config_.map_pix_y,
+                     config_.map_min_x, config_.map_max_x,
+                     config_.map_min_y, config_.map_max_y,
+                     config_.map_rotation + M_PI/2.0,
+                     config_.map_grid_x, config_.map_grid_y );
 }
 
 DoorDepthDetector::~DoorDepthDetector()
 {
+}
+
+void DoorDepthDetector::plot(const sensor_msgs::LaserScan &_scan, std::vector<float> &_responses)
+{
+  cv::Mat plotResponses;
+	cv::Mat responseMat(_responses);
+	responseMat.convertTo(responseMat, CV_64F);
+	cv::Ptr<cv::plot::Plot2d> plot = cv::plot::createPlot2d(responseMat);
+	plot->render(plotResponses);
+	cv::imshow("plot", plotResponses);
+	
+	double min_resp = std::numeric_limits<double>::max();
+	double max_resp = -std::numeric_limits<double>::max();
+	
+	std::cout << std::endl << std::endl;
+	for (const float r : _responses)
+	{
+		std::cout << r << ", ";
+		min_resp = std::min(fabs(static_cast<double>(r)), min_resp);
+		max_resp = std::max(fabs(static_cast<double>(r)), max_resp);
+	}
+	std::cout << std::endl << "min: " << min_resp << std::endl;
+	std::cout << "max: " << max_resp << std::endl;
+	
+	std::vector<float> responses(_responses);
+	for (std::vector<float>::iterator it = responses.begin();
+			 it != responses.end();
+	     ++it)
+	{
+		*it = ((fabs(*it) - min_resp) / (max_resp - min_resp));
+	}
+	
+  figure_local_.clear();
+  size_t N = _scan.ranges.size();
+  for ( size_t i = 0; i < N; i++ ) 
+  {
+      /**
+      * @ToDo Wanderer
+      * uses Figure::symbol or Figure::circle to plot the laser measurements in a for loop
+      **/
+      //figure_local_.symbol(measurement_laser_[i].end_point, Figure::red);
+	  	if (isfinite(_scan.ranges[i]) && _scan.ranges[i] < _scan.range_max)
+			{
+	  		Eigen::Vector2d point_meas;
+				point_meas = range2Eigen(_scan, i);
+				cv::Scalar color;
+				if (responses[i] > 0.2)
+				{
+					std::cout << responses[i] << ", "; 
+					color = cv::Scalar(255.0 * responses[i], 0, 0);
+				}
+				else 
+				{
+					color = cv::Scalar(0,0,0);
+				}
+   	  	figure_local_.circle(tuw::Point2D(point_meas.x(), 
+   	  	                             	    point_meas.y()), 
+   	  	                      						3.0, 
+	  	  	                 								color);
+                           								
+			}
+		
+	}
+	
+  cv::imshow ( figure_local_.title(),figure_local_.view() );
+	cv::waitKey(1);
 }
 
 //Border mode only same supported
@@ -38,14 +116,14 @@ bool DoorDepthDetector::kernelMode(const sensor_msgs::LaserScan &_scan, std::vec
 	{
 		if (i < half_size)
 		{
-			kernel[i] = 0.0f;
+			kernel[i] = -1.0f;
 			//slow
 			ranges.insert(ranges.begin(), ranges[0]);
 		}
 		else 
 		{
 			kernel[i] = 1.0f;
-			ranges.insert(ranges.begin(), ranges.back());
+			ranges.push_back(ranges.back());
 		}
 	}
 	size_t N = ranges.size() - half_size;
@@ -62,7 +140,7 @@ bool DoorDepthDetector::kernelMode(const sensor_msgs::LaserScan &_scan, std::vec
 	     for (int j = 0; j < KERNEL_SIZE; ++j)
 	     {
 		     float curr_range = ranges[(i - half_size) + j];
-		     //HOW TO DEAL WITH THIS APPROPRIATELY
+		     //HOW TO DEAL WITH THIS APPROPRIATELY?
 		     if (!isfinite(curr_range))
 		     {
 			     total_inner_loop--;
@@ -71,14 +149,16 @@ bool DoorDepthDetector::kernelMode(const sensor_msgs::LaserScan &_scan, std::vec
 		     sum += (kernel[j] * curr_range);
 	     }
 	     sum /= static_cast<float>(total_inner_loop);
+	     if (!isfinite(sum))
+	     {
+		     sum = 0;
+	     }
 	     responses.push_back(sum);
 		}
 	}
 	
-	std::cout << "(" << std::endl;
-	for (const auto val : responses)
-		std::cout << val << ", ";
-	std::cout << ")" << std::endl;
+	plot(_scan, responses);
+	
 }
 
 bool DoorDepthDetector::structureMode(const sensor_msgs::LaserScan &_scan, std::vector<Eigen::Vector2d> &_detections)

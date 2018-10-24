@@ -8,6 +8,7 @@
   <!-- Example:  -->
   <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
   <maintainer email="felix.koenig@tuwien.ac.at">Felix Koenig</maintainer>
+  <maintainer email="felix.koenig@protonmail.com">Felix Koenig</maintainer>
   <maintainer email="markus.bader@tuwien.ac.at">Markus Bader</maintainer>
 
 
@@ -27,6 +28,7 @@
   <!-- Authors do not have to be maintianers, but could be -->
   <!-- Example: -->
   <author email="felix.koenig@tuwien.ac.at">Felix König</author>
+  <author email="felix.koenig@protonmail.com">Felix Koenig</author>
 
 
   <!-- The *_depend tags are used to specify dependencies -->
@@ -42,13 +44,18 @@
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
 		<build_depend>tf</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>rospy</build_depend>
   <build_depend>tuw_geometry</build_depend>
   <build_depend>sensor_msgs</build_depend>
+  <build_depend>tuw_geometry</build_depend>
   <build_depend>tuw_geometry_msgs</build_depend>
   <build_depend>dynamic_reconfigure</build_depend>
 		<build_depend>tf_conversions</build_depend>
   
-		<run_depend>tf</run_depend>
+		<run_depend>tf</run_depend>  
+		<run_depend>roscpp</run_depend>
+  <run_depend>rospy</run_depend>
   <run_depend>tuw_geometry</run_depend>
   <run_depend>sensor_msgs</run_depend>
   <run_depend>tuw_geometry_msgs</run_depend>

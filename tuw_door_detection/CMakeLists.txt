@@ -21,6 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(Boost REQUIRED COMPONENTS system)
 
 find_package(Eigen3 REQUIRED)
+find_package(OpenCV REQUIRED)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -95,6 +96,7 @@ find_package(Eigen3 REQUIRED)
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
 generate_dynamic_reconfigure_options(
    cfg/Door2DDetector.cfg
+   cfg/DepthDetector.cfg
 #   cfg/DynReconf2.cfg
 )
 
@@ -110,7 +112,7 @@ generate_dynamic_reconfigure_options(
 catkin_package(
   INCLUDE_DIRS include
 #  LIBRARIES tuw_linedetection
-  CATKIN_DEPENDS tuw_geometry tuw_geometry_msgs tf tf_conversions
+  CATKIN_DEPENDS roscpp rospy tuw_geometry tuw_geometry_msgs tf tf_conversions
 #  DEPENDS system_lib
 )
 
@@ -153,6 +155,7 @@ add_dependencies(door2d_detector_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catk
 ## Specify libraries to link a library or executable target against
 target_link_libraries(door2d_detector_node
    ${catkin_LIBRARIES}
+   ${OpenCV_LIBRARIES}
 )
 #############
 ## Install ##
