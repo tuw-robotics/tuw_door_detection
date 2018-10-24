@@ -41,13 +41,13 @@ public:
 
 protected:
 	bool processLaser(const sensor_msgs::LaserScan &_laser) override;
-	void plot(const sensor_msgs::LaserScan &_scan, std::vector<float> &_responses);
+	void plot(const sensor_msgs::LaserScan &_scan, std::vector<double> &_responses);
 	Config config_;
 
 private:
 	Figure figure_local_;
 	float thresh_{0.3};
-	std::size_t KERNEL_SIZE = {8};
+	std::size_t KERNEL_SIZE = {16};
 	ros::Publisher pubObjectDetections_;
 
 	std::unique_ptr<ParametersNode> &params() { return params_; }

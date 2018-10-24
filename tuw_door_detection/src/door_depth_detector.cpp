@@ -34,7 +34,7 @@ DoorDepthDetector::~DoorDepthDetector()
 {
 }
 
-void DoorDepthDetector::plot(const sensor_msgs::LaserScan &_scan, std::vector<float> &_responses)
+void DoorDepthDetector::plot(const sensor_msgs::LaserScan &_scan, std::vector<double> &_responses)
 {
   cv::Mat plotResponses;
 	cv::Mat responseMat(_responses);
@@ -47,21 +47,21 @@ void DoorDepthDetector::plot(const sensor_msgs::LaserScan &_scan, std::vector<fl
 	double max_resp = -std::numeric_limits<double>::max();
 	
 	std::cout << std::endl << std::endl;
-	for (const float r : _responses)
+	for (const double r : _responses)
 	{
-		std::cout << r << ", ";
-		min_resp = std::min(fabs(static_cast<double>(r)), min_resp);
-		max_resp = std::max(fabs(static_cast<double>(r)), max_resp);
+		//std::cout << r << ", ";
+		min_resp = std::min(r, min_resp);
+		max_resp = std::max(r, max_resp);
 	}
 	std::cout << std::endl << "min: " << min_resp << std::endl;
 	std::cout << "max: " << max_resp << std::endl;
 	
-	std::vector<float> responses(_responses);
-	for (std::vector<float>::iterator it = responses.begin();
+	std::vector<double> responses(_responses);
+	for (std::vector<double>::iterator it = responses.begin();
 			 it != responses.end();
 	     ++it)
 	{
-		*it = ((fabs(*it) - min_resp) / (max_resp - min_resp));
+		*it = ((*it) - min_resp) / (max_resp - min_resp);
 	}
 	
   figure_local_.clear();
@@ -79,9 +79,11 @@ void DoorDepthDetector::plot(const sensor_msgs::LaserScan &_scan, std::vector<fl
 	  		Eigen::Vector2d point_meas;
 				point_meas = range2Eigen(_scan, i);
 				cv::Scalar color;
-				if (responses[i] > 0.2)
+				double radius = 1.0;
+				if (responses[i] > 0.7 || responses[i] < 0.2)
 				{
 					std::cout << responses[i] << ", "; 
+					radius = radius + (responses[i] * 2.0);
 					color = cv::Scalar(255.0 * responses[i], 0, 0);
 				}
 				else 
@@ -90,7 +92,7 @@ void DoorDepthDetector::plot(const sensor_msgs::LaserScan &_scan, std::vector<fl
 				}
    	  	figure_local_.circle(tuw::Point2D(point_meas.x(), 
    	  	                             	    point_meas.y()), 
-   	  	                      						3.0, 
+   	  	                      						radius, 
 	  	  	                 								color);
                            								
 			}
@@ -106,9 +108,11 @@ bool DoorDepthDetector::kernelMode(const sensor_msgs::LaserScan &_scan, std::vec
 {
 	assert (KERNEL_SIZE % 2 == 0);
 	
-	std::vector<float> ranges = std::vector<float>(_scan.ranges);
+	std::vector<double> ranges;
+	ranges.resize(_scan.ranges.size());
+	std::copy(_scan.ranges.begin(), _scan.ranges.end(), ranges.begin());
 	
-	std::vector<float> kernel(KERNEL_SIZE);
+	std::vector<double> kernel(KERNEL_SIZE);
 	size_t half_size = static_cast<std::size_t>(KERNEL_SIZE / 2.0);
 	
 	//TODO: preallocate
@@ -128,17 +132,17 @@ bool DoorDepthDetector::kernelMode(const sensor_msgs::LaserScan &_scan, std::vec
 		}
 	}
 	size_t N = ranges.size() - half_size;
-	std::vector<float> responses;
+	std::vector<double> responses;
 	
 	for (size_t i=half_size; i < N; ++i)
 	{
-		float length = ranges[i];
+		double length = ranges[i];
 
-	  float sum = 0.0;
+	  double sum = 0.0;
 	  size_t total_inner_loop = KERNEL_SIZE;
 	  for (int j = 0; j < KERNEL_SIZE; ++j)
 	  {
-		  float curr_range = ranges[(i - half_size) + j];
+		  double curr_range = ranges[(i - half_size) + j];
 		  //HOW TO DEAL WITH THIS APPROPRIATELY?
 		  if (!isfinite(curr_range) || length >= _scan.range_max)
 		  {
@@ -147,7 +151,7 @@ bool DoorDepthDetector::kernelMode(const sensor_msgs::LaserScan &_scan, std::vec
 		  }               
 		  sum += (kernel[j] * curr_range);
 	  }
-	  sum /= static_cast<float>(total_inner_loop);
+	  sum /= static_cast<double>(total_inner_loop);
 	  if (!isfinite(sum))
 	  {
 		  sum = 0;
@@ -167,7 +171,7 @@ bool DoorDepthDetector::structureMode(const sensor_msgs::LaserScan &_scan, std::
 	size_t N = _scan.ranges.size();
 	
 	int i=0;
-	float last_range = _scan.ranges[0];
+	double last_range = _scan.ranges[0];
 	int last_range_idx = 0;
 	while(!isfinite(last_range) && i < N)
 	{
