@@ -66,6 +66,7 @@ void DoorDepthDetector::plot(const sensor_msgs::LaserScan &_scan, std::vector<fl
 	
   figure_local_.clear();
   size_t N = _scan.ranges.size();
+	std::cout << std::endl;
   for ( size_t i = 0; i < N; i++ ) 
   {
       /**
@@ -112,7 +113,7 @@ bool DoorDepthDetector::kernelMode(const sensor_msgs::LaserScan &_scan, std::vec
 	
 	//TODO: preallocate
 	//Same border mode
-	for (int i=0; i < KERNEL_SIZE; ++i)
+	for (size_t i=0; i < KERNEL_SIZE; ++i)
 	{
 		if (i < half_size)
 		{
@@ -129,32 +130,29 @@ bool DoorDepthDetector::kernelMode(const sensor_msgs::LaserScan &_scan, std::vec
 	size_t N = ranges.size() - half_size;
 	std::vector<float> responses;
 	
-	for (int i=half_size; i < N; ++i)
+	for (size_t i=half_size; i < N; ++i)
 	{
 		float length = ranges[i];
 
-    if ( ( length < _scan.range_max ) && isfinite ( length ) ) 
-		{
-	     float sum = 0.0;
-	     size_t total_inner_loop = KERNEL_SIZE;
-	     for (int j = 0; j < KERNEL_SIZE; ++j)
-	     {
-		     float curr_range = ranges[(i - half_size) + j];
-		     //HOW TO DEAL WITH THIS APPROPRIATELY?
-		     if (!isfinite(curr_range))
-		     {
-			     total_inner_loop--;
-			     continue;
-		     }               
-		     sum += (kernel[j] * curr_range);
-	     }
-	     sum /= static_cast<float>(total_inner_loop);
-	     if (!isfinite(sum))
-	     {
-		     sum = 0;
-	     }
-	     responses.push_back(sum);
-		}
+	  float sum = 0.0;
+	  size_t total_inner_loop = KERNEL_SIZE;
+	  for (int j = 0; j < KERNEL_SIZE; ++j)
+	  {
+		  float curr_range = ranges[(i - half_size) + j];
+		  //HOW TO DEAL WITH THIS APPROPRIATELY?
+		  if (!isfinite(curr_range) || length >= _scan.range_max)
+		  {
+			  total_inner_loop--;
+			  continue;
+		  }               
+		  sum += (kernel[j] * curr_range);
+	  }
+	  sum /= static_cast<float>(total_inner_loop);
+	  if (!isfinite(sum))
+	  {
+		  sum = 0;
+	  }
+	  responses.push_back(sum);
 	}
 	
 	plot(_scan, responses);
