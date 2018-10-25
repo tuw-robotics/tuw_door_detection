@@ -16,7 +16,8 @@
     <param name="mode" value="depth"/>
     <param name="publisher_topic" value="$(arg publisher_topic)" />
     <param name="source_frame" value="$(arg source_frame)"/>
-				<param name="world_frame" value="$(arg world_frame)"/>
-				<param name="debug" value="true"/>
+		<param name="world_frame" value="$(arg world_frame)"/>
+		<param name="debug" value="true"/>
+    <param name="internal_mode" value="kernel"/>
   </node>
 </launch>

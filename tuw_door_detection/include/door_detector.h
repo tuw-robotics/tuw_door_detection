@@ -42,6 +42,7 @@ protected:
 	virtual bool getTF(const std::string &world_frame, const std::string &source_frame, tf::StampedTransform &_pose, bool debug=false);
 	
 	Eigen::Vector2d range2Eigen(const sensor_msgs::LaserScan &_scan, int idx);
+	Eigen::Vector2d range2Eigen(const double range, const double angle);
 };
 
 

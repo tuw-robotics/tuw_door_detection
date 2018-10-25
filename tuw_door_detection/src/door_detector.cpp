@@ -15,6 +15,16 @@ void DoorDetector::init(const std::string &pub_topic)
 	pubObjectDetections_ = nh_.advertise<tuw_object_msgs::ObjectDetection>(pub_topic, 1, true);
 }
 
+Eigen::Vector2d DoorDetector::range2Eigen(const double range, const double angle)
+{
+	
+	Eigen::Vector2d v(0,0);
+	v[0] = cos(angle) * range;
+	v[1] = cos(angle) * range;
+	
+	return std::move(v);
+}
+
 Eigen::Vector2d DoorDetector::range2Eigen(const sensor_msgs::LaserScan &_scan, int idx)
 {
 	assert(_scan.ranges.size() > idx);

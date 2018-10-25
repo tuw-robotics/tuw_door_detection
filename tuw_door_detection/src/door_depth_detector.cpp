@@ -22,32 +22,72 @@ DoorDepthDetector::ParametersNode::ParametersNode() : node("~")
 DoorDepthDetector::DoorDepthDetector(ros::NodeHandle &_nh) : params_(new DoorDepthDetector::ParametersNode()), DoorDetector(_nh), figure_local_("KernelResponses")
 {
 	init(params_->publisher_topic);
+	config_.reset(new Config());
 	
-	figure_local_.init(config_.map_pix_x, config_.map_pix_y,
-                     config_.map_min_x, config_.map_max_x,
-                     config_.map_min_y, config_.map_max_y,
-                     config_.map_rotation + M_PI/2.0,
-                     config_.map_grid_x, config_.map_grid_y );
+	figure_local_.init(config_->map_pix_x, config_->map_pix_y,
+                     config_->map_min_x, config_->map_max_x,
+                     config_->map_min_y, config_->map_max_y,
+                     config_->map_rotation + M_PI/2.0,
+                     config_->map_grid_x, config_->map_grid_y );
 }
 
 DoorDepthDetector::~DoorDepthDetector()
 {
 }
 
-void DoorDepthDetector::plot(const sensor_msgs::LaserScan &_scan, std::vector<double> &_responses)
+//void DoorDepthDetector::callbackConfig(tuw_door_detection::DepthDetectorConfig &_config, uint32_t level)
+//{
+//	config_.reset(new tuw_door_detection::DepthDetectorConfig(_config));
+//}
+
+void DoorDepthDetector::plot(const std::vector<DoorDetection> &_detections)
+{
+	figure_local_.clear();
+	
+	for (const auto d : _detections)
+	{
+		double radius = 1.0;
+		cv::Scalar color;
+		if (d.validDetection() == true)
+		{
+			radius = 1.0 + (d.responseNormalized() * 2.0);
+      color = cv::Scalar(255.0 * d.responseNormalized(), 0, 0);
+		}
+		else
+		{
+			color = cv::Scalar(0,0,0);
+		}
+		std::cout << d << std::endl;
+    figure_local_.circle(d[0].end_point, 
+                                      radius, 
+                                      color,
+		                     							1.0);
+	}
+	
+  cv::imshow ( figure_local_.title(), figure_local_.view() );
+	cv::waitKey(1);
+}
+
+void DoorDepthDetector::plot(const std::vector<double> &_responses)
 {
   cv::Mat plotResponses;
-	cv::Mat responseMat(_responses);
+	std::vector<double> resp_copy(_responses);
+	cv::Mat responseMat(resp_copy);
 	responseMat.convertTo(responseMat, CV_64F);
 	cv::Ptr<cv::plot::Plot2d> plot = cv::plot::createPlot2d(responseMat);
 	plot->render(plotResponses);
 	cv::imshow("plot", plotResponses);
-	
-	double min_resp = std::numeric_limits<double>::max();
-	double max_resp = -std::numeric_limits<double>::max();
+}
+
+template <typename T>
+std::vector<T> DoorDepthDetector::normalize(std::vector<T> &_v)
+{
+	std::vector<T> c(_v);
+  T min_resp = std::numeric_limits<T>::max();
+	T max_resp = -std::numeric_limits<T>::max();
 	
 	std::cout << std::endl << std::endl;
-	for (const double r : _responses)
+	for (const T r : c)
 	{
 		//std::cout << r << ", ";
 		min_resp = std::min(r, min_resp);
@@ -56,55 +96,17 @@ void DoorDepthDetector::plot(const sensor_msgs::LaserScan &_scan, std::vector<do
 	std::cout << std::endl << "min: " << min_resp << std::endl;
 	std::cout << "max: " << max_resp << std::endl;
 	
-	std::vector<double> responses(_responses);
-	for (std::vector<double>::iterator it = responses.begin();
-			 it != responses.end();
-	     ++it)
+	auto it = c.begin();
+	for (; it != c.end(); ++it)
 	{
 		*it = ((*it) - min_resp) / (max_resp - min_resp);
 	}
 	
-  figure_local_.clear();
-  size_t N = _scan.ranges.size();
-	std::cout << std::endl;
-  for ( size_t i = 0; i < N; i++ ) 
-  {
-      /**
-      * @ToDo Wanderer
-      * uses Figure::symbol or Figure::circle to plot the laser measurements in a for loop
-      **/
-      //figure_local_.symbol(measurement_laser_[i].end_point, Figure::red);
-	  	if (isfinite(_scan.ranges[i]) && _scan.ranges[i] < _scan.range_max)
-			{
-	  		Eigen::Vector2d point_meas;
-				point_meas = range2Eigen(_scan, i);
-				cv::Scalar color;
-				double radius = 1.0;
-				if (responses[i] > 0.7 || responses[i] < 0.2)
-				{
-					std::cout << responses[i] << ", "; 
-					radius = radius + (responses[i] * 2.0);
-					color = cv::Scalar(255.0 * responses[i], 0, 0);
-				}
-				else 
-				{
-					color = cv::Scalar(0,0,0);
-				}
-   	  	figure_local_.circle(tuw::Point2D(point_meas.x(), 
-   	  	                             	    point_meas.y()), 
-   	  	                      						radius, 
-	  	  	                 								color);
-                           								
-			}
-		
-	}
-	
-  cv::imshow ( figure_local_.title(),figure_local_.view() );
-	cv::waitKey(1);
+	return std::move(c);
 }
 
 //Border mode only same supported
-bool DoorDepthDetector::kernelMode(const sensor_msgs::LaserScan &_scan, std::vector<Eigen::Vector2d> &_detections)
+bool DoorDepthDetector::kernelMode(const sensor_msgs::LaserScan &_scan, std::vector<DoorDetection> &_detections)
 {
 	assert (KERNEL_SIZE % 2 == 0);
 	
@@ -159,11 +161,39 @@ bool DoorDepthDetector::kernelMode(const sensor_msgs::LaserScan &_scan, std::vec
 	  responses.push_back(sum);
 	}
 	
-	plot(_scan, responses);
+	plot(responses);
+	std::vector<double> responses_normalized = normalize(responses);
 	
+	_detections.clear();
+	N = _scan.ranges.size();
+	for (int i=0; i < N; ++i)
+	{
+      if (isfinite(_scan.ranges[i]) && _scan.ranges[i] < _scan.range_max)
+			{
+				Eigen::Vector2d point_meas = range2Eigen(_scan, i);
+				DoorDetection d;
+				d.resize(1);
+				d[0].end_point = Point2D(point_meas.x(), point_meas.y());
+				d[0].length = _scan.ranges[i];
+				d.response() = responses[i];
+				d.responseNormalized() = responses_normalized[i];
+				d.validDetection() = false;
+				if (d.responseNormalized() > 0.7 || d.responseNormalized() < 0.2)
+				{
+					d.validDetection() = true;
+					if (d.responseNormalized() < 0.2) 
+					{
+						d.responseNormalized() = 1.0 - d.responseNormalized();
+					}
+				}
+				_detections.push_back(d);
+			}
+	}
+	
+	plot(_detections);
 }
 
-bool DoorDepthDetector::structureMode(const sensor_msgs::LaserScan &_scan, std::vector<Eigen::Vector2d> &_detections)
+bool DoorDepthDetector::structureMode(const sensor_msgs::LaserScan &_scan, std::vector<DoorDetection> &_detections)
 {
 	//Eigen::Matrix<double,4,4> tf_laser2world = tf2EigenMat(tf_laser); 
 	//std::cout << "robot pose: (" << tf_laser2world(0,3) << ", " << tf_laser2world(1,3) << ")" << std::endl;
@@ -222,13 +252,20 @@ bool DoorDepthDetector::structureMode(const sensor_msgs::LaserScan &_scan, std::
 	{
 			if (idx_set.count(c.first) == 0)
 			{
-				_detections.push_back(candidates[i].first);
+				DoorDetection d;
+				d.resize(1);
+				d[0].end_point = Point2D(candidates[i].first.x(), candidates[i].first.y());
+				d.validDetection() = true;
+				_detections.push_back(d);
 				idx_set.insert(c.first);
 			}
 			
 			if (idx_set.count(c.second) == 0)
 			{
-				_detections.push_back(candidates[i].second);
+				DoorDetection d;
+				d[0].end_point = Point2D(candidates[i].second.x(), candidates[i].second.y());
+				d.validDetection() = true;
+				_detections.push_back(d);
 				idx_set.insert(c.second);
 			}
 			i++;
@@ -247,10 +284,12 @@ bool DoorDepthDetector::processLaser(const sensor_msgs::LaserScan &_scan)
 		return false;
 	}
 	
-	std::vector<Eigen::Vector2d> detections;
+	std::vector<DoorDetection> detections;
 	if (params()->internal_mode == "structure")
 	{
+		std::cout << "structureMode " << std::endl;
 		structureMode(_scan, detections);
+		std::cout << "structureMode " << std::endl;
 	}
 	else 
 	{
@@ -258,12 +297,19 @@ bool DoorDepthDetector::processLaser(const sensor_msgs::LaserScan &_scan)
 	}
 	
 	//t = tf_laser2world * t;
-	for (Eigen::Vector2d &v : detections)
+	for (DoorDetection &d : detections)
 	{	
+			if (!d.validDetection())
+			{
+				//TODO: cleanup
+				continue;
+			}
 			Eigen::Quaterniond q(1,0,0,0);
 			tuw_object_msgs::ObjectWithCovariance out_obj;
-			out_obj.object.pose.position.x = v[0];				
-			out_obj.object.pose.position.y = v[1];				
+			const auto point = d[0].end_point;
+			
+			out_obj.object.pose.position.x = point.x();				
+			out_obj.object.pose.position.y = point.y();				
 			out_obj.object.pose.position.z = 0;//v[2];				
 			
 			out_obj.object.pose.orientation.x = q.x();
