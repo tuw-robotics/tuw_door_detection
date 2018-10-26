@@ -14,49 +14,51 @@
 
 namespace tuw {
 
-class DoorLineDetector : public LineSegment2DDetector, public DoorDetector
-{
-public:
-	DoorLineDetector(ros::NodeHandle &_nh);
-	virtual ~DoorLineDetector();
+    class DoorLineDetector : public LineSegment2DDetector, public DoorDetector {
+    public:
+        DoorLineDetector(ros::NodeHandle &_nh);
 
-protected:
-  /**
-   * @brief callback function for incoming laser scans
-   * @param _laser laser scan message
-   */
-  bool processLaser(const sensor_msgs::LaserScan &_laser) override;
+        virtual ~DoorLineDetector();
 
-private:
-  enum FilterMode { FILTER_DOORS, FILTER_NON_DOORS };
-  MeasurementLaserPtr measurement_laser_;                /// laser measurements
-  std::vector<Point2D> measurement_local_scanpoints_;    /// laser beam endpoints for line detection
-  std::vector<LineSegment> measurement_linesegments_;  /// detected line segments in sensor coordinates
-	ros::Publisher line_pub_;
-  ros::Publisher door_pub_;
-  ros::Publisher laser_pub_;
-  bool display_window_;
-  bool modify_laser_scan_;
-	FilterMode doors_filter_mode_;
-  std::pair<double,double> door_range;
+    protected:
+        /**
+         * @brief callback function for incoming laser scans
+         * @param _laser laser scan message
+         */
+        bool processLaser(const sensor_msgs::LaserScan &_laser) override;
 
-  /// parameter server for dynamic detector configuration
-  dynamic_reconfigure::Server<tuw_geometry::Linesegment2DDetectorConfig> reconfigure_server_;
+    private:
+        enum FilterMode {
+            FILTER_DOORS, FILTER_NON_DOORS
+        };
+        MeasurementLaserPtr measurement_laser_;                /// laser measurements
+        std::vector<Point2D> measurement_local_scanpoints_;    /// laser beam endpoints for line detection
+        std::vector<LineSegment> measurement_linesegments_;  /// detected line segments in sensor coordinates
+        ros::Publisher line_pub_;
+        ros::Publisher door_pub_;
+        ros::Publisher laser_pub_;
+        bool display_window_;
+        bool modify_laser_scan_;
+        FilterMode doors_filter_mode_;
+        std::pair<double, double> door_range;
 
-  /// parameter server callback
-  dynamic_reconfigure::Server<tuw_geometry::Linesegment2DDetectorConfig>::CallbackType reconfigure_fnc_;
+        /// parameter server for dynamic detector configuration
+        dynamic_reconfigure::Server<tuw_geometry::Linesegment2DDetectorConfig> reconfigure_server_;
 
-	/**
-   * @brief callback function on incoming parameter changes
-   * @param config the configuration message
-   * @param level not used here, but required for dynamic reconfigure callbacks
-   */
-  void callbackConfig(tuw_geometry::Linesegment2DDetectorConfig &config, uint32_t level);
+        /// parameter server callback
+        dynamic_reconfigure::Server<tuw_geometry::Linesegment2DDetectorConfig>::CallbackType reconfigure_fnc_;
+
+        /**
+       * @brief callback function on incoming parameter changes
+       * @param config the configuration message
+       * @param level not used here, but required for dynamic reconfigure callbacks
+       */
+        void callbackConfig(tuw_geometry::Linesegment2DDetectorConfig &config, uint32_t level);
 
 
-  bool is_in_doorrange(tuw_geometry_msgs::LineSegment &line_segment);
+        bool is_in_doorrange(tuw_geometry_msgs::LineSegment &line_segment);
 
-};
+    };
 
 }
 

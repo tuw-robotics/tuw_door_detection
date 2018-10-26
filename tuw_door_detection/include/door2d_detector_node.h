@@ -46,51 +46,52 @@
 #include <tuw_linedetection/Linesegment2DDetectorConfig.h>
 #include <unordered_map>
 
-namespace tuw
-{
+namespace tuw {
 /**
  * @brief ROS wrapper node for LineSegment2DDetector
  * @class Door2DDetectorNode
  */
-class Door2DDetectorNode 
-{
-public:
-	struct ParametersNode
-	{			
-		ParametersNode();
-  	enum FilterMode { LINES, DEPTH };
-		std::unordered_map<std::string, FilterMode> enumResolver{
-																															{"lines", FilterMode::LINES},
-																															{"depth", FilterMode::DEPTH},
-																															{"LINES", FilterMode::LINES},
-																															{"DEPTH", FilterMode::DEPTH}
-																														};
-		FilterMode mode;
-		ros::NodeHandle node;
-	};
+    class Door2DDetectorNode {
+    public:
+        struct ParametersNode {
+            ParametersNode();
 
-  Door2DDetectorNode();
-  ~Door2DDetectorNode();
+            enum FilterMode {
+                LINES, DEPTH
+            };
+            std::unordered_map<std::string, FilterMode> enumResolver{
+                    {"lines", FilterMode::LINES},
+                    {"depth", FilterMode::DEPTH},
+                    {"LINES", FilterMode::LINES},
+                    {"DEPTH", FilterMode::DEPTH}
+            };
+            FilterMode mode;
+            ros::NodeHandle node;
+        };
 
-  void publish();
-  
-private:
+        Door2DDetectorNode();
 
-  ros::NodeHandle nh_;
-	ParametersNode params_;
-	ros::Subscriber sub_laser_;
-	std::unique_ptr<DoorDetector> door_detector_;
-  MeasurementLaserPtr measurement_laser_;                /// laser measurements
-  bool display_window_;
-  bool modify_laser_scan_;
+        ~Door2DDetectorNode();
 
-  /**
-   * @brief callback function for incoming laser scans
-   * @param _laser laser scan message
-   */
-  void callbackLaser(const sensor_msgs::LaserScan &_laser);
+        void publish();
 
-};
+    private:
+
+        ros::NodeHandle nh_;
+        ParametersNode params_;
+        ros::Subscriber sub_laser_;
+        std::unique_ptr<DoorDetector> door_detector_;
+        MeasurementLaserPtr measurement_laser_;                /// laser measurements
+        bool display_window_;
+        bool modify_laser_scan_;
+
+        /**
+         * @brief callback function for incoming laser scans
+         * @param _laser laser scan message
+         */
+        void callbackLaser(const sensor_msgs::LaserScan &_laser);
+
+    };
 };
 
 #endif  // LINESEGMENT2D_DETECTOR_NODE_H
