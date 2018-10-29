@@ -146,7 +146,7 @@ add_executable(door2d_detector_node src/door2d_detector_node.cpp
 																		src/door_detector.cpp
 																		src/door_line_detector.cpp 
 																		src/door_depth_detector.cpp
-																		src/door_detection.cpp)
+																		src/door_detection.cpp src/contour.cpp include/contour.h)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above

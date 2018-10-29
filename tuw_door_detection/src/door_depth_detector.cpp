@@ -7,6 +7,7 @@
 #include <opencv2/plot.hpp>
 #include <tuw_geometry/figure.h>
 #include <tuw_geometry/point2d.h>
+#include <contour.h>
 
 using namespace tuw;
 
@@ -95,7 +96,8 @@ std::vector<T> DoorDepthDetector::normalize(std::vector<T> &_v) {
   return std::move(c);
 }
 
-bool DoorDepthDetector::contourMode(const sensor_msgs::LaserScan &_laser) {
+bool DoorDepthDetector::contourMode(const sensor_msgs::LaserScan &_scan) {
+  printf("contour mode\n");
   WorldScopedMaps map;
   map.init(config_->map_pix_x, config_->map_pix_y,
            config_->map_min_x, config_->map_max_x,
@@ -103,20 +105,67 @@ bool DoorDepthDetector::contourMode(const sensor_msgs::LaserScan &_laser) {
            config_->map_rotation + M_PI / 2.0);
 
   cv::Mat img = cv::Mat::zeros(map.height(), map.width(), CV_8U);
-  const size_t N = _laser.ranges.size();
+  const size_t N = _scan.ranges.size();
+  size_t contour_cnt = 1;
 
-  for (size_t i = 0; i < (N - 1); i++) {
-    Eigen::Vector2d v = range2Eigen(_laser, i);
-    Eigen::Vector2d vnext = range2Eigen(_laser, i + 1);
-    Point2D pt = Point2D(v[0], v[1]);
-    Point2D ptnext = Point2D(vnext[0], vnext[1]);
+  size_t i = 0;
+  double last_range = _scan.ranges[0];
+  size_t last_range_idx = 0;
+  size_t last_angle = _scan.angle_min;
+  while (!isfinite(last_range) && i < N) {
+    i++;
+    last_range = _scan.ranges[i];
+    last_angle = _scan.angle_min + (_scan.angle_increment * i);
+    last_range_idx = i;
+  }
+  const std::vector<int> jet_sampler = {16, 64, 128, 230, 200, 150};
+  std::vector<std::shared_ptr<Contour>> contours;
+  contours.push_back(std::make_shared<Contour>());
 
-    if (pt.distanceTo(ptnext) < 0.25) {
-      map.line(img, pt, ptnext, cv::Scalar(255));
+  for (size_t i = last_range_idx; i < N; i++) {
+
+    if (std::isfinite(_scan.ranges[i]) && _scan.ranges[i] < _scan.range_max) {
+
+      Eigen::Vector2d v = range2Eigen(_scan, last_range_idx);
+      Eigen::Vector2d vnext = range2Eigen(_scan, i);
+      Point2D pt = Point2D(v[0], v[1]);
+      Point2D ptnext = Point2D(vnext[0], vnext[1]);
+      const double angle = _scan.angle_min + (_scan.angle_increment * i);
+
+      if (abs(_scan.ranges[i] - last_range) < 0.25) {
+        //const int color_idx = jet_sampler[contour_cnt % jet_sampler.size()];
+        contours.back()->push_back(Contour::Beam::make_beam(_scan.ranges[i], angle, ptnext));
+      } else {
+        contour_cnt += 1;
+        const auto beam = Contour::Beam::make_beam(_scan.ranges[i], angle, ptnext);
+        contours.push_back(std::make_shared<Contour>());
+        contours.back()->push_back(beam);
+      }
+
+      last_range = _scan.ranges[i];
+      last_angle = angle;
+      last_range_idx = i;
+
     }
+
   }
 
-  cv::imshow("lines_as_img", img);
+  contour_cnt = 0;
+  for (const auto &elem : contours) {
+    contour_cnt += 1;
+    auto color = cv::Scalar(jet_sampler[contour_cnt % jet_sampler.size()]);
+
+    if (elem->length() > 0.6 && elem->length() < 1.2) {
+      color = cv::Scalar(255);
+    }
+
+    elem->render(map, img, color);
+
+  }
+
+  cv::Mat procImage;
+  cv::applyColorMap(img, procImage, cv::COLORMAP_JET);
+  cv::imshow("lines_as_img", procImage);
   cv::waitKey(1);
 }
 
