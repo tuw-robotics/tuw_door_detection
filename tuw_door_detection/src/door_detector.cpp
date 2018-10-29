@@ -61,9 +61,9 @@ Eigen::Matrix<double, 4, 4> DoorDetector::tf2EigenMat(const tf::Transform &tf) {
     const auto r = tf.getBasis();
     const auto t = tf.getOrigin();
     m << r[0][0], r[0][1], r[0][2], t[0],
-            r[1][0], r[1][1], r[1][2], t[1],
-            r[2][0], r[1][1], r[2][2], t[2],
-            0, 0, 1;
+         r[1][0], r[1][1], r[1][2], t[1],
+         r[2][0], r[1][1], r[2][2], t[2],
+         0, 0, 1;
     return m;
 }
 

@@ -92,6 +92,8 @@ namespace tuw {
         bool structureMode(const sensor_msgs::LaserScan &_laser, std::vector<DoorDetectionPtr> &_detections);
 
         bool kernelMode(const sensor_msgs::LaserScan &_laser, std::vector<DoorDetectionPtr> &_detections);
+
+        bool contourMode(const sensor_msgs::LaserScan &_laser);
     };
 }
 
