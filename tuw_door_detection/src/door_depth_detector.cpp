@@ -43,14 +43,17 @@ DoorDepthDetector::~DoorDepthDetector() {
 void DoorDepthDetector::plot(const std::vector<DoorDetectionPtr> &_detections) {
   figure_local_.clear();
 
-  for (const auto d : _detections) {
-    double radius = 1.0;
-    cv::Scalar color;
-    if (d->validDetection()) {
-      radius = 1.0 + (d->responseNormalized() * 2.0);
-      color = cv::Scalar(255.0 * d->responseNormalized(), 0, 0);
-    } else {
-      color = cv::Scalar(0, 0, 0);
+    for (const auto d : _detections) {
+        double radius = 1.0;
+        cv::Scalar color;
+        if (d->validDetection()) {
+            radius = 1.0 + (d->responseNormalized() * 2.0);
+            color = cv::Scalar(255.0 * d->responseNormalized(), 0, 0);
+        } else {
+            color = cv::Scalar(0, 0, 0);
+        }
+        std::cout << *d << std::endl;
+        figure_local_.circle(d->operator[](0).end_point, radius, color, 1.0);
     }
     std::cout << *d << std::endl;
     figure_local_.circle(d->operator[](0).end_point,
@@ -219,22 +222,32 @@ bool DoorDepthDetector::kernelMode(const sensor_msgs::LaserScan &_scan, std::vec
   plot(responses);
   std::vector<double> responses_normalized = normalize(responses);
 
-  _detections.clear();
-  N = _scan.ranges.size();
-  for (int i = 0; i < N; ++i) {
-    if (std::isfinite(_scan.ranges[i]) && _scan.ranges[i] < _scan.range_max) {
-      Eigen::Vector2d point_meas = range2Eigen(_scan, i);
-      auto d = std::make_shared<DoorDetection>();
-      d->resize(1);
-      d->operator[](0).end_point = Point2D(point_meas.x(), point_meas.y());
-      d->operator[](0).length = _scan.ranges[i];
-      d->response() = responses[i];
-      d->responseNormalized() = responses_normalized[i];
-      d->validDetection() = false;
-      if (d->responseNormalized() > 0.7 || d->responseNormalized() < 0.2) {
-        d->validDetection() = true;
-        if (d->responseNormalized() < 0.2) {
-          d->responseNormalized() = 1.0 - d->responseNormalized();
+    _detections.clear();
+    N = _scan.ranges.size();
+    for (int i = 0; i < N; ++i) {
+        if (std::isfinite(_scan.ranges[i]) && _scan.ranges[i] < _scan.range_max) {
+            Eigen::Vector2d point_meas = range2Eigen(_scan, i);
+            auto d = std::make_shared<DoorDetection>();
+            d->resize(_scan.ranges.size());
+            d->operator[](0).end_point = Point2D(point_meas.x(), point_meas.y());
+            d->operator[](0).length = _scan.ranges[i];
+            d->response() = responses[i];
+            d->responseNormalized() = responses_normalized[i];
+            d->validDetection() = false;
+            if (!_detections.empty())
+            {
+                d->begin();
+            }
+            if (d->responseNormalized() > 0.7 || d->responseNormalized() < 0.2) {
+                d->validDetection() = true;
+                if (d->responseNormalized() < 0.2) {
+                    d->responseNormalized() = 1.0 - d->responseNormalized();
+                }
+                if (!_detections.empty()) {
+                    _detections.back()->link(_detections.back(), d);
+                }
+                _detections.push_back(d);
+            }
         }
       }
       _detections.back()->link(_detections.back(), d);

@@ -11,7 +11,7 @@ namespace tuw {
     using DoorDetectionPtr = std::shared_ptr<DoorDetection>;
     using DoorDetectionConstPtr = std::shared_ptr<DoorDetection const>;
 
-    class DoorDetection : public MeasurementLaser {
+    class DoorDetection : public Measurement {
     public:
         DoorDetection();
 
@@ -37,6 +37,7 @@ namespace tuw {
         double response_;
         double response_normalized_;
         bool valid_;
+        MeasurementLaser::Beam
         std::weak_ptr<DoorDetection> next_;
         std::weak_ptr<DoorDetection> previous_;
 
