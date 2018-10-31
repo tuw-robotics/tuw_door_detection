@@ -36,7 +36,15 @@ namespace tuw {
 
         void push_back(std::shared_ptr<Beam> beam);
 
-        void render(WorldScopedMaps &map2image, cv::Mat &image, cv::Scalar &color);
+        void detectCorners(const size_t KERNEL_SIZE);
+
+        void cvDetectCorners();
+
+        const std::vector<cv::Point2d> &getCorners();
+
+        void renderInternal(tuw::WorldScopedMaps &map);
+
+        void render(WorldScopedMaps &map2image, cv::Mat &image, cv::Scalar &color, double rad = 2, bool corners = true);
 
         const Point2D &startPoint() const {
           const auto elem = *beams_.begin();
@@ -70,13 +78,13 @@ namespace tuw {
 
         double length();
 
-        size_t corners();
-
     private:
         std::vector<std::shared_ptr<Beam>> beams_;
+        std::vector<cv::Point2d> corner_points_;
         bool length_cache_uptodate_;
         double length_;
         size_t num_corners_;
+        cv::Mat rendering_;
 
     };
 };

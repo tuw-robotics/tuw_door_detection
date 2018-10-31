@@ -3,6 +3,7 @@
 
 #include <tuw_geometry/measurement_laser.h>
 #include <tuw_object_msgs/ObjectWithCovariance.h>
+#include <memory>
 
 namespace tuw {
 
@@ -11,7 +12,7 @@ namespace tuw {
     using DoorDetectionPtr = std::shared_ptr<DoorDetection>;
     using DoorDetectionConstPtr = std::shared_ptr<DoorDetection const>;
 
-    class DoorDetection : public Measurement {
+    class DoorDetection : public MeasurementLaser {
     public:
         DoorDetection();
 
@@ -37,7 +38,6 @@ namespace tuw {
         double response_;
         double response_normalized_;
         bool valid_;
-        MeasurementLaser::Beam
         std::weak_ptr<DoorDetection> next_;
         std::weak_ptr<DoorDetection> previous_;
 

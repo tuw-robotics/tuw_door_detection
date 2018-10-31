@@ -86,6 +86,7 @@ namespace tuw {
         float thresh_{0.3};
         std::size_t KERNEL_SIZE = {8};
         ros::Publisher pubObjectDetections_;
+        std::map<size_t, cv::Scalar> colorMap_;
 
         std::unique_ptr<ParametersNode> &params() { return params_; }
 
