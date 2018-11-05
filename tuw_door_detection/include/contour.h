@@ -38,6 +38,8 @@ namespace tuw {
 
         void detectCorners(const size_t KERNEL_SIZE);
 
+        void cvConvexityDefects(tuw::WorldScopedMaps &_map);
+
         void cvDetectCorners();
 
         const std::vector<cv::Point2d> &getCorners();

@@ -64,6 +64,23 @@ void tuw::Contour::detectCorners(const size_t KERNEL_SIZE) {
 
 }
 
+void tuw::Contour::cvConvexityDefects(tuw::WorldScopedMaps &_map) {
+    std::vector<cv::Point2i> end_points_stl;
+    std::vector<int> hull;
+    std::vector<cv::Vec4i> defects;
+    //std::vector<cv::Vec4i> defects;
+
+    end_points_stl.resize(beams_.size());
+    for (auto i = 0; i < end_points_stl.size(); ++i) {
+        const auto end_point = _map.w2m(beams_[i]->end_point);
+        end_points_stl[i].x = end_point.x();
+        end_points_stl[i].y = end_point.y();
+    }
+
+    cv::convexHull(end_points_stl, hull);
+    cv::convexityDefects(end_points_stl, cv::Mat(hull), defects);
+}
+
 void tuw::Contour::cvDetectCorners() {
     corner_points_.clear();
 

@@ -168,6 +168,7 @@ bool DoorDepthDetector::contourMode(const sensor_msgs::LaserScan &_scan) {
 
         elem->renderInternal(map);
         elem->cvDetectCorners();
+        elem->cvConvexityDefects(map);
         if (elem->length() > 0.6 && elem->length() < 1.2) {
             potential_doors++;
         }
