@@ -4,6 +4,9 @@
 
 #include <contour.h>
 #include <iostream>
+#include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/highgui.hpp>
 
 tuw::Contour::Contour() : length_(0.0) {
 

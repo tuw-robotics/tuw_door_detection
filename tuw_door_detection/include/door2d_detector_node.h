@@ -37,7 +37,6 @@
 #include "door_detector.h"
 #include <ros/ros.h>
 #include <sensor_msgs/LaserScan.h>
-#include <tuw_geometry/measurement_laser.h>
 #include <tuw_geometry/linesegment2d_detector.h>
 #include <tuw_geometry_msgs/LineSegment.h>
 #include <tuw_geometry_msgs/LineSegments.h>
@@ -81,7 +80,8 @@ namespace tuw {
         ParametersNode params_;
         ros::Subscriber sub_laser_;
         std::unique_ptr<DoorDetector> door_detector_;
-        MeasurementLaserPtr measurement_laser_;                /// laser measurements
+        //@Deprecated
+        //MeasurementLaserPtr measurement_laser_;                /// laser measurements
         bool display_window_;
         bool modify_laser_scan_;
 

@@ -59,7 +59,7 @@ Door2DDetectorNode::Door2DDetectorNode() : nh_(""), display_window_(true), modif
     sub_laser_ = nh_.subscribe("scan", 1000, &Door2DDetectorNode::callbackLaser, this);
     //line_pub_ = nh_.advertise<tuw_geometry_msgs::LineSegments>("line_segments", 1000);
     //door_pub_ = nh_.advertise<tuw_object_msgs::ObjectDetection>("object_detection", 1000);
-    measurement_laser_ = std::make_shared<tuw::MeasurementLaser>();
+    //measurement_laser_ = std::make_shared<tuw::MeasurementLaser>();
     params_ = ParametersNode();
 
     if (params_.mode == ParametersNode::FilterMode::DEPTH) {
