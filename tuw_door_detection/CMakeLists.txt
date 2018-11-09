@@ -6,16 +6,16 @@ add_compile_options(-std=c++14) ## for c++ 2014
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-		tf
-		tf_conversions
-  roscpp
-  rospy
-  std_msgs
-  sensor_msgs
-  tuw_geometry
-  tuw_geometry_msgs
-  dynamic_reconfigure
-)
+        tf
+        tf_conversions
+        roscpp
+        rospy
+        std_msgs
+        sensor_msgs
+        tuw_geometry
+        tuw_geometry_msgs
+        dynamic_reconfigure
+        )
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
@@ -95,9 +95,9 @@ find_package(OpenCV REQUIRED)
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
 generate_dynamic_reconfigure_options(
-   cfg/Door2DDetector.cfg
-   cfg/DepthDetector.cfg
-#   cfg/DynReconf2.cfg
+        cfg/Door2DDetector.cfg
+        cfg/DepthDetector.cfg
+        #   cfg/DynReconf2.cfg
 )
 
 ###################################
@@ -110,10 +110,10 @@ generate_dynamic_reconfigure_options(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  INCLUDE_DIRS include
-#  LIBRARIES tuw_linedetection
-  CATKIN_DEPENDS roscpp rospy tuw_geometry tuw_geometry_msgs tf tf_conversions
-#  DEPENDS system_lib
+        INCLUDE_DIRS include
+        #  LIBRARIES tuw_linedetection
+        CATKIN_DEPENDS roscpp rospy tuw_geometry tuw_geometry_msgs tf tf_conversions
+        #  DEPENDS system_lib
 )
 
 ###########
@@ -123,11 +123,11 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-  ./include/
-  ${catkin_INCLUDE_DIRS}
-  ${PYTHON_INCLUDE_DIRS}
-  ${Boost_INCLUDE_DIRS}
-  ${EIGEN3_INCLUDE_DIR} 
+        ./include/
+        ${catkin_INCLUDE_DIRS}
+        ${PYTHON_INCLUDE_DIRS}
+        ${Boost_INCLUDE_DIRS}
+        ${EIGEN3_INCLUDE_DIR}
 )
 
 ## Declare a C++ library
@@ -142,11 +142,11 @@ include_directories(
 
 ## Declare a C++ executable
 # add_executable(tuw_linedetection_node src/tuw_linedetection_node.cpp)
-add_executable(door2d_detector_node src/door2d_detector_node.cpp 
-																		src/door_detector.cpp
-																		src/door_line_detector.cpp 
-																		src/door_depth_detector.cpp
-																		src/door_detection.cpp src/contour.cpp include/contour.h)
+add_executable(door2d_detector_node src/door2d_detector_node.cpp
+        src/door_detector.cpp
+        src/door_line_detector.cpp
+        src/door_depth_detector.cpp
+        src/door_detection.cpp src/contour.cpp include/contour.h)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -155,9 +155,22 @@ add_dependencies(door2d_detector_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catk
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(door2d_detector_node
-   ${catkin_LIBRARIES}
-   ${OpenCV_LIBRARIES}
-)
+        ${catkin_LIBRARIES}
+        ${OpenCV_LIBRARIES}
+        ${Boost_LIBRARIES}
+        )
+
+add_executable(door_detector_image_processor_node src/door_detector_imgproc.cpp
+        src/door_detector_imgproc_node.cpp)
+add_dependencies(door_detector_image_processor_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+## Specify libraries to link a library or executable target against
+target_link_libraries(door_detector_image_processor_node
+        ${catkin_LIBRARIES}
+        ${OpenCV_LIBRARIES}
+        ${Boost_LIBRARIES}
+        )
+
 #############
 ## Install ##
 #############

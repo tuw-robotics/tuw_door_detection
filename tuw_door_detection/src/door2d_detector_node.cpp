@@ -81,7 +81,7 @@ void Door2DDetectorNode::callbackLaser(const sensor_msgs::LaserScan &_laser) {
 }
 
 int main(int argc, char **argv) {
-    ros::init(argc, argv, "linesegment2d_detector_node");
+    ros::init(argc, argv, "door_2d_detector_node");
 
     Door2DDetectorNode detector_node;
 

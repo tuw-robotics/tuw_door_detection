@@ -75,7 +75,6 @@ namespace tuw {
         void publish();
 
     private:
-
         ros::NodeHandle nh_;
         ParametersNode params_;
         ros::Subscriber sub_laser_;
