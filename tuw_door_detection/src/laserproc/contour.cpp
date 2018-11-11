@@ -2,7 +2,7 @@
 // Created by felix on 29.10.18.
 //
 
-#include <contour.h>
+#include <laserproc/contour.h>
 #include <iostream>
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>

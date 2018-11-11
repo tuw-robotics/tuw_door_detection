@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
         tuw_geometry
         tuw_geometry_msgs
         dynamic_reconfigure
+        cv_bridge
         )
 
 ## System dependencies are found with CMake's conventions
@@ -112,7 +113,7 @@ generate_dynamic_reconfigure_options(
 catkin_package(
         INCLUDE_DIRS include
         #  LIBRARIES tuw_linedetection
-        CATKIN_DEPENDS roscpp rospy tuw_geometry tuw_geometry_msgs tf tf_conversions
+        CATKIN_DEPENDS roscpp rospy tuw_geometry tuw_geometry_msgs tf tf_conversions cv_bridge
         #  DEPENDS system_lib
 )
 
@@ -143,10 +144,12 @@ include_directories(
 ## Declare a C++ executable
 # add_executable(tuw_linedetection_node src/tuw_linedetection_node.cpp)
 add_executable(door2d_detector_node src/door2d_detector_node.cpp
-        src/door_detector.cpp
-        src/door_line_detector.cpp
-        src/door_depth_detector.cpp
-        src/door_detection.cpp src/contour.cpp include/contour.h)
+        src/laserproc/door_detector.cpp
+        src/laserproc/door_line_detector.cpp
+        src/laserproc/door_depth_detector.cpp
+        src/laserproc/door_detection.cpp
+        src/laserproc/contour.cpp
+        )
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -160,8 +163,9 @@ target_link_libraries(door2d_detector_node
         ${Boost_LIBRARIES}
         )
 
-add_executable(door_detector_image_processor_node src/door_detector_imgproc.cpp
-        src/door_detector_imgproc_node.cpp)
+add_executable(door_detector_image_processor_node
+        src/imgproc/door_detector_imgproc.cpp
+        src/imgproc/door_detector_imgproc_node.cpp)
 add_dependencies(door_detector_image_processor_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against

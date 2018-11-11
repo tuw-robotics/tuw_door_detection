@@ -34,7 +34,7 @@
 #ifndef LINESEGMENT2D_DETECTOR_NODE_H
 #define LINESEGMENT2D_DETECTOR_NODE_H
 
-#include "door_detector.h"
+#include "laserproc/door_detector.h"
 #include <ros/ros.h>
 #include <sensor_msgs/LaserScan.h>
 #include <tuw_geometry/linesegment2d_detector.h>

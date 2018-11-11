@@ -32,8 +32,8 @@
  ***************************************************************************/
 
 #include "door2d_detector_node.h"
-#include "door_line_detector.h"
-#include "door_depth_detector.h"
+#include "laserproc/door_line_detector.h"
+#include "laserproc/door_depth_detector.h"
 
 #include <tuw_geometry_msgs/LineSegment.h>
 #include <tuw_geometry_msgs/LineSegments.h>

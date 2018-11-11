@@ -1,4 +1,4 @@
-#include "door_depth_detector.h"
+#include "laserproc/door_depth_detector.h"
 #include <geometry_msgs/PoseWithCovariance.h>
 #include <tuw_object_msgs/ObjectWithCovariance.h>
 #include <opencv2/core.hpp>
@@ -7,7 +7,7 @@
 #include <opencv2/plot.hpp>
 #include <tuw_geometry/figure.h>
 #include <tuw_geometry/point2d.h>
-#include <contour.h>
+#include <laserproc/contour.h>
 #include <random>
 
 using namespace tuw;

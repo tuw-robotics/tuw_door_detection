@@ -1,7 +1,5 @@
 
-#include <door_detection.h>
-
-#include "door_detection.h"
+#include <laserproc/door_detection.h>
 
 using namespace tuw;
 

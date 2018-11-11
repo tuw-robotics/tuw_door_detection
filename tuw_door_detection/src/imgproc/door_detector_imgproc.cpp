@@ -1,4 +1,4 @@
-#include <door_detector_imgproc.h>
+#include <imgproc/door_detector_imgproc.h>
 //
 // Created by felix on 09.11.18.
 //
