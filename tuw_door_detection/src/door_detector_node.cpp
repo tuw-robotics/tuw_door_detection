@@ -31,20 +31,13 @@
  *   POSSIBILITY OF SUCH DAMAGE.                                           *
  ***************************************************************************/
 
-#include "door2d_detector_node.h"
+#include "door_detector_node.h"
 #include "laserproc/door_line_detector.h"
 #include "laserproc/door_depth_detector.h"
 
-#include <tuw_geometry_msgs/LineSegment.h>
-#include <tuw_geometry_msgs/LineSegments.h>
-#include <opencv2/core.hpp>
-#include <opencv2/imgproc.hpp>
-#include <opencv2/highgui.hpp>
-#include <eigen3/Eigen/Core>
-
 using namespace tuw;
 
-Door2DDetectorNode::ParametersNode::ParametersNode() : node("~") {
+DoorDetectorNode::ParametersNode::ParametersNode() : node("~") {
   std::string mode_str;
   node.param<std::string>("mode", mode_str, std::string("depth"));
   try {
@@ -55,8 +48,11 @@ Door2DDetectorNode::ParametersNode::ParametersNode() : node("~") {
   }
 }
 
-Door2DDetectorNode::Door2DDetectorNode() : nh_(""), display_window_(true), modify_laser_scan_(true) {
-  sub_laser_ = nh_.subscribe("scan", 1000, &Door2DDetectorNode::callbackLaser, this);
+DoorDetectorNode::DoorDetectorNode() : nh_(""), display_window_(true), modify_laser_scan_(true) {
+  sub_laser_ = nh_.subscribe("scan", 1000, &DoorDetectorNode::callbackLaser, this);
+  sub_image_ = nh_.subscribe("image_rgb", 1000, &DoorDetectorNode::callbackImage, this);
+  sub_image_depth_ = nh_.subscribe("image_depth", 1000, &DoorDetectorNode::callbackDepthImage, this);
+  img_processor_.reset(new DoorDetectorImageProcessor());
   //line_pub_ = nh_.advertise<tuw_geometry_msgs::LineSegments>("line_segments", 1000);
   //door_pub_ = nh_.advertise<tuw_object_msgs::ObjectDetection>("object_detection", 1000);
   //measurement_laser_ = std::make_shared<tuw::MeasurementLaser>();
@@ -69,25 +65,50 @@ Door2DDetectorNode::Door2DDetectorNode() : nh_(""), display_window_(true), modif
   }
 }
 
-Door2DDetectorNode::~Door2DDetectorNode() {
+DoorDetectorNode::~DoorDetectorNode() {
 }
 
-void Door2DDetectorNode::publish() {
+void DoorDetectorNode::callbackImage(const sensor_msgs::ImageConstPtr &_img) {
+  image_rgb_ = cv_bridge::toCvCopy(_img, std::string("8UC3"));
+
+  if (image_rgb_ && image_depth_) {
+    img_processor_->processImage(image_rgb_, image_depth_);
+    image_rgb_ = nullptr;
+    image_depth_ = nullptr;
+  }
+}
+
+void DoorDetectorNode::callbackDepthImage(const sensor_msgs::ImageConstPtr &_img) {
+  image_depth_ = cv_bridge::toCvCopy(_img, std::string("16UC1"));
+  image_depth_->image.convertTo(image_depth_->image, CV_32FC1,
+                                1.0 / static_cast<double>(std::numeric_limits<u_int16_t>::max()));
+
+  if (image_rgb_ && image_depth_) {
+    img_processor_->processImage(image_rgb_, image_depth_);
+    image_rgb_ = nullptr;
+    image_depth_ = nullptr;
+  }
+}
+
+
+void DoorDetectorNode::publish() {
   door_detector_->publish();
+  img_processor_->display();
 }
 
-void Door2DDetectorNode::callbackLaser(const sensor_msgs::LaserScan &_laser) {
-  door_detector_->processLaser(_laser);
+void DoorDetectorNode::callbackLaser(const sensor_msgs::LaserScan &_laser) {
+  //door_detector_->processLaser(_laser);
 }
 
 int main(int argc, char **argv) {
   ros::init(argc, argv, "door_2d_detector_node");
 
-  Door2DDetectorNode detector_node;
+  DoorDetectorNode detector_node;
 
   while (ros::ok()) {
     ros::spinOnce();
     detector_node.publish();
+
   }
   return 0;
 }

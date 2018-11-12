@@ -143,33 +143,23 @@ include_directories(
 
 ## Declare a C++ executable
 # add_executable(tuw_linedetection_node src/tuw_linedetection_node.cpp)
-add_executable(door2d_detector_node src/door2d_detector_node.cpp
+add_executable(door_detector_node
+        src/door_detector_node.cpp
         src/laserproc/door_detector.cpp
         src/laserproc/door_line_detector.cpp
         src/laserproc/door_depth_detector.cpp
         src/laserproc/door_detection.cpp
         src/laserproc/contour.cpp
+        src/imgproc/door_detector_imgproc.cpp
         )
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(tuw_linedetection_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(door2d_detector_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(door_detector_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(door2d_detector_node
-        ${catkin_LIBRARIES}
-        ${OpenCV_LIBRARIES}
-        ${Boost_LIBRARIES}
-        )
-
-add_executable(door_detector_image_processor_node
-        src/imgproc/door_detector_imgproc.cpp
-        src/imgproc/door_detector_imgproc_node.cpp)
-add_dependencies(door_detector_image_processor_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-## Specify libraries to link a library or executable target against
-target_link_libraries(door_detector_image_processor_node
+target_link_libraries(door_detector_node
         ${catkin_LIBRARIES}
         ${OpenCV_LIBRARIES}
         ${Boost_LIBRARIES}

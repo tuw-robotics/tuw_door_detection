@@ -35,6 +35,7 @@
 #define LINESEGMENT2D_DETECTOR_NODE_H
 
 #include "laserproc/door_detector.h"
+#include <imgproc/door_detector_imgproc.h>
 #include <ros/ros.h>
 #include <sensor_msgs/LaserScan.h>
 #include <tuw_geometry/linesegment2d_detector.h>
@@ -44,13 +45,15 @@
 #include <dynamic_reconfigure/server.h>
 #include <tuw_linedetection/Linesegment2DDetectorConfig.h>
 #include <unordered_map>
+#include <sensor_msgs/Image.h>
+#include <cv_bridge/cv_bridge.h>
 
 namespace tuw {
 /**
  * @brief ROS wrapper node for LineSegment2DDetector
  * @class Door2DDetectorNode
  */
-    class Door2DDetectorNode {
+    class DoorDetectorNode {
     public:
         struct ParametersNode {
             ParametersNode();
@@ -59,18 +62,18 @@ namespace tuw {
                 LINES, DEPTH
             };
             std::unordered_map<std::string, FilterMode> enumResolver{
-                    {"lines", FilterMode::LINES},
-                    {"depth", FilterMode::DEPTH},
-                    {"LINES", FilterMode::LINES},
-                    {"DEPTH", FilterMode::DEPTH}
+                {"lines", FilterMode::LINES},
+                {"depth", FilterMode::DEPTH},
+                {"LINES", FilterMode::LINES},
+                {"DEPTH", FilterMode::DEPTH}
             };
             FilterMode mode;
             ros::NodeHandle node;
         };
 
-        Door2DDetectorNode();
+        DoorDetectorNode();
 
-        ~Door2DDetectorNode();
+        ~DoorDetectorNode();
 
         void publish();
 
@@ -78,9 +81,14 @@ namespace tuw {
         ros::NodeHandle nh_;
         ParametersNode params_;
         ros::Subscriber sub_laser_;
+        ros::Subscriber sub_image_;
+        ros::Subscriber sub_image_depth_;
         std::unique_ptr<DoorDetector> door_detector_;
-        //@Deprecated
-        //MeasurementLaserPtr measurement_laser_;                /// laser measurements
+
+        cv_bridge::CvImagePtr image_rgb_;
+        cv_bridge::CvImagePtr image_depth_;
+        std::unique_ptr<DoorDetectorImageProcessor> img_processor_;
+
         bool display_window_;
         bool modify_laser_scan_;
 
@@ -90,6 +98,9 @@ namespace tuw {
          */
         void callbackLaser(const sensor_msgs::LaserScan &_laser);
 
+        void callbackImage(const sensor_msgs::ImageConstPtr &_img);
+
+        void callbackDepthImage(const sensor_msgs::ImageConstPtr &_img);
     };
 };
 
