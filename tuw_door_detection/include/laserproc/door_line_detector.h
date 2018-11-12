@@ -4,7 +4,7 @@
 #include "door_detector.h"
 #include <ros/ros.h>
 #include <sensor_msgs/LaserScan.h>
-#include <tuw_geometry/measurement_laser.h>
+//#include <tuw_geometry/measurement_laser.h>
 #include <tuw_geometry/linesegment2d_detector.h>
 #include <tuw_geometry_msgs/LineSegment.h>
 #include <tuw_geometry_msgs/LineSegments.h>
@@ -31,7 +31,7 @@ namespace tuw {
         enum FilterMode {
             FILTER_DOORS, FILTER_NON_DOORS
         };
-        MeasurementLaserPtr measurement_laser_;                /// laser measurements
+        //MeasurementLaserPtr measurement_laser_;                /// laser measurements
         std::vector<Point2D> measurement_local_scanpoints_;    /// laser beam endpoints for line detection
         std::vector<LineSegment> measurement_linesegments_;  /// detected line segments in sensor coordinates
         ros::Publisher line_pub_;

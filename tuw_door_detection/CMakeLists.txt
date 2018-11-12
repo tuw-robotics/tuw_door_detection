@@ -128,7 +128,7 @@ include_directories(
         ${catkin_INCLUDE_DIRS}
         ${PYTHON_INCLUDE_DIRS}
         ${Boost_INCLUDE_DIRS}
-        ${EIGEN3_INCLUDE_DIR}
+        ${EIGEN3_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -163,6 +163,7 @@ target_link_libraries(door_detector_node
         ${catkin_LIBRARIES}
         ${OpenCV_LIBRARIES}
         ${Boost_LIBRARIES}
+        ${EIGEN_LIBRARIES}
         )
 
 #############

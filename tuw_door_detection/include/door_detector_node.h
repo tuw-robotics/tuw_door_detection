@@ -47,6 +47,7 @@
 #include <unordered_map>
 #include <sensor_msgs/Image.h>
 #include <cv_bridge/cv_bridge.h>
+#include <map>
 
 namespace tuw {
 /**
@@ -69,6 +70,10 @@ namespace tuw {
             };
             FilterMode mode;
             ros::NodeHandle node;
+            std::string camera_source_frame;
+            std::string laser_source_frame;
+            std::string world_frame;
+            bool debug;
         };
 
         DoorDetectorNode();
@@ -84,6 +89,8 @@ namespace tuw {
         ros::Subscriber sub_image_;
         ros::Subscriber sub_image_depth_;
         std::unique_ptr<DoorDetector> door_detector_;
+        tf::TransformListener listenerTF_;
+        std::map<std::string, std::shared_ptr<tf::StampedTransform>> tfMap_;
 
         cv_bridge::CvImagePtr image_rgb_;
         cv_bridge::CvImagePtr image_depth_;
@@ -101,6 +108,9 @@ namespace tuw {
         void callbackImage(const sensor_msgs::ImageConstPtr &_img);
 
         void callbackDepthImage(const sensor_msgs::ImageConstPtr &_img);
+
+        bool getStaticTF(const std::string &world_frame, const std::string &source_frame, tf::StampedTransform &_pose,
+                         bool debug);
     };
 };
 

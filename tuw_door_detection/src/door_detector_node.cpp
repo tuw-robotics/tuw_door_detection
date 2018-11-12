@@ -40,6 +40,11 @@ using namespace tuw;
 DoorDetectorNode::ParametersNode::ParametersNode() : node("~") {
   std::string mode_str;
   node.param<std::string>("mode", mode_str, std::string("depth"));
+  node.param<std::string>("camera_source_frame", camera_source_frame, std::string(""));
+  node.param<std::string>("laser_source_frame", laser_source_frame, std::string(""));
+  node.param<std::string>("world_frame", world_frame, std::string(""));
+  node.param<bool>("debug", debug, false);
+
   try {
     mode = enumResolver.at(mode_str);
   }
@@ -71,10 +76,14 @@ DoorDetectorNode::~DoorDetectorNode() {
 void DoorDetectorNode::callbackImage(const sensor_msgs::ImageConstPtr &_img) {
   image_rgb_ = cv_bridge::toCvCopy(_img, std::string("8UC3"));
 
-  if (image_rgb_ && image_depth_) {
-    img_processor_->processImage(image_rgb_, image_depth_);
-    image_rgb_ = nullptr;
-    image_depth_ = nullptr;
+  tf::StampedTransform tf;
+  if (getStaticTF(params_.world_frame, _img->header.frame_id.c_str(), tf, params_.debug)) {
+    if (image_rgb_ && image_depth_) {
+      img_processor_->setStaticImageTF(tf);
+      img_processor_->processImage(image_rgb_, image_depth_);
+      image_rgb_ = nullptr;
+      image_depth_ = nullptr;
+    }
   }
 }
 
@@ -83,13 +92,55 @@ void DoorDetectorNode::callbackDepthImage(const sensor_msgs::ImageConstPtr &_img
   image_depth_->image.convertTo(image_depth_->image, CV_32FC1,
                                 1.0 / static_cast<double>(std::numeric_limits<u_int16_t>::max()));
 
-  if (image_rgb_ && image_depth_) {
-    img_processor_->processImage(image_rgb_, image_depth_);
-    image_rgb_ = nullptr;
-    image_depth_ = nullptr;
+  tf::StampedTransform tf;
+  if (getStaticTF(params_.world_frame, _img->header.frame_id.c_str(), tf, params_.debug)) {
+    if (image_rgb_ && image_depth_) {
+      img_processor_->setStaticDepthTF(tf);
+      img_processor_->processImage(image_rgb_, image_depth_);
+      image_rgb_ = nullptr;
+      image_depth_ = nullptr;
+    }
   }
 }
 
+bool DoorDetectorNode::getStaticTF(const std::string &world_frame, const std::string &source_frame,
+                                   tf::StampedTransform &_pose, bool debug) {
+
+  std::string target_frame_id = source_frame;
+  std::string source_frame_id = tf::resolve("", world_frame);
+  std::string key = target_frame_id + "->" + source_frame_id;
+
+  if (!tfMap_[key]) {
+    try {
+
+      listenerTF_.lookupTransform(
+          source_frame_id, target_frame_id, ros::Time(0), _pose);
+      std::shared_ptr<tf::StampedTransform> tf_ref;
+      tf_ref.reset(new tf::StampedTransform(_pose));
+      tfMap_[key] = std::move(tf_ref);
+
+    } catch (tf::TransformException ex) {
+
+      ROS_INFO("getStaticTF");
+      ROS_ERROR("%s", ex.what());
+      ros::Duration(1.0).sleep();
+      return false;
+
+    }
+  }
+
+  _pose = *tfMap_[key];
+
+  if (debug) {
+    std::cout << key << std::endl;
+    std::cout << "tf get o: " << _pose.getOrigin().x() << ", " << _pose.getOrigin().y() << ", " << _pose.getOrigin().z()
+              << std::endl;
+    std::cout << "tf get r: " << _pose.getRotation().x() << ", " << _pose.getRotation().y() << ", "
+              << _pose.getRotation().z() << ", " << _pose.getRotation().w() << std::endl;
+  }
+
+  return true;
+}
 
 void DoorDetectorNode::publish() {
   door_detector_->publish();

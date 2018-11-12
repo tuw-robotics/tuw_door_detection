@@ -9,12 +9,20 @@ DoorDetection::DoorDetection() {
   this->valid_ = false;
 }
 
+DoorDetection::Beam &DoorDetection::operator[](size_t id) {
+  return this->end_points[id];
+}
+
+const DoorDetection::Beam &DoorDetection::operator[](size_t id) const {
+  return this->end_points[id];
+}
+
 tuw_object_msgs::ObjectWithCovariance DoorDetection::toMsg(int id) {
   tuw_object_msgs::ObjectWithCovariance dd;
 
   //TODO refine accordingly (more beams per door measurement i.e. all beams connected to the door)
-  dd.object.pose.position.x = this->operator[](0).end_point.x();
-  dd.object.pose.position.y = this->operator[](0).end_point.y();
+  dd.object.pose.position.x = this->end_points[0].point.x();
+  dd.object.pose.position.y = this->end_points[0].point.y();
   dd.object.pose.position.z = 0;
 
   dd.object.pose.orientation.x = 0;
@@ -35,63 +43,63 @@ tuw_object_msgs::ObjectWithCovariance DoorDetection::toMsg(int id) {
 
 namespace tuw {
 
-  std::ostream &operator<<(std::ostream &output, const DoorDetection &d) {
-    output << "Beams: {(" << d[0].end_point.x() << ", " << d[0].end_point.y() << ")";
-    for (int i = 1; i < d.size(); ++i) {
-      output << ", (" << d[i].end_point.x() << ", " << d[i].end_point.y() << ")";
+    std::ostream &operator<<(std::ostream &output, const DoorDetection &d) {
+      output << "Beams: {(" << d[0].point.x() << ", " << d[0].point.y() << ")";
+      for (int i = 1; i < d.size(); ++i) {
+        output << ", (" << d[i].point.x() << ", " << d[i].point.y() << ")";
+      }
+      output << "}" << "\n";
+      output << "resp: " << std::to_string(d.response()) << "\n";
+      output << "resp_n: " << std::to_string(d.responseNormalized()) << "\n";
+      output << "valid_det: " << (d.validDetection() ? "true" : "false") << "\n";
+      output << "next: " << (d.next_.lock() ? "true" : "false") << std::endl;
+      output << "previous: " << (d.previous_.lock() ? "true" : "false") << std::endl;
+
+      return output;
     }
-    output << "}" << "\n";
-    output << "resp: " << std::to_string(d.response()) << "\n";
-    output << "resp_n: " << std::to_string(d.responseNormalized()) << "\n";
-    output << "valid_det: " << (d.validDetection() ? "true" : "false") << "\n";
-    output << "next: " << (d.next_.lock() ? "true" : "false") << std::endl;
-    output << "previous: " << (d.previous_.lock() ? "true" : "false") << std::endl;
 
-    return output;
-  }
+    double &DoorDetection::responseNormalized() {
+      return response_normalized_;
+    }
 
-  double &DoorDetection::responseNormalized() {
-    return response_normalized_;
-  }
+    double &DoorDetection::response() {
+      return response_;
+    }
 
-  double &DoorDetection::response() {
-    return response_;
-  }
+    bool &DoorDetection::validDetection() {
+      return valid_;
+    }
 
-  bool &DoorDetection::validDetection() {
-    return valid_;
-  }
+    const double &DoorDetection::response() const {
+      return response_;
+    }
 
-  const double &DoorDetection::response() const {
-    return response_;
-  }
+    const double &DoorDetection::responseNormalized() const {
+      return response_normalized_;
+    }
 
-  const double &DoorDetection::responseNormalized() const {
-    return response_normalized_;
-  }
+    const bool &DoorDetection::validDetection() const {
+      return valid_;
+    }
 
-  const bool &DoorDetection::validDetection() const {
-    return valid_;
-  }
+    void DoorDetection::next(DoorDetectionPtr &_other) {
+      next_ = _other;
+    }
 
-  void DoorDetection::next(DoorDetectionPtr &_other) {
-    next_ = _other;
-  }
+    DoorDetectionPtr DoorDetection::next() {
+      return next_.lock();
+    }
 
-  DoorDetectionPtr DoorDetection::next() {
-    return next_.lock();
-  }
+    void DoorDetection::previous(DoorDetectionPtr &_other) {
+      previous_ = _other;
+    }
 
-  void DoorDetection::previous(DoorDetectionPtr &_other) {
-    previous_ = _other;
-  }
+    DoorDetectionPtr DoorDetection::previous() {
+      return previous_.lock();
+    }
 
-  DoorDetectionPtr DoorDetection::previous() {
-    return previous_.lock();
-  }
-
-  void DoorDetection::link(DoorDetectionPtr &_this, DoorDetectionPtr &_other) {
-    _this->next(_other);
-    _other->previous(_this);
-  }
+    void DoorDetection::link(DoorDetectionPtr &_this, DoorDetectionPtr &_other) {
+      _this->next(_other);
+      _other->previous(_this);
+    }
 }

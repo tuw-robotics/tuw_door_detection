@@ -61,7 +61,7 @@ void DoorDepthDetector::plot(const std::vector<DoorDetectionPtr> &_detections) {
       color = cv::Scalar(0, 0, 0);
     }
     std::cout << *d << std::endl;
-    figure_local_.circle(d->operator[](0).end_point, radius, color, 1.0);
+    figure_local_.circle(d->operator[](0).point, radius, color, 1.0);
   }
   cv::imshow(figure_local_.title(), figure_local_.view());
   cv::waitKey(1);
@@ -156,7 +156,7 @@ bool DoorDepthDetector::contourMode(const sensor_msgs::LaserScan &_scan) {
   contours.erase(std::remove_if(contours.begin(),
                                 contours.end(),
                                 [contour_thresh](std::shared_ptr<Contour> &c) {
-                                  return c->length() < contour_thresh;
+                                    return c->length() < contour_thresh;
                                 }),
                  contours.end());
 
@@ -240,7 +240,7 @@ bool DoorDepthDetector::kernelMode(const sensor_msgs::LaserScan &_scan, std::vec
       Eigen::Vector2d point_meas = range2Eigen(_scan, i);
       auto d = std::make_shared<DoorDetection>();
       d->resize(_scan.ranges.size());
-      d->operator[](0).end_point = Point2D(point_meas.x(), point_meas.y());
+      d->operator[](0).point = Point2D(point_meas.x(), point_meas.y());
       d->operator[](0).length = _scan.ranges[i];
       d->response() = responses[i];
       d->responseNormalized() = responses_normalized[i];
@@ -313,7 +313,7 @@ bool DoorDepthDetector::structureMode(const sensor_msgs::LaserScan &_scan, std::
     if (idx_set.count(c.first) == 0) {
       auto d = std::make_shared<DoorDetection>();
       d->resize(1);
-      d->operator[](0).end_point = Point2D(candidates[i].first.x(), candidates[i].first.y());
+      d->operator[](0).point = Point2D(candidates[i].first.x(), candidates[i].first.y());
       d->validDetection() = true;
       _detections.push_back(d);
       idx_set.insert(c.first);
@@ -321,7 +321,7 @@ bool DoorDepthDetector::structureMode(const sensor_msgs::LaserScan &_scan, std::
 
     if (idx_set.count(c.second) == 0) {
       auto d = std::make_shared<DoorDetection>();
-      d->operator[](0).end_point = Point2D(candidates[i].second.x(), candidates[i].second.y());
+      d->operator[](0).point = Point2D(candidates[i].second.x(), candidates[i].second.y());
       d->validDetection() = true;
       _detections.push_back(d);
       idx_set.insert(c.second);
@@ -359,7 +359,7 @@ bool DoorDepthDetector::processLaser(const sensor_msgs::LaserScan &_scan) {
     }
     Eigen::Quaterniond q(1, 0, 0, 0);
     tuw_object_msgs::ObjectWithCovariance out_obj;
-    const auto point = d->operator[](0).end_point;
+    const auto point = d->operator[](0).point;
 
     out_obj.object.pose.position.x = point.x();
     out_obj.object.pose.position.y = point.y();
