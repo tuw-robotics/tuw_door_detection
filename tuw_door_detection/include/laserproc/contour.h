@@ -32,6 +32,31 @@ namespace tuw {
             static std::shared_ptr<Beam> make_beam(double range, double angle, Point2D end_point);
         };
 
+        struct CVDefect {
+            CVDefect(int startIdx, int endIdx, int x, int y) {
+              start_idx = startIdx;
+              end_idx = endIdx;
+              point = cv::Vec2i(x, y);
+            }
+
+            cv::Vec2i point;
+            int start_idx;
+            int end_idx;
+        };
+
+        struct Corner {
+
+            Corner(const cv::Point2d &_point, size_t _response, size_t _idx) {
+              point = _point;
+              response = _response;
+              idx = _idx;
+            }
+
+            cv::Point2d point;
+            double response;
+            size_t idx;
+        };
+
         Contour();
 
         void push_back(std::shared_ptr<Beam> beam);
@@ -42,7 +67,7 @@ namespace tuw {
 
         void cvDetectCorners();
 
-        const std::vector<cv::Point2d> &getCorners();
+        const std::vector<std::unique_ptr<Corner>> &getCorners();
 
         void renderInternal(tuw::WorldScopedMaps &map);
 
@@ -73,21 +98,24 @@ namespace tuw {
         }
 
         std::vector<std::shared_ptr<Beam>>::const_iterator begin() const { return beams_.begin(); }
+
         std::vector<std::shared_ptr<Beam>>::iterator begin() { return beams_.begin(); }
 
         std::vector<std::shared_ptr<Beam>>::const_iterator end() const { return beams_.end(); }
+
         std::vector<std::shared_ptr<Beam>>::iterator end() { return beams_.end(); }
 
         double length();
 
     private:
         std::vector<std::shared_ptr<Beam>> beams_;
-        std::vector<cv::Point2d> corner_points_;
+        std::vector<std::unique_ptr<Corner>> corner_points_;
         bool length_cache_uptodate_;
         double length_;
         size_t num_corners_;
         cv::Mat rendering_;
 
+        std::vector<std::unique_ptr<CVDefect>> convexity_defects_;
     };
 };
 

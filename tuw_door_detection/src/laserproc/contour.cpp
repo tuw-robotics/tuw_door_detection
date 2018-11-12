@@ -4,6 +4,7 @@
 
 #include <laserproc/contour.h>
 #include <iostream>
+#include <set>
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
@@ -82,6 +83,14 @@ void tuw::Contour::cvConvexityDefects(tuw::WorldScopedMaps &_map) {
 
   cv::convexHull(end_points_stl, hull);
   cv::convexityDefects(end_points_stl, cv::Mat(hull), defects);
+
+  convexity_defects_.resize(defects.size());
+
+  std::cout << std::endl << std::endl;
+  for (int i = 0; i < defects.size(); ++i) {
+    std::cout << defects[i][2] << ", " << defects[i][3] << std::endl;
+    convexity_defects_[i].reset(new CVDefect(defects[i][0], defects[i][1], defects[i][2], defects[i][3]));
+  }
 }
 
 void tuw::Contour::cvDetectCorners() {
@@ -94,18 +103,56 @@ void tuw::Contour::cvDetectCorners() {
   cv::minMaxLoc(corners_, &min, &max);
   double thresh = max * 0.75;
 
+  size_t idx = 0;
   for (size_t i = 0; i < corners_.rows; ++i) {
     for (size_t j = 0; j < corners_.cols; ++j) {
       if (corners_.at<float>(j, i) > thresh) {
         const auto color = cv::Scalar(255);
-        corner_points_.push_back(cv::Point2d(i, j));
+        std::unique_ptr<Corner> corner;
+        corner.reset(new Corner(cv::Point2d(i, j), corners_.at<float>(i, j), idx));
+
+        corner_points_.push_back(std::move(corner));
+
+        idx++;
         //cv::circle(corner_img, cv::Point2d(i, j), 3, color);
       }
     }
   }
+
+  std::set<size_t> removal;
+  //Non maximum suppression
+  for (int ii = 0; ii < corner_points_.size(); ++ii) {
+    for (int jj = 0; jj < corner_points_.size(); ++jj) {
+
+      if (ii == jj) {
+        continue;
+      }
+
+      auto c0 = corner_points_[ii]->point;
+      auto c1 = corner_points_[jj]->point;
+      double d = cv::norm(c0 - c1);
+
+      if (d > 5) {
+        continue;
+      }
+
+      if (corner_points_[ii]->response > corner_points_[jj]->response) {
+        removal.insert(corner_points_[jj]->idx);
+      }
+    }
+  }
+
+  corner_points_.erase(std::remove_if(corner_points_.begin(), corner_points_.end(),
+                                      [&removal](const std::unique_ptr<Corner> &c) {
+                                          if (removal.count(c->idx) > 0) {
+                                            return true;
+                                          }
+                                          return false;
+                                      }),
+                       corner_points_.end());
 }
 
-const std::vector<cv::Point2d> &tuw::Contour::getCorners() {
+const std::vector<std::unique_ptr<tuw::Contour::Corner>> &tuw::Contour::getCorners() {
   return corner_points_;
 }
 
@@ -124,7 +171,12 @@ void tuw::Contour::render(tuw::WorldScopedMaps &map, cv::Mat &img, cv::Scalar &c
   if (corners) {
     const auto ccolor = cv::Scalar(0, 0, 255);
     for (const auto &c : corner_points_) {
-      cv::circle(img, c, 3, ccolor, 1);
+      cv::circle(img, c->point, 3, ccolor, 3);
+    }
+
+    const auto cvdcolor = cv::Scalar(0, 255, 0);
+    for (const auto &d : convexity_defects_) {
+      map.line(img, beams_[d->start_idx]->end_point, beams_[d->end_idx]->end_point, cvdcolor, 1);
     }
   }
 }
