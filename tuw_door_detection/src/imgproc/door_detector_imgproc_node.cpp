@@ -4,6 +4,7 @@
 
 #include <imgproc/door_detector_imgproc_node.h>
 #include <opencv2/highgui.hpp>
+#include <opencv2/imgproc.hpp>
 
 using namespace tuw;
 
@@ -24,19 +25,22 @@ DoorDetectorImageProcessorNode::~DoorDetectorImageProcessorNode() {
 
 void DoorDetectorImageProcessorNode::callbackImage(const sensor_msgs::ImageConstPtr &_img) {
   image_rgb_ = cv_bridge::toCvCopy(_img, std::string("8UC3"));
+  cv::GaussianBlur(image_rgb_->image, image_rgb_->image, cv::Size(5, 5), 1.25);
+  cv::Canny(image_rgb_->image, image_rgb_processed_, 100, 200, 7, true);
 }
 
 void DoorDetectorImageProcessorNode::callbackDepthImage(const sensor_msgs::ImageConstPtr &_img) {
   image_depth_ = cv_bridge::toCvCopy(_img, std::string("16UC1"));
   image_depth_->image.convertTo(image_depth_->image, CV_32FC1,
                                 1.0 / static_cast<double>(std::numeric_limits<u_int16_t>::max()));
-
 }
 
 void DoorDetectorImageProcessorNode::display() {
   if (image_rgb_) {
     cv::namedWindow("rgb image");
     cv::imshow("rgb image", image_rgb_->image);
+    cv::namedWindow("rgb image processed");
+    cv::imshow("rgb image processed", image_rgb_processed_);
     cv::waitKey(1);
   }
 

@@ -18,6 +18,6 @@
     <param name="source_frame" value="$(arg source_frame)"/>
     <param name="world_frame" value="$(arg world_frame)"/>
     <remap from="image_rgb" to="$(arg camera_base)/color/image_raw"/>
-    <remap from="image_depth" to="$(arg camera_base)/depth/image_rect_raw"/>
+    <!-- <remap from="image_depth" to="$(arg camera_base)/depth/image_rect_raw"/> -->
   </node>
 </launch>

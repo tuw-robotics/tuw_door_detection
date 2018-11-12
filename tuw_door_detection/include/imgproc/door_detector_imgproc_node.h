@@ -35,6 +35,7 @@ namespace tuw {
     ros::Subscriber sub_image_depth_;
     cv_bridge::CvImagePtr image_rgb_;
     cv_bridge::CvImagePtr image_depth_;
+    cv::Mat image_rgb_processed_;
     //ros::Subscriber sub_depth_cloud_;
 
     std::unique_ptr<DoorDetectorImageProcessor> image_processor_;
