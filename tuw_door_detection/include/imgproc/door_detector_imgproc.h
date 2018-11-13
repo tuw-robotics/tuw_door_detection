@@ -11,25 +11,28 @@
 #include <measurements.h>
 
 namespace tuw {
-    class DoorDetectorImageProcessor {
-
-    public:
-        DoorDetectorImageProcessor();
-
-        ~DoorDetectorImageProcessor();
-
-        void processImage(std::unique_ptr<ImageMeasurement> &_image_meas_rgb,
-                          std::unique_ptr<ImageMeasurement> &_image_meas_depth);
-
-        void display();
-
-    private:
-        cv::Mat last_img_processed_;
-        cv::Mat last_depth_processed_;
-        cv::Mat tfRI;
-        cv::Mat tfRD;
-
-    };
+  class DoorDetectorImageProcessor {
+  
+  public:
+    DoorDetectorImageProcessor();
+    
+    ~DoorDetectorImageProcessor();
+    
+    void processImage( std::shared_ptr<ImageMeasurement> &_image_meas_rgb,
+                       std::shared_ptr<ImageMeasurement> &_image_meas_depth );
+    
+    void registerLaser( std::shared_ptr<LaserMeasurement> &_laser );
+    
+    void display();
+  
+  private:
+    std::shared_ptr<ImageMeasurement> last_img_processed_;
+    std::shared_ptr<ImageMeasurement> last_depth_processed_;
+    cv::Mat tfRI;
+    cv::Mat tfRD;
+    std::vector<cv::Point2d> laser_img_coords_;
+    
+  };
 };
 
 #endif //PROJECT_DOOR_DETECTOR_IMGPROC_H

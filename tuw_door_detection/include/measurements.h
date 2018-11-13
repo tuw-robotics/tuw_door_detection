@@ -5,6 +5,7 @@
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/LaserScan.h>
 #include <tf/transform_datatypes.h>
+#include <laserproc/contour.h>
 
 namespace tuw {
 
@@ -30,6 +31,7 @@ namespace tuw {
     class LaserMeasurement : public Measurement {
     protected:
         sensor_msgs::LaserScan laser;
+        std::vector<Contour::Beam> beams_;
 
     public:
         LaserMeasurement(const sensor_msgs::LaserScan &_laser, const tf::StampedTransform &_tf);
@@ -39,6 +41,20 @@ namespace tuw {
         const sensor_msgs::LaserScan &getLaser() const;
 
         void setLaser(const sensor_msgs::LaserScan &laser);
+
+        void push_back(const Contour::Beam &_beam);
+
+        void resize(const size_t _sz);
+
+        const size_t size() { return beams_.size(); }
+
+        std::vector<Contour::Beam>::iterator begin();
+
+        std::vector<Contour::Beam>::iterator end();
+
+        const Contour::Beam &operator[](const size_t _sz) const;
+
+        Contour::Beam &operator[](const size_t _sz);
     };
 
     class ImageMeasurement : public Measurement {

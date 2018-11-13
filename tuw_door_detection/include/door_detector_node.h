@@ -55,65 +55,65 @@ namespace tuw {
  * @brief ROS wrapper node for LineSegment2DDetector
  * @class Door2DDetectorNode
  */
-    class DoorDetectorNode {
-    public:
-        struct ParametersNode {
-            ParametersNode();
-
-            enum FilterMode {
-                LINES, DEPTH
-            };
-            std::unordered_map<std::string, FilterMode> enumResolver{
-                {"lines", FilterMode::LINES},
-                {"depth", FilterMode::DEPTH},
-                {"LINES", FilterMode::LINES},
-                {"DEPTH", FilterMode::DEPTH}
-            };
-            FilterMode mode;
-            ros::NodeHandle node;
-            std::string camera_source_frame;
-            std::string laser_source_frame;
-            std::string world_frame;
-            bool debug;
-        };
-
-        DoorDetectorNode();
-
-        ~DoorDetectorNode();
-
-        void publish();
-
-    private:
-        ros::NodeHandle nh_;
-        ParametersNode params_;
-        ros::Subscriber sub_laser_;
-        ros::Subscriber sub_image_;
-        ros::Subscriber sub_image_depth_;
-        std::unique_ptr<DoorDetector> door_detector_;
-        tf::TransformListener listenerTF_;
-        std::map<std::string, std::shared_ptr<tf::StampedTransform>> tfMap_;
-
-        std::unique_ptr<ImageMeasurement> image_depth_;
-        std::unique_ptr<ImageMeasurement> image_rgb_;
-        std::unique_ptr<LaserMeasurement> image_laser_;
-        std::unique_ptr<DoorDetectorImageProcessor> img_processor_;
-
-        bool display_window_;
-        bool modify_laser_scan_;
-
-        /**
-         * @brief callback function for incoming laser scans
-         * @param _laser laser scan message
-         */
-        void callbackLaser(const sensor_msgs::LaserScan &_laser);
-
-        void callbackImage(const sensor_msgs::ImageConstPtr &_img);
-
-        void callbackDepthImage(const sensor_msgs::ImageConstPtr &_img);
-
-        bool getStaticTF(const std::string &world_frame, const std::string &source_frame, tf::StampedTransform &_pose,
-                         bool debug);
+  class DoorDetectorNode {
+  public:
+    struct ParametersNode {
+      ParametersNode();
+      
+      enum FilterMode {
+        LINES, DEPTH
+      };
+      std::unordered_map<std::string, FilterMode> enumResolver{
+          {"lines", FilterMode::LINES},
+          {"depth", FilterMode::DEPTH},
+          {"LINES", FilterMode::LINES},
+          {"DEPTH", FilterMode::DEPTH}
+      };
+      FilterMode mode;
+      ros::NodeHandle node;
+      std::string camera_source_frame;
+      std::string laser_source_frame;
+      std::string world_frame;
+      bool debug;
     };
+    
+    DoorDetectorNode();
+    
+    ~DoorDetectorNode();
+    
+    void publish();
+  
+  private:
+    ros::NodeHandle nh_;
+    ParametersNode params_;
+    ros::Subscriber sub_laser_;
+    ros::Subscriber sub_image_;
+    ros::Subscriber sub_image_depth_;
+    std::unique_ptr<DoorDetector> door_detector_;
+    tf::TransformListener listenerTF_;
+    std::map<std::string, std::shared_ptr<tf::StampedTransform>> tfMap_;
+    
+    std::shared_ptr<ImageMeasurement> image_depth_;
+    std::shared_ptr<ImageMeasurement> image_rgb_;
+    std::shared_ptr<LaserMeasurement> laser_measurement_;
+    std::shared_ptr<DoorDetectorImageProcessor> img_processor_;
+    
+    bool display_window_;
+    bool modify_laser_scan_;
+    
+    /**
+     * @brief callback function for incoming laser scans
+     * @param _laser laser scan message
+     */
+    void callbackLaser( const sensor_msgs::LaserScan &_laser );
+    
+    void callbackImage( const sensor_msgs::ImageConstPtr &_img );
+    
+    void callbackDepthImage( const sensor_msgs::ImageConstPtr &_img );
+    
+    bool getStaticTF( const std::string &world_frame, const std::string &source_frame, tf::StampedTransform &_pose,
+                      bool debug );
+  };
 };
 
 #endif  // LINESEGMENT2D_DETECTOR_NODE_H

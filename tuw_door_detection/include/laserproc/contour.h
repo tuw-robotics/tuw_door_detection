@@ -17,7 +17,9 @@ namespace tuw {
 
         class Beam {
         public:
-            explicit Beam(double range, double angle, Point2D end_point);
+            Beam() {};
+
+            Beam(double range, double angle, Point2D end_point);
 
             //Beam(const Beam &) = delete;
 

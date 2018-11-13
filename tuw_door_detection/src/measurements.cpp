@@ -38,6 +38,30 @@ void LaserMeasurement::setLaser(const sensor_msgs::LaserScan &laser) {
   LaserMeasurement::laser = laser;
 }
 
+void LaserMeasurement::push_back(const tuw::Contour::Beam &_beam) {
+  this->beams_.push_back(_beam);
+}
+
+void LaserMeasurement::resize(const size_t _sz) {
+  beams_.resize(_sz);
+}
+
+const Contour::Beam &LaserMeasurement::operator[](const size_t _sz) const {
+  return beams_[_sz];
+}
+
+Contour::Beam &LaserMeasurement::operator[](const size_t _sz) {
+  return beams_[_sz];
+}
+
+std::vector<Contour::Beam>::iterator LaserMeasurement::begin() {
+  return beams_.begin();
+}
+
+std::vector<Contour::Beam>::iterator LaserMeasurement::end() {
+  return beams_.end();
+}
+
 ImageMeasurement::ImageMeasurement(const cv_bridge::CvImagePtr &_image, const tf::StampedTransform &_tf) : image(
     _image), Measurement(_tf) {
 
