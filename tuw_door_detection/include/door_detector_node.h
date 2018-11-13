@@ -43,7 +43,6 @@
 #include <tuw_geometry_msgs/LineSegments.h>
 #include <tuw_object_msgs/ObjectDetection.h>
 #include <dynamic_reconfigure/server.h>
-#include <tuw_linedetection/Linesegment2DDetectorConfig.h>
 #include <unordered_map>
 #include <sensor_msgs/Image.h>
 #include <cv_bridge/cv_bridge.h>
@@ -88,7 +87,9 @@ namespace tuw {
     ParametersNode params_;
     ros::Subscriber sub_laser_;
     ros::Subscriber sub_image_;
+    ros::Subscriber sub_camera_info_rgb_;
     ros::Subscriber sub_image_depth_;
+    ros::Subscriber sub_camera_info_depth_;
     std::unique_ptr<DoorDetector> door_detector_;
     tf::TransformListener listenerTF_;
     std::map<std::string, std::shared_ptr<tf::StampedTransform>> tfMap_;
@@ -97,6 +98,8 @@ namespace tuw {
     std::shared_ptr<ImageMeasurement> image_rgb_;
     std::shared_ptr<LaserMeasurement> laser_measurement_;
     std::shared_ptr<DoorDetectorImageProcessor> img_processor_;
+    sensor_msgs::CameraInfoPtr camera_info_depth_;
+    sensor_msgs::CameraInfoPtr camera_info_rgb_;
     
     bool display_window_;
     bool modify_laser_scan_;
@@ -106,6 +109,10 @@ namespace tuw {
      * @param _laser laser scan message
      */
     void callbackLaser( const sensor_msgs::LaserScan &_laser );
+    
+    void callbackCameraInfoRGB( const sensor_msgs::CameraInfoConstPtr &_msg );
+    
+    void callbackCameraInfoDepth( const sensor_msgs::CameraInfoConstPtr &_msg );
     
     void callbackImage( const sensor_msgs::ImageConstPtr &_img );
     

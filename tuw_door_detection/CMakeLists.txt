@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
         tuw_geometry_msgs
         dynamic_reconfigure
         cv_bridge
+        image_geometry
         )
 
 ## System dependencies are found with CMake's conventions
@@ -113,7 +114,7 @@ generate_dynamic_reconfigure_options(
 catkin_package(
         INCLUDE_DIRS include
         #  LIBRARIES tuw_linedetection
-        CATKIN_DEPENDS roscpp rospy tuw_geometry tuw_geometry_msgs tf tf_conversions cv_bridge
+        CATKIN_DEPENDS roscpp rospy tuw_geometry tuw_geometry_msgs tf tf_conversions cv_bridge image_geometry
         #  DEPENDS system_lib
 )
 

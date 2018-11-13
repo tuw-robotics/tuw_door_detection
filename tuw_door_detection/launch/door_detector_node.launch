@@ -16,7 +16,6 @@
     </group>
 
     <node name="door_detector_node" pkg="tuw_door_detection" type="door_detector_node" output="screen">
-        <remap from="scan" to="$(arg laser_scan)"/>
         <param name="mode" value="depth"/>
         <param name="publisher_topic" value="$(arg publisher_topic)"/>
         <param name="debug" value="$(arg debug)"/>
@@ -25,7 +24,10 @@
         <param name="camera_source_frame" value="$(arg camera_source_frame)"/>
         <param name="laser_source_frame" value="$(arg laser_source_frame)"/>
         <param name="world_frame" value="$(arg world_frame)"/>
+        <remap from="scan" to="$(arg laser_scan)"/>
         <remap from="image_rgb" to="$(arg camera_source_frame)/color/image_raw"/>
         <remap from="image_depth" to="$(arg camera_source_frame)/depth/image_rect_raw"/>
+        <remap from="camera_info_rgb" to="$(arg camera_source_frame)/color/camera_info"/>
+        <remap from="camera_info_depth" to="$(arg camera_source_frame)/depth/camera_info"/>
     </node>
 </launch>

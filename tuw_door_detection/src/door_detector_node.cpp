@@ -57,6 +57,8 @@ DoorDetectorNode::DoorDetectorNode() : nh_( "" ), display_window_( true ), modif
   
   sub_laser_ = nh_.subscribe( "scan", 1000, &DoorDetectorNode::callbackLaser, this );
   sub_image_ = nh_.subscribe( "image_rgb", 1000, &DoorDetectorNode::callbackImage, this );
+  sub_camera_info_rgb_ = nh_.subscribe( "camera_info_rgb", 1000, &DoorDetectorNode::callbackCameraInfoRGB, this );
+  sub_camera_info_depth_ = nh_.subscribe( "camera_info_depth", 1000, &DoorDetectorNode::callbackCameraInfoDepth, this );
   sub_image_depth_ = nh_.subscribe( "image_depth", 1000, &DoorDetectorNode::callbackDepthImage, this );
   img_processor_.reset( new DoorDetectorImageProcessor());
   //line_pub_ = nh_.advertise<tuw_geometry_msgs::LineSegments>("line_segments", 1000);
@@ -76,22 +78,46 @@ DoorDetectorNode::~DoorDetectorNode() {
 
 void DoorDetectorNode::callbackImage( const sensor_msgs::ImageConstPtr &_img ) {
   
+  if ( !camera_info_rgb_ ) {
+    return;
+  }
+  
   auto image = cv_bridge::toCvCopy( _img, std::string( "8UC3" ));
   
   tf::StampedTransform tf;
   if ( getStaticTF( params_.world_frame, _img->header.frame_id.c_str(), tf, params_.debug )) {
     
-    image_rgb_.reset( new ImageMeasurement( image, tf ));
+    //@ToDo: reset not mandatory
+    image_rgb_.reset( new ImageMeasurement( image, tf, *camera_info_rgb_ ));
     
     if ( image_rgb_ && image_depth_ ) {
+      ROS_INFO( "processImage" );
       img_processor_->processImage( image_rgb_, image_depth_ );
-      //image_rgb_ = nullptr;
-      //image_depth_ = nullptr;
+      image_rgb_ = nullptr;
+      image_depth_ = nullptr;
     }
   }
 }
 
+void DoorDetectorNode::callbackCameraInfoRGB( const sensor_msgs::CameraInfoConstPtr &_msg ) {
+  if ( !camera_info_rgb_ ) {
+    ROS_INFO( "CameraInfo for RGB cam retrieved" );
+  }
+  camera_info_rgb_.reset( new sensor_msgs::CameraInfo( *_msg ));
+}
+
+void DoorDetectorNode::callbackCameraInfoDepth( const sensor_msgs::CameraInfoConstPtr &_msg ) {
+  if ( !camera_info_depth_ ) {
+    ROS_INFO( "CameraInfo for depth cam retrieved" );
+  }
+  camera_info_depth_.reset( new sensor_msgs::CameraInfo( *_msg ));
+}
+
 void DoorDetectorNode::callbackDepthImage( const sensor_msgs::ImageConstPtr &_img ) {
+  
+  if ( !camera_info_depth_ ) {
+    return;
+  }
   
   auto image = cv_bridge::toCvCopy( _img, std::string( "16UC1" ));
   image->image.convertTo( image->image, CV_32FC1,
@@ -100,13 +126,40 @@ void DoorDetectorNode::callbackDepthImage( const sensor_msgs::ImageConstPtr &_im
   tf::StampedTransform tf;
   if ( getStaticTF( params_.world_frame, _img->header.frame_id.c_str(), tf, params_.debug )) {
     
-    image_depth_.reset( new ImageMeasurement( image, tf ));
+    //@ToDo: reset not mandatory only image has changed
+    image_depth_.reset( new ImageMeasurement( image, tf, *camera_info_depth_ ));
     
     if ( image_rgb_ && image_depth_ ) {
       img_processor_->processImage( image_rgb_, image_depth_ );
-      //image_rgb_ = nullptr;
-      //image_depth_ = nullptr;
+      image_rgb_ = nullptr;
+      image_depth_ = nullptr;
     }
+  }
+}
+
+void DoorDetectorNode::publish() {
+  door_detector_->publish();
+  img_processor_->display();
+}
+
+void DoorDetectorNode::callbackLaser( const sensor_msgs::LaserScan &_laser ) {
+  //door_detector_->processLaser(_laser);
+  
+  tf::StampedTransform tf;
+  if ( getStaticTF( params_.world_frame, params_.laser_source_frame, tf, params_.debug )) {
+    size_t n = _laser.ranges.size();
+    laser_measurement_.reset( new LaserMeasurement( _laser, tf ));
+    
+    for ( int i = 0; i < n; ++i ) {
+      double range = _laser.ranges[i];
+      if ( isfinite( range ) && range < _laser.range_max ) {
+        const double angle = _laser.angle_min + (_laser.angle_increment * i);
+        const Point2D pt( cos( angle ) * range, sin( angle ) * range );
+        laser_measurement_->push_back( Contour::Beam( range, angle, pt ));
+      }
+    }
+    
+    img_processor_->registerLaser( laser_measurement_ );
   }
 }
 
@@ -150,31 +203,6 @@ bool DoorDetectorNode::getStaticTF( const std::string &world_frame, const std::s
   return true;
 }
 
-void DoorDetectorNode::publish() {
-  door_detector_->publish();
-  img_processor_->display();
-}
-
-void DoorDetectorNode::callbackLaser( const sensor_msgs::LaserScan &_laser ) {
-  //door_detector_->processLaser(_laser);
-  
-  tf::StampedTransform tf;
-  if ( getStaticTF( params_.world_frame, params_.laser_source_frame, tf, params_.debug )) {
-    size_t n = _laser.ranges.size();
-    laser_measurement_.reset( new LaserMeasurement( _laser, tf ));
-    
-    for ( int i = 0; i < n; ++i ) {
-      double range = _laser.ranges[i];
-      if ( isfinite( range ) && range < _laser.range_max ) {
-        const double angle = _laser.angle_min + (_laser.angle_increment * i);
-        const Point2D pt( cos( angle ) * range, sin( angle ) * range );
-        laser_measurement_->push_back( Contour::Beam( range, angle, pt ));
-      }
-    }
-    
-    img_processor_->registerLaser( laser_measurement_ );
-  }
-}
 
 int main( int argc, char **argv ) {
   ros::init( argc, argv, "door_2d_detector_node" );
