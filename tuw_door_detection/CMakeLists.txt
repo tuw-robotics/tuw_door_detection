@@ -151,7 +151,7 @@ add_executable(door_detector_node
         src/laserproc/door_detection.cpp
         src/laserproc/contour.cpp
         src/imgproc/door_detector_imgproc.cpp
-        )
+        src/measurements.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above

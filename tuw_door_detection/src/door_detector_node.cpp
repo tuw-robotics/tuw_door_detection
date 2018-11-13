@@ -74,12 +74,14 @@ DoorDetectorNode::~DoorDetectorNode() {
 }
 
 void DoorDetectorNode::callbackImage(const sensor_msgs::ImageConstPtr &_img) {
-  image_rgb_ = cv_bridge::toCvCopy(_img, std::string("8UC3"));
+  auto image = cv_bridge::toCvCopy(_img, std::string("8UC3"));
 
   tf::StampedTransform tf;
   if (getStaticTF(params_.world_frame, _img->header.frame_id.c_str(), tf, params_.debug)) {
+   
+    image_rgb_.reset(new ImageMeasurement(image, tf));
+
     if (image_rgb_ && image_depth_) {
-      img_processor_->setStaticImageTF(tf);
       img_processor_->processImage(image_rgb_, image_depth_);
       image_rgb_ = nullptr;
       image_depth_ = nullptr;
@@ -88,14 +90,16 @@ void DoorDetectorNode::callbackImage(const sensor_msgs::ImageConstPtr &_img) {
 }
 
 void DoorDetectorNode::callbackDepthImage(const sensor_msgs::ImageConstPtr &_img) {
-  image_depth_ = cv_bridge::toCvCopy(_img, std::string("16UC1"));
-  image_depth_->image.convertTo(image_depth_->image, CV_32FC1,
-                                1.0 / static_cast<double>(std::numeric_limits<u_int16_t>::max()));
+  auto image = cv_bridge::toCvCopy(_img, std::string("16UC1"));
+  image->image.convertTo(image->image, CV_32FC1,
+                         1.0 / static_cast<double>(std::numeric_limits<u_int16_t>::max()));
 
   tf::StampedTransform tf;
   if (getStaticTF(params_.world_frame, _img->header.frame_id.c_str(), tf, params_.debug)) {
+
+    image_depth_.reset(new ImageMeasurement(image, tf));
+
     if (image_rgb_ && image_depth_) {
-      img_processor_->setStaticDepthTF(tf);
       img_processor_->processImage(image_rgb_, image_depth_);
       image_rgb_ = nullptr;
       image_depth_ = nullptr;

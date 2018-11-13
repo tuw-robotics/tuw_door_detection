@@ -7,6 +7,8 @@
 
 #include <cv_bridge/cv_bridge.h>
 #include <tf/transform_datatypes.h>
+#include <sensor_msgs/LaserScan.h>
+#include <measurements.h>
 
 namespace tuw {
     class DoorDetectorImageProcessor {
@@ -16,13 +18,10 @@ namespace tuw {
 
         ~DoorDetectorImageProcessor();
 
-        void processImage(cv_bridge::CvImagePtr _image_rgb, cv_bridge::CvImagePtr _image_depth = nullptr);
+        void processImage(std::unique_ptr<ImageMeasurement> &_image_meas_rgb,
+                          std::unique_ptr<ImageMeasurement> &_image_meas_depth);
 
         void display();
-
-        void setStaticImageTF(tf::StampedTransform &tf);
-
-        void setStaticDepthTF(tf::StampedTransform &tf);
 
     private:
         cv::Mat last_img_processed_;

@@ -48,6 +48,7 @@
 #include <sensor_msgs/Image.h>
 #include <cv_bridge/cv_bridge.h>
 #include <map>
+#include <measurements.h>
 
 namespace tuw {
 /**
@@ -92,8 +93,9 @@ namespace tuw {
         tf::TransformListener listenerTF_;
         std::map<std::string, std::shared_ptr<tf::StampedTransform>> tfMap_;
 
-        cv_bridge::CvImagePtr image_rgb_;
-        cv_bridge::CvImagePtr image_depth_;
+        std::unique_ptr<ImageMeasurement> image_depth_;
+        std::unique_ptr<ImageMeasurement> image_rgb_;
+        std::unique_ptr<LaserMeasurement> image_laser_;
         std::unique_ptr<DoorDetectorImageProcessor> img_processor_;
 
         bool display_window_;

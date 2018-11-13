@@ -17,21 +17,13 @@ DoorDetectorImageProcessor::~DoorDetectorImageProcessor() {
 
 }
 
-void DoorDetectorImageProcessor::processImage(cv_bridge::CvImagePtr _image_rgb, cv_bridge::CvImagePtr _image_depth) {
-  cv::cvtColor(_image_rgb->image, _image_rgb->image, CV_BGR2GRAY);
-  cv::GaussianBlur(_image_rgb->image, _image_rgb->image, cv::Size(5, 5), 0.75);
-  cv::Canny(_image_rgb->image, _image_rgb->image, 20, 55, 3, true);
+void DoorDetectorImageProcessor::processImage(std::unique_ptr<ImageMeasurement> &_image_meas_rgb, std::unique_ptr<ImageMeasurement> &_image_meas_depth) {
+  cv::cvtColor(_image_meas_rgb->getImage()->image, _image_meas_rgb->getImage()->image, CV_BGR2GRAY);
+  cv::GaussianBlur(_image_meas_rgb->getImage()->image, _image_meas_rgb->getImage()->image, cv::Size(5, 5), 0.75);
+  cv::Canny(_image_meas_rgb->getImage()->image, _image_meas_rgb->getImage()->image, 20, 55, 3, true);
 
-  last_img_processed_ = _image_rgb->image;
-  last_depth_processed_ = _image_depth->image;
-}
-
-void DoorDetectorImageProcessor::setStaticImageTF(tf::StampedTransform &tf) {
-  vectorQuaternionToCV(tf.getOrigin(), tf.getRotation(), tfRI);
-}
-
-void DoorDetectorImageProcessor::setStaticDepthTF(tf::StampedTransform &tf) {
-  vectorQuaternionToCV(tf.getOrigin(), tf.getRotation(), tfRD);
+  last_img_processed_ = _image_meas_rgb->getImage()->image;
+  last_depth_processed_ = _image_meas_depth->getImage()->image;
 }
 
 void DoorDetectorImageProcessor::display() {
