@@ -34,6 +34,7 @@
 #include "door_detector_node.h"
 #include "laserproc/door_line_detector.h"
 #include "laserproc/door_depth_detector.h"
+#include <opencv2/highgui.hpp>
 
 using namespace tuw;
 
@@ -145,6 +146,9 @@ void DoorDetectorNode::publish() {
 void DoorDetectorNode::callbackLaser( const sensor_msgs::LaserScan &_laser ) {
   //door_detector_->processLaser(_laser);
   
+  std::unique_ptr<Contour> contour_vis;
+  contour_vis.reset( new Contour());
+  
   tf::StampedTransform tf;
   if ( getStaticTF( params_.world_frame, params_.laser_source_frame, tf, params_.debug )) {
     size_t n = _laser.ranges.size();
@@ -156,11 +160,13 @@ void DoorDetectorNode::callbackLaser( const sensor_msgs::LaserScan &_laser ) {
         const double angle = _laser.angle_min + (_laser.angle_increment * i);
         const Point2D pt( cos( angle ) * range, sin( angle ) * range );
         laser_measurement_->push_back( Contour::Beam( range, angle, pt ));
+        contour_vis->push_back( Contour::Beam::make_beam( range, angle, pt ));
       }
     }
     
     img_processor_->registerLaser( laser_measurement_ );
   }
+  
 }
 
 bool DoorDetectorNode::getStaticTF( const std::string &world_frame, const std::string &source_frame,
