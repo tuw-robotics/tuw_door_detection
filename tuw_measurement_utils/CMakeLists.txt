@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(tuw_door_detection)
+project(tuw_measurement_utils)
 add_compile_options(-std=c++14) ## for c++ 2014
 
 ## Find catkin macros and libraries
@@ -17,7 +17,6 @@ find_package(catkin REQUIRED COMPONENTS
         dynamic_reconfigure
         cv_bridge
         image_geometry
-        tuw_measurement_utils
         )
 
 ## System dependencies are found with CMake's conventions
@@ -97,11 +96,6 @@ find_package(OpenCV REQUIRED)
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-generate_dynamic_reconfigure_options(
-        cfg/Door2DDetector.cfg
-        cfg/DepthDetector.cfg
-        #   cfg/DynReconf2.cfg
-)
 
 ###################################
 ## catkin specific configuration ##
@@ -114,11 +108,10 @@ generate_dynamic_reconfigure_options(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
         INCLUDE_DIRS include
-        #  LIBRARIES tuw_linedetection
-        CATKIN_DEPENDS roscpp rospy tuw_geometry tuw_geometry_msgs tf tf_conversions cv_bridge image_geometry tuw_measurement_utils
-        DEPENDS 
-          OpenCV
-          Eigen3
+        LIBRARIES tuw_measurement_utils
+        CATKIN_DEPENDS roscpp rospy tuw_geometry tuw_geometry_msgs tf tf_conversions cv_bridge image_geometry
+        DEPENDS OpenCV
+                Eigen
 )
 
 ###########
@@ -147,22 +140,17 @@ include_directories(
 
 ## Declare a C++ executable
 # add_executable(tuw_linedetection_node src/tuw_linedetection_node.cpp)
-add_executable(door_detector_node
-        src/door_detector_node.cpp
-        src/laserproc/door_detector.cpp
-        src/laserproc/door_line_detector.cpp
-        src/laserproc/door_depth_detector.cpp
-        src/laserproc/door_detection.cpp
-        src/imgproc/door_detector_imgproc.cpp
-        )
+add_library(tuw_measurement_utils
+        src/measurements.cpp
+        src/contour.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(tuw_linedetection_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(door_detector_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(tuw_measurement_utils ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(door_detector_node
+target_link_libraries(tuw_measurement_utils
         ${catkin_LIBRARIES}
         ${OpenCV_LIBRARIES}
         ${Boost_LIBRARIES}
@@ -184,18 +172,18 @@ target_link_libraries(door_detector_node
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS tuw_linedetection tuw_linedetection_node
-#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+install(TARGETS tuw_measurement_utils tuw_measurement_utils
+        #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+        )
 
 ## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.h"
-#   PATTERN ".svn" EXCLUDE
-# )
+install(DIRECTORY include/${PROJECT_NAME}/
+        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+        FILES_MATCHING PATTERN "*.h"
+        PATTERN ".svn" EXCLUDE
+        )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES

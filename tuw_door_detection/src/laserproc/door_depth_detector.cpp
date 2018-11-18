@@ -7,7 +7,7 @@
 #include <opencv2/plot.hpp>
 #include <tuw_geometry/figure.h>
 #include <tuw_geometry/point2d.h>
-#include <laserproc/contour.h>
+#include <tuw_measurement_utils/contour.h>
 #include <random>
 
 using namespace tuw;

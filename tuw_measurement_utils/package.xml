@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>tuw_door_detection</name>
+  <name>tuw_measurement_utils</name>
   <version>0.0.0</version>
   <description>The tuw_doordetection package</description>
 
@@ -54,7 +54,6 @@
   <build_depend>dynamic_reconfigure</build_depend>
   <build_depend>tf_conversions</build_depend>
   <build_depend>image_geometry</build_depend>
-  <build_depend>tuw_measurement_utils</build_depend>
 
   <run_depend>tf</run_depend>
   <run_depend>cv_bridge</run_depend>
@@ -66,7 +65,6 @@
   <run_depend>dynamic_reconfigure</run_depend>
   <run_depend>tf_conversions</run_depend>
   <run_depend>image_geometry</run_depend>
-  <run_depend>tuw_measurement_utils</run_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

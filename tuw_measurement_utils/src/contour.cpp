@@ -2,7 +2,7 @@
 // Created by felix on 29.10.18.
 //
 
-#include <laserproc/contour.h>
+#include <tuw_measurement_utils/contour.h>
 #include <iostream>
 #include <set>
 #include <opencv2/core.hpp>

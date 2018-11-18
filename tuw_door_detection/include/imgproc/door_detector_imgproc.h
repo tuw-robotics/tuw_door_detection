@@ -8,7 +8,7 @@
 #include <cv_bridge/cv_bridge.h>
 #include <tf/transform_datatypes.h>
 #include <sensor_msgs/LaserScan.h>
-#include <measurements.h>
+#include <tuw_measurement_utils/measurements.h>
 
 namespace tuw {
   class DoorDetectorImageProcessor {
