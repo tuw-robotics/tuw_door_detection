@@ -176,6 +176,10 @@ bool DoorDetectorNode::getStaticTF( const std::string &world_frame, const std::s
   std::string source_frame_id = tf::resolve( "", world_frame );
   std::string key = target_frame_id + "->" + source_frame_id;
   
+  if ( debug ) {
+    ROS_INFO( "tf get: %s", key.c_str());
+  }
+  
   if ( !tfMap_[key] ) {
     try {
       
