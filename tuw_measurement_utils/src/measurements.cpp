@@ -110,29 +110,19 @@ ImageMeasurement::ImageMeasurement( const cv_bridge::CvImagePtr &_image, const t
   camera_.reset( new image_geometry::PinholeCameraModel());
 }
 
-void ImageMeasurement::setCameraInfo( const sensor_msgs::CameraInfo &_camInfo ) {
-  if ( !camera_ ) {
-    camera_.reset( new image_geometry::PinholeCameraModel());
-  }
-  camera_->fromCameraInfo( _camInfo );
-}
-
-void ImageMeasurement::setCameraInfo( const sensor_msgs::CameraInfoConstPtr &_camInfo ) {
-  if ( !camera_ ) {
-    camera_.reset( new image_geometry::PinholeCameraModel());
-  }
-  camera_->fromCameraInfo( *_camInfo );
+void ImageMeasurement::setCameraModel( const std::shared_ptr<image_geometry::PinholeCameraModel> &_cam ) {
+  camera_ = _cam;
 }
 
 cv_bridge::CvImagePtr &ImageMeasurement::getImage() {
   return image;
 }
 
-const std::unique_ptr<image_geometry::PinholeCameraModel> &ImageMeasurement::getCameraModel() const {
+const std::shared_ptr<image_geometry::PinholeCameraModel> &ImageMeasurement::getCameraModel() const {
   return camera_;
 }
 
-std::unique_ptr<image_geometry::PinholeCameraModel> &ImageMeasurement::getCameraModel() {
+std::shared_ptr<image_geometry::PinholeCameraModel> &ImageMeasurement::getCameraModel() {
   return camera_;
 }
 

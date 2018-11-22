@@ -90,19 +90,17 @@ namespace tuw {
     
     cv::Mat &getCVImage();
     
-    const std::unique_ptr<image_geometry::PinholeCameraModel> &getCameraModel() const;
+    const std::shared_ptr<image_geometry::PinholeCameraModel> &getCameraModel() const;
     
-    std::unique_ptr<image_geometry::PinholeCameraModel> &getCameraModel();
+    std::shared_ptr<image_geometry::PinholeCameraModel> &getCameraModel();
     
     void setImage( const cv_bridge::CvImagePtr &image );
     
-    void setCameraInfo( const sensor_msgs::CameraInfo &_camInfo );
-    
-    void setCameraInfo( const sensor_msgs::CameraInfoConstPtr &_camInfo );
+    void setCameraModel( const std::shared_ptr<image_geometry::PinholeCameraModel> &camera_model_ptr );
   
   protected:
     cv_bridge::CvImagePtr image;
-    std::unique_ptr<image_geometry::PinholeCameraModel> camera_;
+    std::shared_ptr<image_geometry::PinholeCameraModel> camera_;
   };
 };
 
