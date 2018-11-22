@@ -29,6 +29,8 @@ namespace tuw {
     void setTfWorldSensor( const tf::StampedTransform &_tf );
     
     void vectorQuaternionToEigen( const tf::Point &pt, const tf::Quaternion &q, Eigen::Matrix<double, 4, 4> &m );
+    
+    void cv2Eigen( const cv::Matx44d &_we_dont_want, Eigen::Matrix<double, 4, 4> &_we_want );
   
   protected:
     Eigen::Matrix<double, 4, 4> tfWorldSensor;

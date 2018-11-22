@@ -18,6 +18,14 @@ Measurement::vectorQuaternionToEigen( const tf::Point &pt, const tf::Quaternion 
   m.topRightCorner<3, 1>() = v;
 }
 
+void Measurement::cv2Eigen( const cv::Matx44d &_we_dont_want, Eigen::Matrix<double, 4, 4> &_we_want ) {
+  for ( int i = 0; i < _we_dont_want.rows; ++i ) {
+    for ( int j = 0; j < _we_dont_want.cols; ++j ) {
+      _we_want( i, j ) = _we_dont_want( i, j );
+    }
+  }
+}
+
 Measurement::Measurement( const Eigen::Matrix<double, 4, 4> &tfWorldSensor ) : tfWorldSensor( tfWorldSensor ) {
 }
 
@@ -31,6 +39,10 @@ const Eigen::Matrix<double, 4, 4> &Measurement::getTfWorldSensor() const {
 
 void Measurement::setTfWorldSensor( const Eigen::Matrix<double, 4, 4> &tfWorldSensor ) {
   Measurement::tfWorldSensor = tfWorldSensor;
+}
+
+void Measurement::setTfWorldSensor( cv::Mat &_tf ) {
+  cv2Eigen( _tf, tfWorldSensor );
 }
 
 void Measurement::setTfWorldSensor( const tf::StampedTransform &_tf ) {
