@@ -63,7 +63,6 @@ LaserMeasurement::LaserMeasurement( const sensor_msgs::LaserScan &_laser,
 void LaserMeasurement::initFromScan() {
   beams_.clear();
   std::size_t n = laser.ranges.size();
-  std::cout << "laser ranges size " << n << std::endl;
   std::size_t ii = 0;
   
   for ( ; ii < n; ++ii ) {

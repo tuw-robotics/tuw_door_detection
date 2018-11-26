@@ -24,6 +24,8 @@ namespace tuw {
     
     const Eigen::Matrix<double, 4, 4> &getTfWorldSensor() const;
     
+    void setTfWorldSensor( cv::Mat &_tf );
+    
     void setTfWorldSensor( const Eigen::Matrix<double, 4, 4> &tfWorldSensor );
     
     void setTfWorldSensor( const tf::StampedTransform &_tf );
