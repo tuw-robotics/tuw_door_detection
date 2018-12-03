@@ -6,9 +6,9 @@
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/LaserScan.h>
 #include <sensor_msgs/CameraInfo.h>
-#include <tf/transform_datatypes.h>
 #include "contour.h"
 #include <image_geometry/pinhole_camera_model.h>
+#include <geometry_msgs/TransformStamped.h>
 
 namespace tuw {
   
@@ -17,7 +17,7 @@ namespace tuw {
     
     Measurement( const Eigen::Matrix<double, 4, 4> &tfWorldSensor );
     
-    Measurement( const tf::StampedTransform &_tf );
+    Measurement( const geometry_msgs::TransformStampedPtr _tf );
     
     ~Measurement() {
     }
@@ -26,16 +26,21 @@ namespace tuw {
     
     void setTfWorldSensor( cv::Mat &_tf );
     
-    void setTfWorldSensor( const Eigen::Matrix<double, 4, 4> &tfWorldSensor );
+    void setTfWorldSensor( const Eigen::Matrix<double, 4, 4> &tfWorldSensor, bool override_stamped = false );
     
-    void setTfWorldSensor( const tf::StampedTransform &_tf );
+    void setTfWorldSensor( const geometry_msgs::TransformStampedPtr _tf );
     
-    void vectorQuaternionToEigen( const tf::Point &pt, const tf::Quaternion &q, Eigen::Matrix<double, 4, 4> &m );
+    const geometry_msgs::TransformStampedPtr getStampedTf() const;
     
-    void cv2Eigen( const cv::Matx44d &_we_dont_want, Eigen::Matrix<double, 4, 4> &_we_want );
+    void vectorQuaternionToEigen( const geometry_msgs::Transform &tf, Eigen::Matrix<double, 4, 4> &m );
+    
+    void transformStamped2Eigen( const geometry_msgs::TransformStampedPtr, Eigen::Matrix<double, 4, 4> & );
+    
+    void cv2Eigen( const cv::Matx44d &, Eigen::Matrix<double, 4, 4> & );
   
   protected:
     Eigen::Matrix<double, 4, 4> tfWorldSensor;
+    geometry_msgs::TransformStampedPtr stamped_tf_;
   };
   
   class LaserMeasurement : public Measurement {
@@ -44,7 +49,7 @@ namespace tuw {
     std::vector<Contour::Beam> beams_;
   
   public:
-    LaserMeasurement( const sensor_msgs::LaserScan &_laser, const tf::StampedTransform &_tf );
+    LaserMeasurement( const sensor_msgs::LaserScan &_laser, const geometry_msgs::TransformStampedPtr _tf );
     
     ~LaserMeasurement() {
     }
@@ -78,14 +83,14 @@ namespace tuw {
   
   public:
     
-    ImageMeasurement( const cv_bridge::CvImageConstPtr &, const tf::StampedTransform & );
+    ImageMeasurement( const cv_bridge::CvImageConstPtr &, const geometry_msgs::TransformStampedPtr );
     
-    ImageMeasurement( const tf::StampedTransform &_tf, const cv_bridge::CvImagePtr &image );
+    ImageMeasurement( const geometry_msgs::TransformStampedPtr &_tf, const cv_bridge::CvImagePtr &image );
     
-    ImageMeasurement( const cv_bridge::CvImagePtr &, const tf::StampedTransform &,
+    ImageMeasurement( const cv_bridge::CvImagePtr &, const geometry_msgs::TransformStampedPtr,
                       const sensor_msgs::CameraInfo & );
     
-    ImageMeasurement( const cv_bridge::CvImagePtr &_image, const tf::StampedTransform &_tf );
+    ImageMeasurement( const cv_bridge::CvImagePtr &_image, const geometry_msgs::TransformStampedPtr _tf );
     
     ~ImageMeasurement() {
     }
