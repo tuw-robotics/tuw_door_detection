@@ -72,18 +72,21 @@ const geometry_msgs::TransformStampedPtr Measurement::getStampedTf() const {
 }
 
 void Measurement::setTfWorldSensor( geometry_msgs::TransformStampedPtr _tf ) {
-  stamped_tf_ = _tf;
-  transformStamped2Eigen( _tf, tfWorldSensor );
+  stamped_tf_.reset( new geometry_msgs::TransformStamped( *_tf ));
+  transformStamped2Eigen( stamped_tf_, tfWorldSensor );
 }
 
-LaserMeasurement::LaserMeasurement( const sensor_msgs::LaserScan &_laser,
-                                    const geometry_msgs::TransformStampedPtr _tf ) : laser( _laser ),
-                                                                                     Measurement( _tf ) {
-  
+LaserMeasurement::LaserMeasurement( const geometry_msgs::TransformStampedPtr _tf ) : Measurement( _tf ) {
 }
 
-void LaserMeasurement::initFromScan() {
+void LaserMeasurement::clear() {
   beams_.clear();
+}
+
+void LaserMeasurement::initFromScan( const sensor_msgs::LaserScan &_scan ) {
+  clear();
+  this->laser = _scan;
+  
   std::size_t n = laser.ranges.size();
   std::size_t ii = 0;
   

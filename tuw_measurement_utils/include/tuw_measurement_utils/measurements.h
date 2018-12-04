@@ -49,12 +49,12 @@ namespace tuw {
     std::vector<Contour::Beam> beams_;
   
   public:
-    LaserMeasurement( const sensor_msgs::LaserScan &_laser, const geometry_msgs::TransformStampedPtr _tf );
+    LaserMeasurement( const geometry_msgs::TransformStampedPtr _tf );
     
     ~LaserMeasurement() {
     }
     
-    void initFromScan();
+    void initFromScan( const sensor_msgs::LaserScan &_scan );
     
     const sensor_msgs::LaserScan &getLaser() const;
     
@@ -77,6 +77,8 @@ namespace tuw {
     const Contour::Beam &operator[]( const size_t _sz ) const;
     
     Contour::Beam &operator[]( const size_t _sz );
+    
+    void clear();
   };
   
   class ImageMeasurement : public Measurement {
