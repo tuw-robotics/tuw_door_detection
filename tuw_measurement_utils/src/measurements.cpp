@@ -87,15 +87,22 @@ void LaserMeasurement::initFromScan( const sensor_msgs::LaserScan &_scan ) {
   clear();
   this->laser = _scan;
   
+  max_reading_ = -std::numeric_limits<double>::max();
+  min_reading_ = std::numeric_limits<double>::max();
+  
   std::size_t n = laser.ranges.size();
   std::size_t ii = 0;
   
   for ( ; ii < n; ++ii ) {
     double range = laser.ranges[ii];
     if ( isfinite( range ) && range < laser.range_max ) {
+      
       const double angle = laser.angle_min + (laser.angle_increment * ii);
       const Point2D pt( cos( angle ) * range, sin( angle ) * range );
       push_back( Contour::Beam( range, angle, pt ));
+      
+      max_reading_ = std::max( max_reading_, range );
+      min_reading_ = std::min( min_reading_, range );
     }
   }
 }

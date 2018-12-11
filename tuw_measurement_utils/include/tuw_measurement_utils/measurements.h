@@ -79,6 +79,9 @@ namespace tuw {
     Contour::Beam &operator[]( const size_t _sz );
     
     void clear();
+    
+    double max_reading_;
+    double min_reading_;
   };
   
   class ImageMeasurement : public Measurement {
