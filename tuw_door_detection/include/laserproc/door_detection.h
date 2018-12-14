@@ -7,6 +7,8 @@
 
 namespace tuw {
 
+  namespace door_laser_proc {
+
     class DoorDetection;
 
     using DoorDetectionPtr = std::shared_ptr<DoorDetection>;
@@ -15,61 +17,61 @@ namespace tuw {
     class DoorDetection {
 
     public:
-        struct Beam {
-            Point2D point;
-            double length;
-        };
+      struct Beam {
+        Point2D point;
+        double length;
+      };
 
-        DoorDetection();
+      DoorDetection();
 
-        double &response();
+      double &response();
 
-        double &responseNormalized();
+      double &responseNormalized();
 
-        bool &validDetection();
+      bool &validDetection();
 
-        const double &response() const;
+      const double &response() const;
 
-        const double &responseNormalized() const;
+      const double &responseNormalized() const;
 
-        const bool &validDetection() const;
+      const bool &validDetection() const;
 
-        tuw_object_msgs::ObjectWithCovariance toMsg(int id);
+      tuw_object_msgs::ObjectWithCovariance toMsg(int id);
 
-        void link(DoorDetectionPtr &_this, DoorDetectionPtr &_other);
+      void link(DoorDetectionPtr &_this, DoorDetectionPtr &_other);
 
-        Beam &operator[](size_t i);
+      Beam &operator[](size_t i);
 
-        const Beam &operator[](size_t id) const;
+      const Beam &operator[](size_t id) const;
 
-        const std::size_t size() const {
-          return end_points.size();
-        }
+      const std::size_t size() const {
+        return end_points.size();
+      }
 
-        void resize(std::size_t sz) {
-          end_points.resize(sz);
-        }
+      void resize(std::size_t sz) {
+        end_points.resize(sz);
+      }
 
-        friend std::ostream &operator<<(std::ostream &output, const DoorDetection &d);
+      friend std::ostream &operator<<(std::ostream &output, const DoorDetection &d);
 
     protected:
-        std::vector<Beam> end_points;
-        double response_;
-        double response_normalized_;
-        bool valid_;
-        std::weak_ptr<DoorDetection> next_;
-        std::weak_ptr<DoorDetection> previous_;
+      std::vector<Beam> end_points;
+      double response_;
+      double response_normalized_;
+      bool valid_;
+      std::weak_ptr<DoorDetection> next_;
+      std::weak_ptr<DoorDetection> previous_;
 
-        void next(DoorDetectionPtr &_other);
+      void next(DoorDetectionPtr &_other);
 
-        DoorDetectionPtr next();
+      DoorDetectionPtr next();
 
-        void previous(DoorDetectionPtr &_other);
+      void previous(DoorDetectionPtr &_other);
 
-        DoorDetectionPtr previous();
+      DoorDetectionPtr previous();
 
     };
-
+  };
 };
 
 #endif

@@ -48,6 +48,8 @@
 #include <cv_bridge/cv_bridge.h>
 #include <map>
 #include <tuw_measurement_utils/measurements.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_ros/buffer.h>
 
 namespace tuw {
 /**
@@ -58,7 +60,7 @@ namespace tuw {
   public:
     struct ParametersNode {
       ParametersNode();
-      
+
       enum FilterMode {
         LINES, DEPTH
       };
@@ -75,13 +77,13 @@ namespace tuw {
       std::string world_frame;
       bool debug;
     };
-    
+
     DoorDetectorNode();
-    
+
     ~DoorDetectorNode();
-    
+
     void publish();
-  
+
   private:
     ros::NodeHandle nh_;
     ParametersNode params_;
@@ -90,37 +92,40 @@ namespace tuw {
     ros::Subscriber sub_camera_info_rgb_;
     ros::Subscriber sub_image_depth_;
     ros::Subscriber sub_camera_info_depth_;
-    std::shared_ptr<DoorDetector> door_detector_;
-    tf::TransformListener listenerTF_;
-    std::map<std::string, std::shared_ptr<tf::StampedTransform>> tfMap_;
-    
+    std::shared_ptr<door_laser_proc::DoorDetectorBase> door_detector_laser_;
+
+    tf2_ros::Buffer tf_buffer_;
+    tf2_ros::TransformListener tf_listener_;
+    std::map<std::string, geometry_msgs::TransformStampedPtr> tfMap_;
+
     std::shared_ptr<ImageMeasurement> image_depth_;
     std::shared_ptr<ImageMeasurement> image_rgb_;
     std::shared_ptr<LaserMeasurement> laser_measurement_;
-    std::shared_ptr<DoorDetectorImageProcessor> img_processor_;
+    std::shared_ptr<image_processor::DoorDetectorImageProcessor> img_processor_;
     sensor_msgs::CameraInfoPtr camera_info_depth_;
     sensor_msgs::CameraInfoPtr camera_info_rgb_;
     //std::unique_ptr<DoorDepthDetector> depth_detector_;
-    
+
     bool display_window_;
     bool modify_laser_scan_;
-    
+
     /**
      * @brief callback function for incoming laser scans
      * @param _laser laser scan message
      */
-    void callbackLaser( const sensor_msgs::LaserScan &_laser );
-    
-    void callbackCameraInfoRGB( const sensor_msgs::CameraInfoConstPtr &_msg );
-    
-    void callbackCameraInfoDepth( const sensor_msgs::CameraInfoConstPtr &_msg );
-    
-    void callbackImage( const sensor_msgs::ImageConstPtr &_img );
-    
-    void callbackDepthImage( const sensor_msgs::ImageConstPtr &_img );
-    
-    bool getStaticTF( const std::string &world_frame, const std::string &source_frame, tf::StampedTransform &_pose,
-                      bool debug );
+    void callbackLaser(const sensor_msgs::LaserScan &_laser);
+
+    void callbackCameraInfoRGB(const sensor_msgs::CameraInfoConstPtr &_msg);
+
+    void callbackCameraInfoDepth(const sensor_msgs::CameraInfoConstPtr &_msg);
+
+    void callbackImage(const sensor_msgs::ImageConstPtr &_img);
+
+    void callbackDepthImage(const sensor_msgs::ImageConstPtr &_img);
+
+    bool getStaticTF(const std::string &world_frame, const std::string &source_frame,
+                     geometry_msgs::TransformStampedPtr &_pose,
+                     bool debug);
   };
 };
 

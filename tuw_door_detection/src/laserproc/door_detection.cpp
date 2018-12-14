@@ -2,6 +2,7 @@
 #include <laserproc/door_detection.h>
 
 using namespace tuw;
+using namespace tuw::door_laser_proc;
 
 DoorDetection::DoorDetection() {
   this->response_ = std::nan("uninitialized");
@@ -42,6 +43,8 @@ tuw_object_msgs::ObjectWithCovariance DoorDetection::toMsg(int id) {
 }
 
 namespace tuw {
+
+  namespace door_laser_proc {
 
     std::ostream &operator<<(std::ostream &output, const DoorDetection &d) {
       output << "Beams: {(" << d[0].point.x() << ", " << d[0].point.y() << ")";
@@ -102,4 +105,5 @@ namespace tuw {
       _this->next(_other);
       _other->previous(_this);
     }
+  }
 }

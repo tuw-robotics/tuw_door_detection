@@ -6,8 +6,8 @@ add_compile_options(-std=c++14) ## for c++ 2014
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-        tf
-        tf_conversions
+        tf2_ros
+        geometry_msgs
         roscpp
         rospy
         std_msgs
@@ -115,10 +115,20 @@ generate_dynamic_reconfigure_options(
 catkin_package(
         INCLUDE_DIRS include
         #  LIBRARIES tuw_linedetection
-        CATKIN_DEPENDS roscpp rospy tuw_geometry tuw_geometry_msgs tf tf_conversions cv_bridge image_geometry tuw_measurement_utils
-        DEPENDS 
-          OpenCV
-          Eigen3
+        CATKIN_DEPENDS
+        roscpp
+        rospy
+        tuw_geometry
+        tuw_geometry_msgs
+        tf2_ros
+        tf_conversions
+        cv_bridge
+        image_geometry
+        tuw_measurement_utils
+
+        DEPENDS
+        OpenCV
+        Eigen3
 )
 
 ###########
@@ -149,11 +159,12 @@ include_directories(
 # add_executable(tuw_linedetection_node src/tuw_linedetection_node.cpp)
 add_executable(door_detector_node
         src/door_detector_node.cpp
-        src/laserproc/door_detector.cpp
+        src/laserproc/door_detector_base.cpp
         src/laserproc/door_line_detector.cpp
         src/laserproc/door_depth_detector.cpp
         src/laserproc/door_detection.cpp
         src/imgproc/door_detector_imgproc.cpp
+        src/door_detector.cpp
         )
 
 ## Add cmake target dependencies of the executable

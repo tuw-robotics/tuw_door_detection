@@ -5,8 +5,9 @@
 #include <eigen3/Eigen/Core>
 
 using namespace tuw;
+using namespace door_laser_proc;
 
-DoorLineDetector::DoorLineDetector( ros::NodeHandle &_nh ) : DoorDetector( _nh ) {
+DoorLineDetector::DoorLineDetector(ros::NodeHandle &_nh) : DoorDetectorBase(_nh) {
 //  reconfigure_fnc_ = boost::bind( &DoorLineDetector::callbackConfig, this, _1, _2 );
 //  reconfigure_server_.setCallback( reconfigure_fnc_ );
 }
@@ -24,7 +25,7 @@ DoorLineDetector::~DoorLineDetector() {
 //  door_range.second = 1.0;
 //}
 
-bool DoorLineDetector::processLaser( const sensor_msgs::LaserScan &_laser ) {
+bool DoorLineDetector::processLaser(const sensor_msgs::LaserScan &_laser) {
   //ROS_INFO("callback laser");
 //  sensor_msgs::LaserScan output_scan = sensor_msgs::LaserScan(_laser);
 //  int nr = (_laser.angle_max - _laser.angle_min) / _laser.angle_increment;
@@ -185,7 +186,7 @@ bool DoorLineDetector::processLaser( const sensor_msgs::LaserScan &_laser ) {
 //      cv::waitKey(1);
 //    }
 //  }
-  
+
   // set header information
 //  line_segments_msg.header = _laser.header;
 //
@@ -193,9 +194,9 @@ bool DoorLineDetector::processLaser( const sensor_msgs::LaserScan &_laser ) {
 //  line_pub_.publish(line_segments_msg);
 }
 
-bool DoorLineDetector::is_in_doorrange( tuw_geometry_msgs::LineSegment &line_segment ) {
+bool DoorLineDetector::is_in_doorrange(tuw_geometry_msgs::LineSegment &line_segment) {
   double dist_x = line_segment.p1.x - line_segment.p0.x;
   double dist_y = line_segment.p1.y - line_segment.p0.y;
-  double distance = std::sqrt( dist_x * dist_x + dist_y * dist_y );
+  double distance = std::sqrt(dist_x * dist_x + dist_y * dist_y);
   return distance > door_range.first && distance < door_range.second;
 }
