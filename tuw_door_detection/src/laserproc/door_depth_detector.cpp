@@ -49,9 +49,7 @@ DoorDepthDetector::DoorDepthDetector(ros::NodeHandle &_nh) : params_(new DoorDep
   }
 }
 
-DoorDepthDetector::~DoorDepthDetector()
-{
-}
+DoorDepthDetector::~DoorDepthDetector() = default;
 
 //void DoorDepthDetector::callbackConfig(tuw_door_detection::DepthDetectorConfig &_config, uint32_t level)
 //{
@@ -204,7 +202,7 @@ std::vector<std::shared_ptr<tuw::Contour>> DoorDepthDetector::contourMode(const 
   cv::imshow("lines_as_img", img);
   cv::waitKey(1);
 
-  return contours;
+  return std::move(contours);
   //cv::imshow("corners", corner_img);
 }
 

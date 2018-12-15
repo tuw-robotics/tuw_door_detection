@@ -39,7 +39,8 @@
 
 using namespace tuw;
 
-DoorDetectorNode::ParametersNode::ParametersNode() : node("~") {
+DoorDetectorNode::ParametersNode::ParametersNode() : node("~")
+{
   std::string mode_str;
   node.param<std::string>("mode", mode_str, std::string("depth"));
   node.param<std::string>("camera_source_frame", camera_source_frame, std::string(""));
@@ -47,16 +48,19 @@ DoorDetectorNode::ParametersNode::ParametersNode() : node("~") {
   node.param<std::string>("world_frame", world_frame, std::string(""));
   node.param<bool>("debug", debug, false);
 
-  try {
+  try
+  {
     mode = enumResolver.at(mode_str);
   }
-  catch (std::exception &e) {
+  catch (std::exception &e)
+  {
     ROS_ERROR("ERROR: %s is not a valid detector mode.", mode_str.c_str());
   }
 }
 
 DoorDetectorNode::DoorDetectorNode() : nh_(""), display_window_(true), modify_laser_scan_(true),
-                                       tf_buffer_(ros::Duration(50, 0)), tf_listener_(tf_buffer_) {
+                                       tf_buffer_(ros::Duration(50, 0)), tf_listener_(tf_buffer_)
+{
 
   sub_laser_ = nh_.subscribe("scan", 1000, &DoorDetectorNode::callbackLaser, this);
   sub_image_ = nh_.subscribe("image_rgb", 1000, &DoorDetectorNode::callbackImage, this);
@@ -69,32 +73,38 @@ DoorDetectorNode::DoorDetectorNode() : nh_(""), display_window_(true), modify_la
   //measurement_laser_ = std::make_shared<tuw::MeasurementLaser>();
   params_ = ParametersNode();
 
-  if (params_.mode == ParametersNode::FilterMode::DEPTH) {
+  if (params_.mode == ParametersNode::FilterMode::DEPTH)
+  {
     door_detector_laser_.reset(new door_laser_proc::DoorDepthDetector(nh_));
-  } else {
+  } else
+  {
     door_detector_laser_.reset(new door_laser_proc::DoorLineDetector(nh_));
   }
 }
 
-DoorDetectorNode::~DoorDetectorNode() {
+DoorDetectorNode::~DoorDetectorNode()
+{
 }
 
-void DoorDetectorNode::callbackImage(const sensor_msgs::ImageConstPtr &_img) {
+void DoorDetectorNode::callbackImage(const sensor_msgs::ImageConstPtr &_img)
+{
 
-  if (!camera_info_rgb_) {
+  if (!camera_info_rgb_)
+  {
     return;
   }
 
   auto image = cv_bridge::toCvCopy(_img, std::string("8UC3"));
 
   geometry_msgs::TransformStampedPtr tf;
-  if (getStaticTF(params_.world_frame, _img->header.frame_id.c_str(), tf, params_.debug)) {
+  if (getStaticTF(params_.world_frame, _img->header.frame_id, tf, params_.debug))
+  {
 
     //@ToDo: reset not mandatory
     image_rgb_.reset(new ImageMeasurement(image, tf, *camera_info_rgb_));
 
-    if (image_rgb_ && image_depth_) {
-      ROS_INFO("processImage");
+    if (image_rgb_ && image_depth_)
+    {
       img_processor_->processImage(image_rgb_, image_depth_);
       image_rgb_ = nullptr;
       image_depth_ = nullptr;
@@ -102,37 +112,43 @@ void DoorDetectorNode::callbackImage(const sensor_msgs::ImageConstPtr &_img) {
   }
 }
 
-void DoorDetectorNode::callbackCameraInfoRGB(const sensor_msgs::CameraInfoConstPtr &_msg) {
-  if (!camera_info_rgb_) {
-    ROS_INFO("CameraInfo for RGB cam retrieved");
+void DoorDetectorNode::callbackCameraInfoRGB(const sensor_msgs::CameraInfoConstPtr &_msg)
+{
+  if (!camera_info_rgb_)
+  {
+    camera_info_rgb_.reset(new sensor_msgs::CameraInfo(*_msg));
   }
-  camera_info_rgb_.reset(new sensor_msgs::CameraInfo(*_msg));
 }
 
-void DoorDetectorNode::callbackCameraInfoDepth(const sensor_msgs::CameraInfoConstPtr &_msg) {
-  if (!camera_info_depth_) {
-    ROS_INFO("CameraInfo for depth cam retrieved");
+void DoorDetectorNode::callbackCameraInfoDepth(const sensor_msgs::CameraInfoConstPtr &_msg)
+{
+  if (!camera_info_depth_)
+  {
+    camera_info_depth_.reset(new sensor_msgs::CameraInfo(*_msg));
   }
-  camera_info_depth_.reset(new sensor_msgs::CameraInfo(*_msg));
 }
 
-void DoorDetectorNode::callbackDepthImage(const sensor_msgs::ImageConstPtr &_img) {
+void DoorDetectorNode::callbackDepthImage(const sensor_msgs::ImageConstPtr &_img)
+{
 
-  if (!camera_info_depth_) {
+  if (!camera_info_depth_)
+  {
     return;
   }
 
   auto image = cv_bridge::toCvCopy(_img, std::string("16UC1"));
-  image->image.convertTo(image->image, CV_32FC1,
+  image->image.convertTo(image->image, CV_32FC3,
                          1.0 / static_cast<double>(std::numeric_limits<u_int16_t>::max()));
 
   geometry_msgs::TransformStampedPtr tf;
-  if (getStaticTF(params_.world_frame, _img->header.frame_id.c_str(), tf, params_.debug)) {
+  if (getStaticTF(params_.world_frame, _img->header.frame_id, tf, params_.debug))
+  {
 
     //@ToDo: reset not mandatory only image has changed
     image_depth_.reset(new ImageMeasurement(image, tf, *camera_info_depth_));
 
-    if (image_rgb_ && image_depth_) {
+    if (image_rgb_ && image_depth_)
+    {
       img_processor_->processImage(image_rgb_, image_depth_);
       image_rgb_ = nullptr;
       image_depth_ = nullptr;
@@ -140,19 +156,22 @@ void DoorDetectorNode::callbackDepthImage(const sensor_msgs::ImageConstPtr &_img
   }
 }
 
-void DoorDetectorNode::publish() {
-  door_detector_laser_->publish();
+void DoorDetectorNode::publish()
+{
+  //door_detector_laser_->publish();
   img_processor_->display();
 }
 
-void DoorDetectorNode::callbackLaser(const sensor_msgs::LaserScan &_laser) {
+void DoorDetectorNode::callbackLaser(const sensor_msgs::LaserScan &_laser)
+{
   door_detector_laser_->processLaser(_laser);
 
   std::unique_ptr<Contour> contour_vis;
-  contour_vis.reset(new Contour());
+  contour_vis = std::make_unique<Contour>();
 
   geometry_msgs::TransformStampedPtr tf;
-  if (getStaticTF(params_.world_frame, params_.laser_source_frame, tf, params_.debug)) {
+  if (getStaticTF(params_.world_frame, params_.laser_source_frame, tf, params_.debug))
+  {
 
     laser_measurement_.reset(new LaserMeasurement(tf));
     laser_measurement_->initFromScan(_laser);
@@ -163,21 +182,36 @@ void DoorDetectorNode::callbackLaser(const sensor_msgs::LaserScan &_laser) {
 }
 
 bool DoorDetectorNode::getStaticTF(const std::string &world_frame, const std::string &source_frame,
-                                   geometry_msgs::TransformStampedPtr &_tf, bool debug) {
+                                   geometry_msgs::TransformStampedPtr &_tf, bool debug)
+{
 
-  std::string target_frame_id = source_frame;
-  std::string source_frame_id = world_frame;
-  std::string key = target_frame_id + "->" + source_frame_id;
+  std::string _target_frame = source_frame;
+  std::string _world_frame = world_frame;
 
-  if (!tfMap_[key]) {
-    try {
+  if (_target_frame[0] == '/')
+  {
+    _target_frame.erase(0, 1);
+  }
+
+  if (_world_frame[0] == '/')
+  {
+    _world_frame.erase(0, 1);
+  }
+
+  std::string key = _target_frame + "->" + _world_frame;
+
+  if (!tfMap_[key])
+  {
+    try
+    {
       geometry_msgs::TransformStamped stamped_tf = tf_buffer_.lookupTransform(
-          source_frame_id, target_frame_id, ros::Time(0));
+          _world_frame, _target_frame, ros::Time(0));
 
       _tf.reset(new geometry_msgs::TransformStamped(stamped_tf));
 
       tfMap_[key] = _tf;
-    } catch (tf2::TransformException &ex) {
+    } catch (tf2::TransformException &ex)
+    {
 
       ROS_INFO("getStaticTF");
       ROS_ERROR("%s", ex.what());
@@ -185,11 +219,13 @@ bool DoorDetectorNode::getStaticTF(const std::string &world_frame, const std::st
       return false;
 
     }
-  } else {
+  } else
+  {
     _tf = tfMap_[key];
   }
 
-  if (debug) {
+  if (debug)
+  {
     std::cout << key << std::endl;
     const auto t = _tf->transform.translation;
     const auto q = _tf->transform.rotation;
@@ -203,12 +239,15 @@ bool DoorDetectorNode::getStaticTF(const std::string &world_frame, const std::st
   return true;
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
   ros::init(argc, argv, "door_2d_detector_node");
 
   DoorDetectorNode detector_node;
 
-  while (ros::ok()) {
+  while (ros::ok())
+  {
+
     ros::spinOnce();
     detector_node.publish();
 

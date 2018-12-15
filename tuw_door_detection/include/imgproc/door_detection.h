@@ -20,10 +20,14 @@ namespace tuw
     public:
 
       void setImage(const cv::Mat &_image)
-      { image_(_image); };
+      {
+        _image.copyTo(image_);
+      };
 
       const cv::Mat &getImage()
-      { return image_; }
+      {
+        return image_;
+      }
 
     private:
 

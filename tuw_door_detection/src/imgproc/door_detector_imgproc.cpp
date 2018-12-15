@@ -15,10 +15,7 @@ DoorDetectorImageProcessor::DoorDetectorImageProcessor() : last_door_detection_(
 
 }
 
-DoorDetectorImageProcessor::~DoorDetectorImageProcessor()
-{
-
-}
+DoorDetectorImageProcessor::~DoorDetectorImageProcessor() = default;
 
 void DoorDetectorImageProcessor::processImage(std::shared_ptr<ImageMeasurement> &_image_meas_rgb,
                                               std::shared_ptr<ImageMeasurement> &_image_meas_depth)
