@@ -159,11 +159,11 @@ include_directories(
 # add_executable(tuw_linedetection_node src/tuw_linedetection_node.cpp)
 add_executable(door_detector_node
         src/door_detector_node.cpp
-        src/laserproc/door_detector_base.cpp
-        src/laserproc/door_line_detector.cpp
-        src/laserproc/door_depth_detector.cpp
-        src/laserproc/door_detection.cpp
-        src/imgproc/door_detector_imgproc.cpp
+        src/laser_processor/door_detector_base.cpp
+        src/laser_processor/door_line_detector.cpp
+        src/laser_processor/door_depth_detector.cpp
+        src/laser_processor/door_detection.cpp
+        src/image_processor/door_detector_imgproc.cpp
         src/door_detector.cpp
         )
 

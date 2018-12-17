@@ -10,16 +10,19 @@
 #include <image_geometry/pinhole_camera_model.h>
 #include <geometry_msgs/TransformStamped.h>
 
-namespace tuw {
+namespace tuw
+{
   
-  class Measurement {
+  class Measurement
+  {
   public:
     
     Measurement( const Eigen::Matrix<double, 4, 4> &tfWorldSensor );
     
     Measurement( const geometry_msgs::TransformStampedPtr _tf );
     
-    ~Measurement() {
+    ~Measurement()
+    {
     }
     
     const Eigen::Matrix<double, 4, 4> &getTfWorldSensor() const;
@@ -43,7 +46,8 @@ namespace tuw {
     geometry_msgs::TransformStampedPtr stamped_tf_;
   };
   
-  class LaserMeasurement : public Measurement {
+  class LaserMeasurement : public Measurement
+  {
   protected:
     sensor_msgs::LaserScan laser;
     std::vector<Contour::Beam> beams_;
@@ -51,7 +55,8 @@ namespace tuw {
   public:
     LaserMeasurement( const geometry_msgs::TransformStampedPtr _tf );
     
-    ~LaserMeasurement() {
+    ~LaserMeasurement()
+    {
     }
     
     void initFromScan( const sensor_msgs::LaserScan &_scan );
@@ -62,11 +67,13 @@ namespace tuw {
     
     void resize( const size_t _sz );
     
-    const size_t size() const {
+    const size_t size() const
+    {
       return beams_.size();
     }
     
-    size_t size() {
+    size_t size()
+    {
       return beams_.size();
     }
     
@@ -84,7 +91,8 @@ namespace tuw {
     double min_reading_;
   };
   
-  class ImageMeasurement : public Measurement {
+  class ImageMeasurement : public Measurement
+  {
   
   public:
     
@@ -97,12 +105,13 @@ namespace tuw {
     
     ImageMeasurement( const cv_bridge::CvImagePtr &_image, const geometry_msgs::TransformStampedPtr _tf );
     
-    ~ImageMeasurement() {
+    ~ImageMeasurement()
+    {
     }
     
     cv_bridge::CvImagePtr &getImage();
     
-    cv::Mat &getCVImage();
+    cv::Mat &cv();
     
     const std::shared_ptr<image_geometry::PinholeCameraModel> &getCameraModel() const;
     
@@ -111,9 +120,12 @@ namespace tuw {
     void setImage( const cv_bridge::CvImagePtr &image );
     
     void setCameraModel( const std::shared_ptr<image_geometry::PinholeCameraModel> &camera_model_ptr );
+    
+    void preserve();
   
   protected:
     cv_bridge::CvImagePtr image;
+    cv::Mat copy_img_;
     std::shared_ptr<image_geometry::PinholeCameraModel> camera_;
   };
 };

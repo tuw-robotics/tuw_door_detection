@@ -9,12 +9,14 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
 
-tuw::Contour::Contour() : length_(0.0)
+tuw::Contour::Contour() : length_( 0.0 )
 {
-
+  is_door_candidate_ = false;
+  candidate_color_ = cv::Scalar( 0, 255, 0 );
+  assigned_color_ = cv::Scalar( 255, 255, 255 );
 }
 
-tuw::Contour::Beam::Beam(double _range, double _angle, tuw::Point2D _end_point)
+tuw::Contour::Beam::Beam( double _range, double _angle, tuw::Point2D _end_point )
 {
   range = _range;
   angle = _angle;
@@ -27,43 +29,43 @@ const bool tuw::Contour::Beam::is_valid() const
   return valid_beam;
 }
 
-void tuw::Contour::Beam::set_valid(const bool v)
+void tuw::Contour::Beam::set_valid( const bool v )
 {
   valid_beam = v;
 }
 
 std::shared_ptr<tuw::Contour::Beam>
-tuw::Contour::Beam::make_beam(double range, double angle, tuw::Point2D end_point)
+tuw::Contour::Beam::make_beam( double range, double angle, tuw::Point2D end_point )
 {
-  return std::make_shared<Beam>(range, angle, end_point);
+  return std::make_shared<Beam>( range, angle, end_point );
 }
 
-void tuw::Contour::push_back(std::shared_ptr<tuw::Contour::Beam> beam)
+void tuw::Contour::push_back( std::shared_ptr<tuw::Contour::Beam> beam )
 {
-  if (beams_.size())
+  if ( beams_.size())
   {
-    length_ += beams_.back()->end_point.distanceTo(beam->end_point);
+    length_ += beams_.back()->end_point.distanceTo( beam->end_point );
   }
-  beams_.push_back(beam);
+  beams_.push_back( beam );
 }
 
 double tuw::Contour::length()
 {
-  if (beams_.size() <= 2)
+  if ( beams_.size() <= 2 )
   {
     return 0;
   }
   return length_;
 }
 
-void tuw::Contour::detectCorners(const size_t KERNEL_SIZE)
+void tuw::Contour::detectCorners( const size_t KERNEL_SIZE )
 {
   std::vector<double> sobel;
-  sobel.resize(KERNEL_SIZE);
-
-  for (size_t i = 0; i < sobel.size(); ++i)
+  sobel.resize( KERNEL_SIZE );
+  
+  for ( size_t i = 0; i < sobel.size(); ++i )
   {
-    if (i < KERNEL_SIZE / 2.0)
+    if ( i < KERNEL_SIZE / 2.0 )
     {
       sobel[i] = -1;
     } else
@@ -71,125 +73,131 @@ void tuw::Contour::detectCorners(const size_t KERNEL_SIZE)
       sobel[i] = 1;
     }
   }
-
+  
   std::vector<double> ranges;
-  ranges.resize(beams_.size() + KERNEL_SIZE);
+  ranges.resize( beams_.size() + KERNEL_SIZE );
   size_t i = 0;
-  for (; i < KERNEL_SIZE / 2.0; ++i)
+  for ( ; i < KERNEL_SIZE / 2.0; ++i )
   {
     ranges[i] = (*begin())->range;
   }
-
-  for (std::vector<std::shared_ptr<Contour::Beam>>::const_iterator it_beam = begin();
-       it_beam != (end() - 1); ++it_beam, ++i)
+  
+  for ( std::vector<std::shared_ptr<Contour::Beam>>::const_iterator it_beam = begin();
+        it_beam != (end() - 1); ++it_beam, ++i )
   {
     const auto beam = *it_beam;
     ranges[i] = beam->range;
   }
-
-  for (; i < ranges.size(); ++i)
+  
+  for ( ; i < ranges.size(); ++i )
   {
     ranges[i] = (*(end() - 1))->range;
   }
-
+  
 }
 
-void tuw::Contour::cvConvexityDefects(tuw::WorldScopedMaps &_map)
+void tuw::Contour::cvConvexityDefects( tuw::WorldScopedMaps &_map )
 {
   std::vector<cv::Point2i> end_points_stl;
   std::vector<int> hull;
   std::vector<cv::Vec4i> defects;
   //std::vector<cv::Vec4i> defects;
-
-  end_points_stl.resize(beams_.size());
-  for (auto i = 0; i < end_points_stl.size(); ++i)
+  
+  end_points_stl.resize( beams_.size());
+  for ( auto i = 0; i < end_points_stl.size(); ++i )
   {
-    const auto end_point = _map.w2m(beams_[i]->end_point);
+    const auto end_point = _map.w2m( beams_[i]->end_point );
     end_points_stl[i].x = end_point.x();
     end_points_stl[i].y = end_point.y();
   }
-
-  cv::convexHull(end_points_stl, hull);
-  cv::convexityDefects(end_points_stl, cv::Mat(hull), defects);
-
-  convexity_defects_.resize(defects.size());
-
+  
+  cv::convexHull( end_points_stl, hull );
+  cv::convexityDefects( end_points_stl, cv::Mat( hull ), defects );
+  
+  convexity_defects_.resize( defects.size());
+  
   std::cout << std::endl << std::endl;
-  for (int i = 0; i < defects.size(); ++i)
+  for ( int i = 0; i < defects.size(); ++i )
   {
     std::cout << defects[i][2] << ", " << defects[i][3] << std::endl;
-    convexity_defects_[i].reset(new CVDefect(defects[i][0], defects[i][1], defects[i][2], defects[i][3]));
+    convexity_defects_[i].reset( new CVDefect( defects[i][0], defects[i][1], defects[i][2], defects[i][3] ));
   }
 }
 
 void tuw::Contour::cvDetectCorners()
 {
   corner_points_.clear();
-
+  
   cv::Mat corners_;
-  cv::cornerHarris(rendering_, corners_, 7, 3, 0.1);
-
+  cv::cornerHarris( rendering_, corners_, 7, 3, 0.1 );
+  
   double min, max;
-  cv::minMaxLoc(corners_, &min, &max);
-  double thresh = max * 0.75;
-
+  cv::minMaxLoc( corners_, &min, &max );
+  
+  //@ToDo: threshold
+  double thresh = (max - min) * 0.75;
+  
   size_t idx = 0;
-  for (size_t i = 0; i < corners_.rows; ++i)
+  for ( size_t i = 0; i < corners_.rows; ++i )
   {
-    for (size_t j = 0; j < corners_.cols; ++j)
+    for ( size_t j = 0; j < corners_.cols; ++j )
     {
-      if (corners_.at<float>(j, i) > thresh)
+      if ( corners_.at<float>( j, i ) > thresh )
       {
-        const auto color = cv::Scalar(255);
+        const auto color = cv::Scalar( 255 );
         std::unique_ptr<Corner> corner;
-        corner.reset(new Corner(cv::Point2d(i, j), corners_.at<float>(i, j), idx));
-
-        corner_points_.push_back(std::move(corner));
-
+        corner.reset( new Corner( cv::Point2d( i, j ), corners_.at<float>( i, j ), idx ));
+        
+        corner_points_.push_back( std::move( corner ));
+        
         idx++;
         //cv::circle(corner_img, cv::Point2d(i, j), 3, color);
       }
     }
   }
-
+  
   std::set<size_t> removal;
   //Non maximum suppression
-  for (int ii = 0; ii < corner_points_.size(); ++ii)
+  for ( int ii = 0; ii < corner_points_.size(); ++ii )
   {
-    for (int jj = 0; jj < corner_points_.size(); ++jj)
+    for ( int jj = 0; jj < corner_points_.size(); ++jj )
     {
-
-      if (ii == jj)
+      
+      if ( ii == jj )
       {
         continue;
       }
-
+      
       auto c0 = corner_points_[ii]->point;
       auto c1 = corner_points_[jj]->point;
-      double d = cv::norm(c0 - c1);
-
-      if (d > 5)
+      double d = cv::norm( c0 - c1 );
+      
+      //@ToDo: use meter not pixel!!! -> from world scoped map
+      if ( d > 2 )
       {
         continue;
       }
-
-      if (corner_points_[ii]->response > corner_points_[jj]->response)
+      
+      if ( corner_points_[ii]->response > corner_points_[jj]->response )
       {
-        removal.insert(corner_points_[jj]->idx);
+        removal.insert( corner_points_[jj]->idx );
       }
     }
   }
-
-  corner_points_.erase(std::remove_if(corner_points_.begin(), corner_points_.end(),
-                                      [&removal](const std::unique_ptr<Corner> &c)
-                                      {
-                                        if (removal.count(c->idx) > 0)
+  
+  corner_points_.erase( std::remove_if( corner_points_.begin(), corner_points_.end(),
+                                        [&removal]( const std::unique_ptr<Corner> &c )
                                         {
-                                          return true;
-                                        }
-                                        return false;
-                                      }),
-                       corner_points_.end());
+                                          if ( removal.count( c->idx ) > 0 )
+                                          {
+                                            return true;
+                                          }
+                                          return false;
+                                        } ),
+                        corner_points_.end());
+  
+  
+  std::cout << "Corners " << corner_points_.size() << std::endl;
 }
 
 const std::vector<std::unique_ptr<tuw::Contour::Corner>> &tuw::Contour::getCorners()
@@ -197,41 +205,41 @@ const std::vector<std::unique_ptr<tuw::Contour::Corner>> &tuw::Contour::getCorne
   return corner_points_;
 }
 
-void tuw::Contour::renderInternal(tuw::WorldScopedMaps &map)
+void tuw::Contour::renderInternal( tuw::WorldScopedMaps &map )
 {
-  rendering_ = cv::Mat::zeros(map.height(), map.width(), CV_8U);
-  cv::Scalar color_ = cv::Scalar(255);
-  render(map, rendering_, color_, 2);
+  rendering_ = cv::Mat::zeros( map.height(), map.width(), CV_8U );
+  cv::Scalar color_ = cv::Scalar( 255 );
+  render( map, rendering_, color_, 2 );
 }
 
-void tuw::Contour::render(tuw::WorldScopedMaps &map, cv::Mat &img, cv::Scalar &color, double rad, bool corners)
+void tuw::Contour::render( tuw::WorldScopedMaps &map, cv::Mat &img, cv::Scalar &color, double rad, bool corners )
 {
-  cv::Scalar color_final = color;
-
-  if (is_door_candidate_)
+  assigned_color_ = color;
+  
+  if ( is_door_candidate_ )
   {
-    color_final = candidate_color_;
+    assigned_color_ = candidate_color_;
   }
-
-  for (std::vector<std::shared_ptr<Contour::Beam>>::const_iterator it_beam = begin();
-       it_beam != (end() - 1); ++it_beam)
+  
+  for ( std::vector<std::shared_ptr<Contour::Beam>>::const_iterator it_beam = begin();
+        it_beam != (end() - 1); ++it_beam )
   {
-    map.line(img, (*it_beam)->end_point, (*(it_beam + 1))->end_point, color_final, rad);
+    map.line( img, (*it_beam)->end_point, (*(it_beam + 1))->end_point, assigned_color_, rad );
   }
-
-  if (corners)
+  
+  if ( corners )
   {
-
-    const auto ccolor = cv::Scalar(0, 255, 0);
-    for (const auto &c : corner_points_)
+    
+    const auto ccolor = cv::Scalar( 0, 0, 255 );
+    for ( const auto &c : corner_points_ )
     {
-      cv::circle(img, c->point, 3, ccolor, 3);
+      cv::circle( img, c->point, 3, ccolor, 3 );
     }
-
-    const auto cvdcolor = cv::Scalar(0, 255, 0);
-    for (const auto &d : convexity_defects_)
+    
+    const auto cvdcolor = cv::Scalar( 0, 255, 0 );
+    for ( const auto &d : convexity_defects_ )
     {
-      map.line(img, beams_[d->start_idx]->end_point, beams_[d->end_idx]->end_point, cvdcolor, 1);
+      map.line( img, beams_[d->start_idx]->end_point, beams_[d->end_idx]->end_point, cvdcolor, 1 );
     }
   }
 }

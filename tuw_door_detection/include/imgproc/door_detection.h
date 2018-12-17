@@ -5,36 +5,38 @@
 #ifndef IMGPROC_DOOR_DETECTION_H
 #define IMGPROC_DOOR_DETECTION_H
 
+#include <tuw_measurement_utils/measurements.h>
+
 namespace tuw
 {
   namespace image_processor
   {
-
+    
     class DoorDetection;
-
+    
     using DoorDetectionPtr = std::shared_ptr<DoorDetection>;
     using DoorDetectionConstPtr = std::shared_ptr<DoorDetection const>;
-
+    
     class DoorDetection
     {
     public:
-
-      void setImage(const cv::Mat &_image)
+      
+      void setImageMeasurement( const std::shared_ptr<ImageMeasurement> &_image )
       {
-        _image.copyTo(image_);
+        image_ = _image;
       };
-
-      const cv::Mat &getImage()
+      
+      const std::shared_ptr<ImageMeasurement> &getImageMeasurement() const
       {
         return image_;
       }
-
+    
     private:
-
-      cv::Mat image_;
-
+      
+      std::shared_ptr<ImageMeasurement> image_;
+      
     };
-
+    
   };
 }
 
