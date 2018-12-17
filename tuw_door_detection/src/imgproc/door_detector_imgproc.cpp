@@ -73,10 +73,12 @@ void DoorDetectorImageProcessor::registerLaser(std::shared_ptr<LaserMeasurement>
 void DoorDetectorImageProcessor::display()
 {
 
+  //@ToDo: performance
+
   if (last_img_processed_)
   {
-
-    cv::Mat img_display = cv::Mat(last_img_processed_->getCVImage());
+    cv::Mat img_display;
+    last_img_processed_->getCVImage().copyTo(img_display);
     cv::namedWindow("rgb image processed");
 
     for (cv::Point2d &pt : laser_img_coords_)

@@ -30,13 +30,13 @@ DoorDepthDetector::DoorDepthDetector(ros::NodeHandle &_nh) : params_(new DoorDep
   config_.reset(new Config());
 
   figure_local_.init(config_->map_pix_x, config_->map_pix_y,
-                     config_->map_min_x, config_->map_max_x,
+                     -2, 25,
                      config_->map_min_y, config_->map_max_y,
                      config_->map_rotation + M_PI / 2.0,
                      config_->map_grid_x, config_->map_grid_y);
 
   ws_map_.init(config_->map_pix_x, config_->map_pix_y,
-               config_->map_min_x, config_->map_max_x,
+               -2, 25,
                config_->map_min_y, config_->map_max_y,
                config_->map_rotation + M_PI / 2.0);
 
@@ -180,17 +180,18 @@ std::vector<std::shared_ptr<tuw::Contour>> DoorDepthDetector::contourMode(const 
 
   contour_cnt = 0;
   size_t potential_doors = 0;
-  for (const auto &elem : contours)
+  for (auto &elem : contours)
   {
     contour_cnt += 1;
     cv::Scalar color = colorMap_[contour_cnt];
 
     elem->renderInternal(ws_map_);
     elem->cvDetectCorners();
-    elem->cvConvexityDefects(ws_map_);
+    //elem->cvConvexityDefects(ws_map_);
     if (elem->length() > 0.6 && elem->length() < 1.2)
     {
       potential_doors++;
+      elem->set_door_candidate(true);
     }
     elem->render(ws_map_, img, color, 2, true);
   }

@@ -88,13 +88,14 @@ DoorDetectorNode::~DoorDetectorNode()
 
 void DoorDetectorNode::callbackImage(const sensor_msgs::ImageConstPtr &_img)
 {
+  auto ts_start = ros::Time::now();
 
   if (!camera_info_rgb_)
   {
     return;
   }
 
-  auto image = cv_bridge::toCvCopy(_img, std::string("8UC3"));
+  auto image = cv_bridge::toCvCopy(_img, _img->encoding);
 
   geometry_msgs::TransformStampedPtr tf;
   if (getStaticTF(params_.world_frame, _img->header.frame_id, tf, params_.debug))
@@ -110,6 +111,9 @@ void DoorDetectorNode::callbackImage(const sensor_msgs::ImageConstPtr &_img)
       image_depth_ = nullptr;
     }
   }
+
+  auto ts_end = ros::Time::now();
+  std::cout << "process image took " << (ts_end - ts_start) << "ms " << std::endl;
 }
 
 void DoorDetectorNode::callbackCameraInfoRGB(const sensor_msgs::CameraInfoConstPtr &_msg)
@@ -136,7 +140,7 @@ void DoorDetectorNode::callbackDepthImage(const sensor_msgs::ImageConstPtr &_img
     return;
   }
 
-  auto image = cv_bridge::toCvCopy(_img, std::string("16UC1"));
+  auto image = cv_bridge::toCvCopy(_img, _img->encoding/*std::string("16UC3")*/);
   image->image.convertTo(image->image, CV_32FC3,
                          1.0 / static_cast<double>(std::numeric_limits<u_int16_t>::max()));
 
@@ -164,13 +168,14 @@ void DoorDetectorNode::publish()
 
 void DoorDetectorNode::callbackLaser(const sensor_msgs::LaserScan &_laser)
 {
+  auto ts_start = ros::Time::now();
   door_detector_laser_->processLaser(_laser);
 
   std::unique_ptr<Contour> contour_vis;
   contour_vis = std::make_unique<Contour>();
 
   geometry_msgs::TransformStampedPtr tf;
-  if (getStaticTF(params_.world_frame, params_.laser_source_frame, tf, params_.debug))
+  if (getStaticTF(params_.world_frame, _laser.header.frame_id, tf, params_.debug))
   {
 
     laser_measurement_.reset(new LaserMeasurement(tf));
@@ -179,6 +184,8 @@ void DoorDetectorNode::callbackLaser(const sensor_msgs::LaserScan &_laser)
     img_processor_->registerLaser(laser_measurement_);
   }
 
+  auto ts_end = ros::Time::now();
+  std::cout << "process laser took: " << (ts_end - ts_start) << "ms" << std::endl;
 }
 
 bool DoorDetectorNode::getStaticTF(const std::string &world_frame, const std::string &source_frame,
