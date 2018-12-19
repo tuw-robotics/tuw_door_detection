@@ -78,10 +78,14 @@ namespace tuw
       virtual ~DoorDepthDetector();
 
       WorldScopedMaps &getMap()
-      { return ws_map_; }
+      {
+        return ws_map_;
+      }
 
       std::vector<std::shared_ptr<tuw::Contour>> getContours()
-      { return contours_; }
+      {
+        return contours_;
+      }
 
     protected:
       //std::unique_ptr<tuw_door_detection::DepthDetectorConfig> config_;
@@ -106,7 +110,9 @@ namespace tuw
       std::vector<std::shared_ptr<tuw::Contour>> contours_;
 
       std::unique_ptr<ParametersNode> &params()
-      { return params_; }
+      {
+        return params_;
+      }
 
       bool structureMode(const sensor_msgs::LaserScan &_laser, std::vector<DoorDetectionPtr> &_detections);
 
