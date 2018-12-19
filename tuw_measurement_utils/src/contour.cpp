@@ -42,7 +42,7 @@ tuw::Contour::Beam::make_beam( double range, double angle, tuw::Point2D end_poin
 
 void tuw::Contour::push_back( std::shared_ptr<tuw::Contour::Beam> beam )
 {
-  if ( beams_.size())
+  if ( !beams_.empty())
   {
     length_ += beams_.back()->end_point.distanceTo( beam->end_point );
   }

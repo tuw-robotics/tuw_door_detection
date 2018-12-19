@@ -166,7 +166,8 @@ ImageMeasurement::ImageMeasurement( const cv_bridge::CvImageConstPtr &_image,
   image.reset( new cv_bridge::CvImage( *_image.get()));
 }
 
-ImageMeasurement::ImageMeasurement( const cv_bridge::CvImagePtr &_image, const geometry_msgs::TransformStampedPtr &_tf,
+ImageMeasurement::ImageMeasurement( const cv_bridge::CvImagePtr &_image,
+                                    const geometry_msgs::TransformStampedPtr &_tf,
                                     const sensor_msgs::CameraInfo &_camInfo ) :
     Measurement( _tf )
 {

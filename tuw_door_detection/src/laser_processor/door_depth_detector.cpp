@@ -72,7 +72,6 @@ void DoorDepthDetector::plot( const std::vector<DoorDetectionPtr> &_detections )
     {
       color = cv::Scalar( 0, 0, 0 );
     }
-    std::cout << *d << std::endl;
     figure_local_.circle( d->operator[]( 0 ).point, radius, color, 1.0 );
   }
   cv::imshow( figure_local_.title(), figure_local_.view());
@@ -97,15 +96,12 @@ std::vector<T> DoorDepthDetector::normalize( std::vector<T> &_v )
   T min_resp = std::numeric_limits<T>::max();
   T max_resp = -std::numeric_limits<T>::max();
   
-  std::cout << std::endl << std::endl;
   for ( const T r : c )
   {
     //std::cout << r << ", ";
     min_resp = std::min( r, min_resp );
     max_resp = std::max( r, max_resp );
   }
-  std::cout << std::endl << "min: " << min_resp << std::endl;
-  std::cout << "max: " << max_resp << std::endl;
   
   auto it = c.begin();
   for ( ; it != c.end(); ++it )
@@ -188,7 +184,6 @@ std::vector<std::shared_ptr<tuw::Contour>> DoorDepthDetector::contourMode( const
     elem->renderInternal( ws_map_ );
     elem->cvDetectCorners();
     
-    std::cout << "contour len " << elem->length() << std::endl;
     //elem->cvConvexityDefects(ws_map_);
     if ( elem->length() > 0.6 && elem->length() < 1.2 )
     {
@@ -197,10 +192,6 @@ std::vector<std::shared_ptr<tuw::Contour>> DoorDepthDetector::contourMode( const
     }
     
     elem->render( ws_map_, img, color, 2, true );
-  }
-  if ( potential_doors )
-  {
-    std::cout << potential_doors << " potential doors " << std::endl;
   }
   
   cv::imshow( "lines_as_img", img );
@@ -329,9 +320,6 @@ DoorDepthDetector::structureMode( const sensor_msgs::LaserScan &_scan, std::vect
     
     if ((length < _scan.range_max) && isfinite( length ) && abs_diff > thresh_ )
     {
-      std::cout << "range diff: " << abs_diff << std::endl;
-      std::cout << "range: " << length << std::endl;
-      std::cout << "last range: " << last_range << std::endl;
       
       Eigen::Vector2d meas1 = range2Eigen( _scan, i );
       Eigen::Vector2d meas0 = range2Eigen( _scan, last_range_idx );

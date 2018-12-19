@@ -33,6 +33,7 @@ namespace tuw
       ~Beam() = default;
       
       Point2D end_point;
+      Point2D img_coords;
       double range;
       double angle;
       
@@ -97,6 +98,26 @@ namespace tuw
     void set_door_candidate( bool val )
     {
       this->is_door_candidate_ = val;
+    }
+    
+    std::shared_ptr<Beam> front()
+    {
+      beams_.front();
+    }
+    
+    std::shared_ptr<Beam> back()
+    {
+      beams_.back();
+    }
+    
+    std::vector<std::shared_ptr<Beam>> &beams()
+    {
+      return beams_;
+    }
+    
+    const std::vector<std::shared_ptr<Beam>> &beams() const
+    {
+      return beams_;
     }
     
     void render( WorldScopedMaps &map2image, cv::Mat &image, cv::Scalar &color, double rad = 2, bool corners = true );
