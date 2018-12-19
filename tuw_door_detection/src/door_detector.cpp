@@ -8,23 +8,34 @@
 
 using namespace tuw;
 
-void DoorDetector::merge( std::shared_ptr<image_processor::DoorDetectorImageProcessor> &img_processor,
-                          std::shared_ptr<door_laser_proc::DoorDetectorBase> &laser_processor )
+DoorDetector::DoorDetector()
 {
-  
+
+}
+
+DoorDetector::~DoorDetector()
+{
+
+}
+
+void DoorDetector::merge(std::shared_ptr<image_processor::DoorDetectorImageProcessor> &img_processor,
+                         std::shared_ptr<door_laser_proc::DoorDetectorBase> &laser_processor)
+{
+
   detection_image_ = img_processor->getResult();
   auto laser_processor_dyn = std::dynamic_pointer_cast<door_laser_proc::DoorDepthDetector>(
-      laser_processor );
+      laser_processor);
   if (laser_processor_dyn)
   {
     detection_laser_ = laser_processor_dyn->getContours();
   }
-  
-  if ( !detection_image_ || !detection_laser_.size())
-  {
-    return;
-  }
-  
+
+}
+
+void DoorDetector::clear()
+{
+  image_measurement_ = nullptr;
+  laser_measurement_ = nullptr;
 }
 
 void DoorDetector::setImageMeasurement(std::shared_ptr<ImageMeasurement> &img_meas)
@@ -32,61 +43,74 @@ void DoorDetector::setImageMeasurement(std::shared_ptr<ImageMeasurement> &img_me
   image_measurement_ = img_meas;
 }
 
-void DoorDetector::setLaserMeasurement( std::shared_ptr<tuw::LaserMeasurement> &laser_meas )
+void DoorDetector::setLaserMeasurement(std::shared_ptr<tuw::LaserMeasurement> &laser_meas)
 {
   laser_measurement_ = laser_meas;
 }
 
 void DoorDetector::display()
 {
-  
-  if ( detection_image_ && detection_laser_.size())
+
+  if (image_measurement_ && laser_measurement_)
   {
+    cv::Mat hhh;
     cv::Mat img_display;
-    detection_image_->getImageMeasurement()->cv().copyTo( img_display );
-    if ( img_display.channels() != 3 )
+    image_measurement_->getOriginalImage().copyTo(hhh);
+    if (hhh.channels() == 3)
     {
-      cv::cvtColor( img_display, img_display, CV_GRAY2BGR );
+      cv::cvtColor(hhh, img_display, CV_BGR2GRAY);
+    } else
+    {
+      img_display = hhh;
     }
-    
-    const auto T_WC = detection_image_->getImageMeasurement()->getTfWorldSensor();
+    cv::GaussianBlur(img_display, img_display, cv::Size(5, 5), 0.75);
+    cv::Canny(img_display, img_display, 10, 60, 3, true);
+    if (img_display.channels() != 3)
+    {
+      cv::cvtColor(img_display, img_display, CV_GRAY2BGR);
+    }
+
+    const auto T_WC = image_measurement_->getTfWorldSensor();
     const auto T_WL = laser_measurement_->getTfWorldSensor();
     const auto T_CL = T_WC.inverse() * T_WL;
-  
-    cv::namedWindow( "rgb image processed" );
-    for ( const auto &contour : detection_laser_ )
+
+    cv::namedWindow("rgb image processed");
+    for (const auto &contour : detection_laser_)
     {
-      
-      for ( auto it_beams = contour->begin();
-            it_beams != contour->end(); ++it_beams )
+
+      for (auto it_beams = contour->begin();
+           it_beams != contour->end(); ++it_beams)
       {
         auto beam = *it_beams;
-        
+
         double rad = 2;
-        if ( it_beams == contour->begin() || it_beams == (contour->end() - 1))
+        if (it_beams == contour->begin() || it_beams == (contour->end() - 1))
         {
           rad = 5;
         }
-        
-        auto endpoint = Eigen::Vector4d( beam->end_point.x(), beam->end_point.y(), 0, 1 );
+
+        auto endpoint = Eigen::Vector4d(beam->end_point.x(), beam->end_point.y(), 0, 1);
         Eigen::Vector4d laser_in_image = T_CL * endpoint;
         laser_in_image = laser_in_image / laser_in_image[3];
-        
+
         //const auto pnt3d = cv::Point3d( laser_in_image[0], laser_in_image[1], laser_in_image[2] );
-        const cv::Point3d pnt3d = cv::Point3d( laser_in_image[0], laser_in_image[1], laser_in_image[2] );
-        const cv::Point2d img = detection_image_->getImageMeasurement()->getCameraModel()->project3dToPixel( pnt3d );
-        
+        const cv::Point3d pnt3d = cv::Point3d(laser_in_image[0],
+                                              laser_in_image[1],
+                                              laser_in_image[2]);
+
+        const cv::Point2d img_pnt = image_measurement_->getCameraModel()->project3dToPixel(pnt3d);
+
         //in image coord
-        cv::circle( img_display, img, rad, contour->getAssignedColor(), rad );
+        cv::circle(img_display, img_pnt, rad, contour->getAssignedColor(), rad);
       }
     }
-    
-    cv::imshow( "rgb image processed", img_display );
-    cv::waitKey( 1 );
-    
+
+    cv::imshow("rgb image processed", img_display);
+    cv::waitKey(100);
+
   }
-  
-  for ( const auto c : detection_laser_ )
+
+  for (const auto c : detection_laser_)
   {
     //auto corners = c->getCorners();
     //std::cout << "c " << corners.size() << std::endl;

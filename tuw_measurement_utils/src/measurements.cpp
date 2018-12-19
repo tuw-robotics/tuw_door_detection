@@ -160,13 +160,13 @@ std::vector<Contour::Beam>::iterator LaserMeasurement::end()
 }
 
 ImageMeasurement::ImageMeasurement( const cv_bridge::CvImageConstPtr &_image,
-                                    const geometry_msgs::TransformStampedPtr _tf )
+                                    const geometry_msgs::TransformStampedPtr &_tf )
     : Measurement( _tf )
 {
   image.reset( new cv_bridge::CvImage( *_image.get()));
 }
 
-ImageMeasurement::ImageMeasurement( const cv_bridge::CvImagePtr &_image, const geometry_msgs::TransformStampedPtr _tf,
+ImageMeasurement::ImageMeasurement( const cv_bridge::CvImagePtr &_image, const geometry_msgs::TransformStampedPtr &_tf,
                                     const sensor_msgs::CameraInfo &_camInfo ) :
     Measurement( _tf )
 {
@@ -176,7 +176,7 @@ ImageMeasurement::ImageMeasurement( const cv_bridge::CvImagePtr &_image, const g
 }
 
 
-ImageMeasurement::ImageMeasurement( const cv_bridge::CvImagePtr &_image, const geometry_msgs::TransformStampedPtr _tf )
+ImageMeasurement::ImageMeasurement( const cv_bridge::CvImagePtr &_image, const geometry_msgs::TransformStampedPtr &_tf )
     : image(
     _image ), Measurement( _tf )
 {
@@ -201,6 +201,11 @@ const std::shared_ptr<image_geometry::PinholeCameraModel> &ImageMeasurement::get
 std::shared_ptr<image_geometry::PinholeCameraModel> &ImageMeasurement::getCameraModel()
 {
   return camera_;
+}
+
+cv::Mat &ImageMeasurement::getOriginalImage()
+{
+  return copy_img_;
 }
 
 cv::Mat &ImageMeasurement::cv()

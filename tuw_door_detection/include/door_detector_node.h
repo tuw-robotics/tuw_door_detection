@@ -50,18 +50,23 @@
 #include <tuw_measurement_utils/measurements.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/buffer.h>
+#include <door_detector.h>
 
-namespace tuw {
+namespace tuw
+{
 /**
  * @brief ROS wrapper node for LineSegment2DDetector
  * @class Door2DDetectorNode
  */
-  class DoorDetectorNode {
+  class DoorDetectorNode
+  {
   public:
-    struct ParametersNode {
+    struct ParametersNode
+    {
       ParametersNode();
 
-      enum FilterMode {
+      enum FilterMode
+      {
         LINES, DEPTH
       };
       std::unordered_map<std::string, FilterMode> enumResolver{
@@ -82,6 +87,8 @@ namespace tuw {
 
     ~DoorDetectorNode();
 
+    void process();
+
     void publish();
 
   private:
@@ -93,6 +100,7 @@ namespace tuw {
     ros::Subscriber sub_image_depth_;
     ros::Subscriber sub_camera_info_depth_;
     std::shared_ptr<door_laser_proc::DoorDetectorBase> door_detector_laser_;
+    std::unique_ptr<DoorDetector> door_detector_;
 
     tf2_ros::Buffer tf_buffer_;
     tf2_ros::TransformListener tf_listener_;
