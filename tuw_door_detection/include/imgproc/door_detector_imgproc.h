@@ -29,8 +29,6 @@ namespace tuw
 
       std::shared_ptr<DoorDetection> &getResult();
 
-      void registerLaser(std::shared_ptr<LaserMeasurement> &_laser);
-
     private:
       std::shared_ptr<ImageMeasurement> last_img_processed_;
       std::shared_ptr<ImageMeasurement> last_depth_processed_;

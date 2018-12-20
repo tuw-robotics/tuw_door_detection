@@ -30,45 +30,6 @@ void DoorDetectorImageProcessor::processImage(std::shared_ptr<ImageMeasurement> 
   last_door_detection_->setImageMeasurement(_image_meas_rgb);
 }
 
-void DoorDetectorImageProcessor::registerLaser(std::shared_ptr<LaserMeasurement> &_laser)
-{
-
-  if (!last_img_processed_)
-  {
-    return;
-  }
-
-  laser_img_coords_.clear();
-
-  const auto T_WC = last_img_processed_->getTfWorldSensor();
-  const auto T_WL = _laser->getTfWorldSensor();
-  const auto T_CL = T_WC.inverse() * T_WL;
-
-  size_t i = 0;
-  laser_img_coords_.resize(_laser->size());
-
-  for (auto beam_it = _laser->begin(); beam_it != _laser->end(); ++beam_it, ++i)
-  {
-    auto endpoint = Eigen::Vector4d(beam_it->end_point.x(), beam_it->end_point.y(), 0, 1);
-    Eigen::Vector4d laser_in_image = T_CL * endpoint;
-    laser_in_image = laser_in_image / laser_in_image[3];
-
-    //const auto pnt3d = cv::Point3d( laser_in_image[0], laser_in_image[1], laser_in_image[2] );
-    const cv::Point3d pnt3d = cv::Point3d(laser_in_image[0], laser_in_image[1], laser_in_image[2]);
-    laser_img_coords_[i] = last_img_processed_->getCameraModel()->project3dToPixel(pnt3d);
-  }
-
-  //laser_img_coords_.resize( 1000 );
-  //double _x = 0.0;
-  //double _y = 0.0;
-  //for ( int i = 0; i < 1000; ++i ) {
-  //  laser_img_coords_.push_back( last_img_processed_->getCameraModel()->project3dToPixel(
-  //      cv::Point3d( _x + 0.001 * i, _y, 1.0 )));
-  //  //laser_img_coords_.push_back( last_img_processed_->getCameraModel()->project3dToPixel(
-  //  //cv::Point3d( _x, _y + 0.001 * i, 1.0 )));
-  //}
-}
-
 std::shared_ptr<DoorDetection> &DoorDetectorImageProcessor::getResult()
 {
   return last_door_detection_;
