@@ -315,3 +315,13 @@ void Contour::registerToImage( const Eigen::Matrix4d &tf,
     line_segment_img_coords_.push_back( std::make_pair( p0_img, p1_img ));
   }
 }
+
+void Contour::visibilityCheck( bool shift_lines, int img_width, int img_height )
+{
+  for ( auto &b : beams_ )
+  {
+    bool not_vis = b->img_coords.x() < 0 || b->img_coords.x() > img_height || b->img_coords.y() < 0 ||
+                   b->img_coords.y() > img_width;
+    b->set_is_visible( !not_vis );
+  }
+}

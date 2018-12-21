@@ -99,6 +99,8 @@ namespace tuw
                           double cx, double cy,
                           double tx, double ty );
     
+    void visibilityCheck( bool shift_lines, int img_width, int img_height );
+    
     const std::vector<std::unique_ptr<Corner>> &getCorners();
     
     const std::vector<LineSegment2D> &getLineSegements()

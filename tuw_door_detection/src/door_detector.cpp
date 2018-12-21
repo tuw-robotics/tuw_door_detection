@@ -76,11 +76,33 @@ void DoorDetector::display()
     
     const auto T_WC = image_measurement_->getTfWorldSensor();
     const auto T_WL = laser_measurement_->getTfWorldSensor();
-    const auto T_CL = T_WC.inverse() * T_WL;
+    const Eigen::Matrix4d T_CL = T_WC.inverse() * T_WL;
+    
+    auto &cmodel = image_measurement_->getCameraModel();
+    auto img_height = img_display.size().height;
+    auto img_width = img_display.size().width;
+    
+    std::for_each( detection_laser_.begin(), detection_laser_.end(),
+                   [&cmodel, &T_CL, img_height, img_width]
+                       ( std::shared_ptr<Contour> &contr )
+                   {
+                     contr->registerToImage( T_CL,
+                                             cmodel->fx(), cmodel->fy(),
+                                             cmodel->cx(), cmodel->cy(),
+                                             cmodel->Tx(), cmodel->Ty());
+      
+                     contr->visibilityCheck( false, img_width, img_height );
+                   } );
     
     cv::namedWindow( "rgb image processed" );
     for ( const auto &contour : detection_laser_ )
     {
+      contour->registerToImage( T_CL,
+                                cmodel->fx(), cmodel->fy(),
+                                cmodel->cx(), cmodel->cy(),
+                                cmodel->Tx(), cmodel->Ty());
+      
+      contour->visibilityCheck( false, img_width, img_height );
       
       for ( auto it_beams = contour->begin();
             it_beams != contour->end(); ++it_beams )
@@ -93,30 +115,12 @@ void DoorDetector::display()
           rad = 5;
         }
         
-        auto endpoint = Eigen::Vector4d( beam->end_point.x(), beam->end_point.y(), 0, 1 );
-        Eigen::Vector4d laser_in_image = T_CL * endpoint;
-        laser_in_image = laser_in_image / laser_in_image[3];
-        
-        //const auto pnt3d = cv::Point3d( laser_in_image[0], laser_in_image[1], laser_in_image[2] );
-        const cv::Point3d pnt3d = cv::Point3d( laser_in_image[0],
-                                               laser_in_image[1],
-                                               laser_in_image[2] );
-        
-        const cv::Point2d img_pnt = image_measurement_->getCameraModel()->project3dToPixel( pnt3d );
-        if ( img_pnt.x < 0 || img_pnt.x > img_display.size().height || img_pnt.y < 0 ||
-             img_pnt.y > img_display.size().width )
+        if ( beam->get_is_visible())
         {
-          beam->set_is_visible( false );
-        } else
-        {
-          //@ToDo: do this independently in separate method -> image coordinates are needed more than once
-          beam->img_coords = Point2D( img_pnt.x, img_pnt.y );
-          beam->set_is_visible( true );
-          
-          //in image coord
-          cv::circle( img_display, img_pnt, rad, contour->getAssignedColor(), rad );
+          auto &img_pnt = beam->img_coords;
+          cv::circle( img_display, cv::Point2d( img_pnt.x(), img_pnt.y()),
+                      rad, contour->getAssignedColor(), rad );
         }
-        
       }
       
     }
