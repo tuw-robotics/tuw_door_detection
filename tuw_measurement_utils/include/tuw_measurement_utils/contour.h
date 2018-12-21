@@ -92,7 +92,7 @@ namespace tuw
     
     void cvDetectCorners();
     
-    void detectLines();
+    void detectLines( LineSegment2DDetector &lineSegment2DDetector );
     
     void registerToImage( const Eigen::Matrix4d &tf,
                           double fx, double fy,
@@ -107,6 +107,11 @@ namespace tuw
     {
       return line_segments_;
     };
+    
+    const std::vector<std::pair<Point2D, Point2D>> &getLineSegmentImageCoords()
+    {
+      return line_segment_img_coords_;
+    }
     
     void renderInternal( tuw::WorldScopedMaps &map );
     

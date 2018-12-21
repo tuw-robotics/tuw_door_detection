@@ -113,6 +113,7 @@ namespace tuw
       std::map<size_t, cv::Scalar> colorMap_;
       std::vector<std::shared_ptr<tuw::Contour>> contours_;
       tuw_door_detection::DepthDetectorConfig reconfigure_config_;
+      LineSegment2DDetector line_segment_detector_;
       
       //reconfigure stuff
       dynamic_reconfigure::Server<tuw_door_detection::DepthDetectorConfig>::CallbackType cb_type_;

@@ -62,6 +62,11 @@ DoorDepthDetector::~DoorDepthDetector() = default;
 void DoorDepthDetector::reconfigureCallback( tuw_door_detection::DepthDetectorConfig &_config, uint32_t level )
 {
   reconfigure_config_ = tuw_door_detection::DepthDetectorConfig( _config );
+  line_segment_detector_.config_.threshold_split = _config.line_detection_split_threshold;
+  line_segment_detector_.config_.threshold_split_neighbor = _config.line_detection_split_neighbor;
+  line_segment_detector_.config_.min_length = _config.line_detection_min_length;
+  line_segment_detector_.config_.min_points_per_line = _config.line_detection_min_points_per_line;
+  line_segment_detector_.config_.min_points_per_unit = _config.line_detection_min_points_per_unit;
 }
 
 void DoorDepthDetector::plot( const std::vector<DoorDetectionPtr> &_detections )
@@ -192,6 +197,7 @@ std::vector<std::shared_ptr<tuw::Contour>> DoorDepthDetector::contourMode( const
     
     elem->renderInternal( ws_map_ );
     elem->cvDetectCorners();
+    elem->detectLines( line_segment_detector_ );
     elem->set_door_candidate( false );
     
     //elem->cvConvexityDefects(ws_map_);

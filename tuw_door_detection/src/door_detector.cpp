@@ -109,20 +109,26 @@ void DoorDetector::display()
       {
         std::shared_ptr<Contour::Beam> &beam = *it_beams;
         
-        double rad = 2;
+        double rad = 1;
         if ( it_beams == contour->begin() || it_beams == (contour->end() - 1))
         {
-          rad = 5;
+          rad = 2;
         }
         
         if ( beam->get_is_visible())
         {
           auto &img_pnt = beam->img_coords;
-          cv::circle( img_display, cv::Point2d( img_pnt.x(), img_pnt.y()),
+          cv::circle( img_display, img_pnt.cv(),
                       rad, contour->getAssignedColor(), rad );
         }
       }
       
+      for ( const auto &line_seg : contour->getLineSegmentImageCoords())
+      {
+        cv::Point2d p0 = line_seg.first.cv();
+        cv::Point2d p1 = line_seg.second.cv();
+        cv::line( img_display, p0, p1, cv::Scalar( 0, 0, 0 ));
+      }
     }
     
     //std::cout << "door candidates size " << door_candidates_.size() << std::endl << std::endl;

@@ -256,9 +256,8 @@ void Contour::render( WorldScopedMaps &map, cv::Mat &img, cv::Scalar &color, dou
   }
 }
 
-void Contour::detectLines()
+void Contour::detectLines( LineSegment2DDetector &lineSegment2DDetector )
 {
-  LineSegment2DDetector lineSegment2DDetector;
   
   //@ToDo: performance create views or whatever, avoid copying
   std::vector<Point2D> all_pnts = std::vector<Point2D>( beams_.size());
