@@ -18,6 +18,27 @@ namespace tuw
   
   public:
     
+    //class CandidateAttributes
+    //{
+    //public:
+    //  void setLengthRequirement()
+    //  {
+    //    length_requirement_ = true;
+    //  }
+    //
+    //  void setCrossingSegs()
+    //  {
+    //    crossing_segs_ = true;
+    //  }
+    //
+    //  void setDoor
+    //
+    //private:
+    //  bool length_requirement_;
+    //  bool crossing_segs_;
+    //  bool door_candidate_;
+    //};
+    
     class Beam
     {
     public:
@@ -103,7 +124,7 @@ namespace tuw
     
     const std::vector<std::unique_ptr<Corner>> &getCorners();
     
-    const std::vector<LineSegment2D> &getLineSegements()
+    const std::vector<LineSegment2DDetector::LineSegment> &getLineSegements()
     {
       return line_segments_;
     };
@@ -195,6 +216,16 @@ namespace tuw
       return beams_.end();
     }
     
+    const std::vector<std::shared_ptr<Contour>> &getChildren() const
+    {
+      return children_;
+    }
+    
+    void addChild( std::shared_ptr<Contour> &child )
+    {
+      children_.push_back( child );
+    }
+    
     const cv::Scalar &getAssignedColor() const
     {
       return assigned_color_;
@@ -205,8 +236,9 @@ namespace tuw
   private:
     std::vector<std::shared_ptr<Beam>> beams_;
     std::vector<std::unique_ptr<Corner>> corner_points_;
-    std::vector<LineSegment2D> line_segments_;
+    std::vector<LineSegment2DDetector::LineSegment> line_segments_;
     std::vector<std::pair<Point2D, Point2D>> line_segment_img_coords_;
+    std::vector<std::shared_ptr<Contour>> children_;
     bool length_cache_uptodate_;
     double length_;
     size_t num_corners_;

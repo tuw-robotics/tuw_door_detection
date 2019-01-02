@@ -130,6 +130,8 @@ namespace tuw
       
       std::vector<std::shared_ptr<tuw::Contour>> contourMode( const sensor_msgs::LaserScan &_laser );
       
+      const bool isDoorCandidate(const std::shared_ptr<Contour> &contour) const;
+      
     };
   }
 }

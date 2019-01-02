@@ -33,16 +33,20 @@ void DoorDetector::merge( std::shared_ptr<image_processor::DoorDetectorImageProc
   
   detection_laser_ = laser_processor_dyn->getContours();
   
-  door_candidates_ = std::vector<std::shared_ptr<Contour >>( detection_laser_.size());
-  auto it = std::copy_if( detection_laser_.begin(),
-                          detection_laser_.end(),
-                          door_candidates_.begin(),
-                          []( const std::shared_ptr<Contour> c )
-                          {
-                            return c->is_door_candidate();
-                          } );
-  
-  door_candidates_.resize( std::distance( door_candidates_.begin(), it ));
+  //for ( const std::shared_ptr<Contour> &c : detection_laser_ )
+  //{
+  //  if ( c->is_door_candidate())
+  //  {
+  //    door_candidates_.push_back( c );
+  //  }
+  //  for ( auto &child_candidate : c->getChildren())
+  //  {
+  //    if ( child_candidate->is_door_candidate())
+  //    {
+  //      door_candidates_.push_back( child_candidate );
+  //    }
+  //  }
+  //}
   
 }
 
@@ -133,20 +137,23 @@ void DoorDetector::display()
     
     //std::cout << "door candidates size " << door_candidates_.size() << std::endl << std::endl;
     //
-    for ( auto it_contour = door_candidates_.begin();
-          it_contour != door_candidates_.end();
+    for ( auto it_contour = detection_laser_.begin();
+          it_contour != detection_laser_.end();
           ++it_contour )
     {
       std::shared_ptr<Contour> contour = *it_contour;
-      Point2D right_most, left_most;
-      if ( contour->beams().front()->get_is_visible() && contour->beams().back()->get_is_visible())
+      if ( contour->is_door_candidate())
       {
-        right_most = contour->beams().front()->img_coords;
-        left_most = contour->beams().back()->img_coords;
-        printf( "left (%.2f,%.2f)\n", left_most.x(), left_most.y());
-        printf( "right (%.2f,%.2f)\n", right_most.x(), right_most.y());
-        cv::Rect roi( left_most.x(), 0, right_most.x() - left_most.x(), img_display.size().height );
-        cv::rectangle( img_display, roi, cv::Scalar( 0, 255, 0 ), 1 );
+        draw_roi( contour, img_display );
+      }
+      std::cout << "roi contour " << std::endl;
+      for ( auto chld: contour->getChildren())
+      {
+        std::cout << "roi child " << std::endl;
+        if ( chld->is_door_candidate())
+        {
+          draw_roi( chld, img_display );
+        }
       }
     }
     
@@ -162,5 +169,19 @@ void DoorDetector::display()
     //for ( const std::unique_ptr<Contour::Corner> &cn : corners )
     //{
     //}
+  }
+}
+
+void DoorDetector::draw_roi( std::shared_ptr<Contour> &contour, cv::Mat &img_display )
+{
+  Point2D right_most, left_most;
+  if ( contour->beams().front()->get_is_visible() && contour->beams().back()->get_is_visible())
+  {
+    right_most = contour->beams().front()->img_coords;
+    left_most = contour->beams().back()->img_coords;
+    printf( "left (%.2f,%.2f)\n", left_most.x(), left_most.y());
+    printf( "right (%.2f,%.2f)\n", right_most.x(), right_most.y());
+    cv::Rect roi( left_most.x(), 0, right_most.x() - left_most.x(), img_display.size().height );
+    cv::rectangle( img_display, roi, cv::Scalar( 0, 255, 0 ), 1 );
   }
 }

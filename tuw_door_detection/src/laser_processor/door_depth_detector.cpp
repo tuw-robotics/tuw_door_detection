@@ -7,6 +7,7 @@
 #include <opencv2/plot.hpp>
 #include <tuw_geometry/figure.h>
 #include <tuw_geometry/point2d.h>
+#include <tuw_geometry/linesegment2d_detector.h>
 #include <tuw_measurement_utils/contour.h>
 #include <random>
 
@@ -201,12 +202,7 @@ std::vector<std::shared_ptr<tuw::Contour>> DoorDepthDetector::contourMode( const
     elem->set_door_candidate( false );
     
     //elem->cvConvexityDefects(ws_map_);
-    if ( elem->length() > reconfigure_config_.min_door_len
-         && elem->length() < reconfigure_config_.max_door_len )
-    {
-      potential_doors++;
-      elem->set_door_candidate( true );
-    }
+    isDoorCandidate( elem );
     
     elem->render( ws_map_, img, color, 2, true );
   }
@@ -216,6 +212,32 @@ std::vector<std::shared_ptr<tuw::Contour>> DoorDepthDetector::contourMode( const
   
   return std::move( contours );
   //cv::imshow("corners", corner_img);
+}
+
+const bool DoorDepthDetector::isDoorCandidate( const std::shared_ptr<Contour> &contour ) const
+{
+  if ( contour->length() > reconfigure_config_.min_door_len
+       && contour->length() < reconfigure_config_.max_door_len )
+  {
+    contour->set_door_candidate( true );
+    return true;
+  }
+  
+  for ( auto lSeg : contour->getLineSegements())
+  {
+    unsigned int idx0 = lSeg.idx0_;
+    unsigned int idx1 = lSeg.idx1_;
+    std::shared_ptr<Contour> cChild = std::make_shared<Contour>();
+    for ( ; idx0 <= idx1; idx0++ )
+    {
+      cChild->push_back( contour->beams()[idx0] );
+    }
+    isDoorCandidate( cChild );
+    contour->addChild( cChild );
+  }
+  
+  contour->set_door_candidate( false );
+  return false;
 }
 
 //Border mode only same supported

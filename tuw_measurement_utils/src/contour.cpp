@@ -269,8 +269,8 @@ void Contour::detectLines( LineSegment2DDetector &lineSegment2DDetector )
     all_pnts[each++] = elem->end_point;
   } );
   
-  lineSegment2DDetector.start( all_pnts, line_segments_ );
-  
+  lineSegment2DDetector.start( all_pnts );
+  line_segments_ = lineSegment2DDetector.result();
 }
 
 void Contour::registerToImage( const Eigen::Matrix4d &tf,

@@ -29,6 +29,8 @@ namespace tuw
     void clear();
     
     void display();
+    
+    void draw_roi( std::shared_ptr<Contour> &contour, cv::Mat &img_display );
   
   private:
     std::shared_ptr<ImageMeasurement> image_measurement_;
