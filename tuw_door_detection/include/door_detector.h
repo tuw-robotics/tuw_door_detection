@@ -10,28 +10,28 @@
 
 namespace tuw
 {
-  
+
   class DoorDetector
   {
   public:
-    
+
     DoorDetector();
-    
+
     ~DoorDetector();
-    
-    void merge( std::shared_ptr<image_processor::DoorDetectorImageProcessor> &img_processor,
+
+    bool merge( std::shared_ptr<image_processor::DoorDetectorImageProcessor> &img_processor,
                 std::shared_ptr<door_laser_proc::DoorDetectorBase> &laser_processor );
-    
+
     void setImageMeasurement( std::shared_ptr<ImageMeasurement> &image_meas );
-    
+
     void setLaserMeasurement( std::shared_ptr<LaserMeasurement> &laser_meas );
-    
+
     void clear();
-    
+
     void display();
-    
+
     void draw_roi( std::shared_ptr<Contour> &contour, cv::Mat &img_display );
-  
+
   private:
     std::shared_ptr<ImageMeasurement> image_measurement_;
     std::shared_ptr<LaserMeasurement> laser_measurement_;
@@ -39,7 +39,7 @@ namespace tuw
     std::vector<std::shared_ptr<Contour>> detection_laser_;
     std::vector<std::shared_ptr<Contour>> door_candidates_;
   };
-  
+
 };
 
 #endif //PROJECT_DOOR_DETECTOR_H
