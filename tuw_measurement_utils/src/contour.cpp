@@ -16,6 +16,7 @@ Contour::Contour() : length_( 0.0 )
   is_door_candidate_ = false;
   candidate_color_ = cv::Scalar( 0, 255, 0 );
   assigned_color_ = cv::Scalar( 255, 255, 255 );
+  line_segments_ = std::vector<LineSegment2DDetector::LineSegment>( 0 );
 }
 
 Contour::Beam::Beam( double _range, double _angle, Point2D _end_point )
@@ -271,6 +272,12 @@ void Contour::detectLines( LineSegment2DDetector &lineSegment2DDetector )
   
   lineSegment2DDetector.start( all_pnts );
   line_segments_ = lineSegment2DDetector.result();
+}
+
+bool Contour::optimizeLines( const unsigned int iterations )
+{
+  
+  return true;
 }
 
 void Contour::registerToImage( const Eigen::Matrix4d &tf,

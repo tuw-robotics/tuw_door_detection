@@ -174,10 +174,13 @@ void DoorDetectorNode::process()
     auto ts_start = ros::Time::now();
     
     img_processor_->processImage( image_rgb_, image_depth_ );
+    
     bool success = door_detector_laser_->processLaser( laser_measurement_->getLaser());
     
     door_detector_->setImageMeasurement( image_rgb_ );
+    
     door_detector_->setLaserMeasurement( laser_measurement_ );
+    
     door_detector_->merge( img_processor_, door_detector_laser_ );
     
     door_detector_->display();

@@ -23,23 +23,30 @@ DoorDepthDetector::ParametersNode::ParametersNode() : node( "~" )
   node.param<std::string>( "internal_mode", internal_mode, "contour" );
 }
 
+DoorDepthDetector::ReconfigureParams::ReconfigureParams()
+{
+  contour_cut_thresh = 0.25;
+  min_door_len = 0.4;
+  max_door_len = 1.1;
+}
+
 DoorDepthDetector::DoorDepthDetector( ros::NodeHandle &_nh ) : params_( new DoorDepthDetector::ParametersNode()),
                                                                DoorDetectorBase( _nh ),
                                                                figure_local_( "KernelResponses" )
 {
   init( params_->publisher_topic );
-  config_.reset( new Config());
+  wm_config_.reset( new WorldscopedMapConfig());
   
-  figure_local_.init( config_->map_pix_x, config_->map_pix_y,
+  figure_local_.init( wm_config_->map_pix_x, wm_config_->map_pix_y,
                       -2, 25,
-                      config_->map_min_y, config_->map_max_y,
-                      config_->map_rotation + M_PI / 2.0,
-                      config_->map_grid_x, config_->map_grid_y );
+                      wm_config_->map_min_y, wm_config_->map_max_y,
+                      wm_config_->map_rotation + M_PI / 2.0,
+                      wm_config_->map_grid_x, wm_config_->map_grid_y );
   
-  ws_map_.init( config_->map_pix_x, config_->map_pix_y,
+  ws_map_.init( wm_config_->map_pix_x, wm_config_->map_pix_y,
                 -2, 25,
-                config_->map_min_y, config_->map_max_y,
-                config_->map_rotation + M_PI / 2.0 );
+                wm_config_->map_min_y, wm_config_->map_max_y,
+                wm_config_->map_rotation + M_PI / 2.0 );
   
   std::mt19937 gen( 19937 );
   std::uniform_int_distribution<> dist( 20, 255 );
@@ -62,7 +69,9 @@ DoorDepthDetector::~DoorDepthDetector() = default;
 
 void DoorDepthDetector::reconfigureCallback( tuw_door_detection::DepthDetectorConfig &_config, uint32_t level )
 {
-  reconfigure_config_ = tuw_door_detection::DepthDetectorConfig( _config );
+  detector_config_.min_door_len = _config.min_door_len;
+  detector_config_.max_door_len = _config.max_door_len;
+  detector_config_.contour_cut_thresh = _config.contour_cut_thresh;
   line_segment_detector_.config_.threshold_split = _config.line_detection_split_threshold;
   line_segment_detector_.config_.threshold_split_neighbor = _config.line_detection_split_neighbor;
   line_segment_detector_.config_.min_length = _config.line_detection_min_length;
@@ -162,7 +171,7 @@ std::vector<std::shared_ptr<tuw::Contour>> DoorDepthDetector::contourMode( const
       Point2D ptnext = Point2D( vnext[0], vnext[1] );
       const double angle = _scan.angle_min + (_scan.angle_increment * i);
       
-      if ( abs( _scan.ranges[i] - last_range ) < reconfigure_config_.contour_cut_thresh )
+      if ( abs( _scan.ranges[i] - last_range ) < detector_config_.contour_cut_thresh )
       {
         //const int color_idx = jet_sampler[contour_cnt % jet_sampler.size()];
         contours.back()->push_back( Contour::Beam::make_beam( _scan.ranges[i], angle, ptnext ));
@@ -185,7 +194,7 @@ std::vector<std::shared_ptr<tuw::Contour>> DoorDepthDetector::contourMode( const
                                   contours.end(),
                                   [this]( std::shared_ptr<Contour> &c )
                                   {
-                                    return c->length() < this->reconfigure_config_.min_door_len;
+                                    return c->length() < detector_config_.min_door_len;
                                   } ),
                   contours.end());
   
@@ -199,10 +208,13 @@ std::vector<std::shared_ptr<tuw::Contour>> DoorDepthDetector::contourMode( const
     elem->renderInternal( ws_map_ );
     elem->cvDetectCorners();
     elem->detectLines( line_segment_detector_ );
+    //elem->optimizeLines( 10 );
     elem->set_door_candidate( false );
     
     //elem->cvConvexityDefects(ws_map_);
+    std::cout << "is door candidate ? " << std::endl;
     isDoorCandidate( elem );
+    std::cout << "is door candidate ? " << std::endl;
     
     elem->render( ws_map_, img, color, 2, true );
   }
@@ -216,24 +228,32 @@ std::vector<std::shared_ptr<tuw::Contour>> DoorDepthDetector::contourMode( const
 
 const bool DoorDepthDetector::isDoorCandidate( const std::shared_ptr<Contour> &contour ) const
 {
-  if ( contour->length() > reconfigure_config_.min_door_len
-       && contour->length() < reconfigure_config_.max_door_len )
+  //@ToDo: move child construction to separate function?!
+  if ( contour->length() > detector_config_.min_door_len
+       && contour->length() < detector_config_.max_door_len )
   {
     contour->set_door_candidate( true );
     return true;
   }
   
-  for ( auto lSeg : contour->getLineSegements())
+  auto lSegs = contour->getLineSegments();
+  for ( int ii = 0; ii < lSegs.size(); ii++ )
   {
+    auto lSeg = lSegs[ii];
     unsigned int idx0 = lSeg.idx0_;
     unsigned int idx1 = lSeg.idx1_;
     std::shared_ptr<Contour> cChild = std::make_shared<Contour>();
-    for ( ; idx0 <= idx1; idx0++ )
+    
+    for ( ; idx0 < idx1; idx0++ )
     {
       cChild->push_back( contour->beams()[idx0] );
     }
-    isDoorCandidate( cChild );
-    contour->addChild( cChild );
+    
+    if ( cChild->beams().size() > 1 )
+    {
+      isDoorCandidate( cChild );
+      contour->addChild( cChild );
+    }
   }
   
   contour->set_door_candidate( false );

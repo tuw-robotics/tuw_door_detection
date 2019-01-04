@@ -124,7 +124,7 @@ namespace tuw
     
     const std::vector<std::unique_ptr<Corner>> &getCorners();
     
-    const std::vector<LineSegment2DDetector::LineSegment> &getLineSegements()
+    const std::vector<LineSegment2DDetector::LineSegment> &getLineSegments()
     {
       return line_segments_;
     };
@@ -232,6 +232,8 @@ namespace tuw
     }
     
     double length();
+    
+    bool optimizeLines( const unsigned int iterations );
   
   private:
     std::vector<std::shared_ptr<Beam>> beams_;

@@ -146,12 +146,11 @@ void DoorDetector::display()
       {
         draw_roi( contour, img_display );
       }
-      std::cout << "roi contour " << std::endl;
       for ( auto chld: contour->getChildren())
       {
-        std::cout << "roi child " << std::endl;
         if ( chld->is_door_candidate())
         {
+          std::cout << "child is door candidate" << std::endl;
           draw_roi( chld, img_display );
         }
       }

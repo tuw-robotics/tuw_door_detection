@@ -32,10 +32,20 @@ namespace tuw
         std::string internal_mode;
       };
       
-      //TODO: use callback from parameterserver
-      struct Config
+      struct ReconfigureParams
       {
-        Config()
+      public:
+        ReconfigureParams();
+        
+        double contour_cut_thresh;
+        double min_door_len;
+        double max_door_len;
+      };
+      
+      //TODO: use callback from parameterserver
+      struct WorldscopedMapConfig
+      {
+        WorldscopedMapConfig()
         {
           map_pix_x = 500;
           map_pix_y = 500;
@@ -60,7 +70,7 @@ namespace tuw
       };
       
       std::unique_ptr<ParametersNode> params_;
-      std::unique_ptr<Config> config_;
+      std::unique_ptr<WorldscopedMapConfig> wm_config_;
       
       ///// parameter server for dynamic detector configuration
       // dynamic_reconfigure::Server<tuw_door_detection::DepthDetectorConfig> reconfigure_server_;
@@ -112,8 +122,8 @@ namespace tuw
       ros::Publisher pubObjectDetections_;
       std::map<size_t, cv::Scalar> colorMap_;
       std::vector<std::shared_ptr<tuw::Contour>> contours_;
-      tuw_door_detection::DepthDetectorConfig reconfigure_config_;
       LineSegment2DDetector line_segment_detector_;
+      ReconfigureParams detector_config_;
       
       //reconfigure stuff
       dynamic_reconfigure::Server<tuw_door_detection::DepthDetectorConfig>::CallbackType cb_type_;
@@ -130,7 +140,7 @@ namespace tuw
       
       std::vector<std::shared_ptr<tuw::Contour>> contourMode( const sensor_msgs::LaserScan &_laser );
       
-      const bool isDoorCandidate(const std::shared_ptr<Contour> &contour) const;
+      const bool isDoorCandidate( const std::shared_ptr<Contour> &contour ) const;
       
     };
   }
