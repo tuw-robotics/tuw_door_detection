@@ -209,8 +209,6 @@ void Contour::cvDetectCorners()
                                         } ),
                         corner_points_.end());
   
-  
-  std::cout << "Corners " << corner_points_.size() << std::endl;
 }
 
 const std::vector<std::unique_ptr<Contour::Corner>> &Contour::getCorners()

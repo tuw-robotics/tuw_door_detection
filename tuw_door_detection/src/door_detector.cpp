@@ -72,7 +72,7 @@ void DoorDetector::display()
   if ( image_measurement_ && laser_measurement_ )
   {
     cv::Mat img_display;
-    image_measurement_->getOriginalImage().copyTo( img_display );
+    detection_image_->getImageMeasurement()->cv().copyTo( img_display );
     if ( img_display.channels() != 3 )
     {
       cv::cvtColor( img_display, img_display, CV_GRAY2BGR );
@@ -131,7 +131,7 @@ void DoorDetector::display()
       {
         cv::Point2d p0 = line_seg.first.cv();
         cv::Point2d p1 = line_seg.second.cv();
-        cv::line( img_display, p0, p1, cv::Scalar( 0, 0, 0 ));
+        cv::line( img_display, p0, p1, cv::Scalar( 255, 255, 255 ), 2 );
       }
     }
     
@@ -150,7 +150,6 @@ void DoorDetector::display()
       {
         if ( chld->is_door_candidate())
         {
-          std::cout << "child is door candidate" << std::endl;
           draw_roi( chld, img_display );
         }
       }

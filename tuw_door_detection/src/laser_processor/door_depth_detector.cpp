@@ -212,9 +212,7 @@ std::vector<std::shared_ptr<tuw::Contour>> DoorDepthDetector::contourMode( const
     elem->set_door_candidate( false );
     
     //elem->cvConvexityDefects(ws_map_);
-    std::cout << "is door candidate ? " << std::endl;
     isDoorCandidate( elem );
-    std::cout << "is door candidate ? " << std::endl;
     
     elem->render( ws_map_, img, color, 2, true );
   }
