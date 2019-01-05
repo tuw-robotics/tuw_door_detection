@@ -178,6 +178,6 @@ void DoorDetector::draw_roi( std::shared_ptr<Contour> &contour, cv::Mat &img_dis
     //printf( "left (%.2f,%.2f)\n", left_most.x(), left_most.y());
     //printf( "right (%.2f,%.2f)\n", right_most.x(), right_most.y());
     cv::Rect roi(left_most.x(), 0, right_most.x() - left_most.x(), img_display.size().height);
-    cv::rectangle(img_display, roi, cv::Scalar(0, 255, 0), 1);
+    cv::rectangle(img_display, roi, cv::Scalar(0, static_cast<int>(255 * contour->candidateLikelyhood()), 0), 1);
   }
 }

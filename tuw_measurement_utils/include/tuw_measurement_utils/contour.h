@@ -47,7 +47,7 @@ namespace tuw
       {
       };
 
-      Beam(double range, double angle, Point2D end_point);
+      Beam( double range, double angle, Point2D end_point );
 
       //Beam(const Beam &) = delete;
 
@@ -62,13 +62,13 @@ namespace tuw
 
       const bool is_valid() const;
 
-      void set_valid(const bool v);
+      void set_valid( const bool v );
 
       const bool get_is_visible() const;
 
-      void set_is_visible(const bool v);
+      void set_is_visible( const bool v );
 
-      static std::shared_ptr<Beam> make_beam(double range, double angle, Point2D end_point);
+      static std::shared_ptr<Beam> make_beam( double range, double angle, Point2D end_point );
 
     private:
       bool valid_beam;
@@ -77,7 +77,7 @@ namespace tuw
 
     struct CVDefect
     {
-      CVDefect(int startIdx, int endIdx, int x, int y)
+      CVDefect( int startIdx, int endIdx, int x, int y )
       {
         start_idx = startIdx;
         end_idx = endIdx;
@@ -92,7 +92,7 @@ namespace tuw
     struct Corner
     {
 
-      Corner(const cv::Point2d &_point, size_t _response, size_t _idx)
+      Corner( const cv::Point2d &_point, size_t _response, size_t _idx )
       {
         point = _point;
         response = _response;
@@ -106,22 +106,22 @@ namespace tuw
 
     Contour();
 
-    void push_back(std::shared_ptr<Beam> beam);
+    void push_back( std::shared_ptr<Beam> beam );
 
-    void detectCorners(const size_t KERNEL_SIZE);
+    void detectCorners( const size_t KERNEL_SIZE );
 
-    void cvConvexityDefects(tuw::WorldScopedMaps &_map);
+    void cvConvexityDefects( tuw::WorldScopedMaps &_map );
 
     void cvDetectCorners();
 
-    void detectLines(LineSegment2DDetector &lineSegment2DDetector);
+    void detectLines( LineSegment2DDetector &lineSegment2DDetector );
 
-    void registerToImage(const Eigen::Matrix4d &tf,
-                         double fx, double fy,
-                         double cx, double cy,
-                         double tx, double ty);
+    void registerToImage( const Eigen::Matrix4d &tf,
+                          double fx, double fy,
+                          double cx, double cy,
+                          double tx, double ty );
 
-    void visibilityCheck(bool shift_lines, int img_width, int img_height);
+    void visibilityCheck( bool shift_lines, int img_width, int img_height );
 
     const std::vector<std::unique_ptr<Corner>> &getCorners();
 
@@ -135,16 +135,26 @@ namespace tuw
       return line_segment_img_coords_;
     }
 
-    void renderInternal(tuw::WorldScopedMaps &map);
+    void renderInternal( tuw::WorldScopedMaps &map );
 
     bool is_door_candidate()
     {
       return is_door_candidate_;
     }
 
-    void set_door_candidate(bool val)
+    void set_door_candidate( bool val )
     {
       this->is_door_candidate_ = val;
+    }
+
+    void candidateLikelyhood( const double lh )
+    {
+      likelyhood_ = lh;
+    }
+
+    const double candidateLikelyhood() const
+    {
+      return likelyhood_;
     }
 
     std::shared_ptr<Beam> front()
@@ -167,7 +177,7 @@ namespace tuw
       return beams_;
     }
 
-    void render(WorldScopedMaps &map2image, cv::Mat &image, cv::Scalar &color, double rad = 2, bool corners = true);
+    void render( WorldScopedMaps &map2image, cv::Mat &image, cv::Scalar &color, double rad = 2, bool corners = true );
 
     const Point2D &startPoint() const
     {
@@ -222,7 +232,7 @@ namespace tuw
       return children_;
     }
 
-    void addChild(std::shared_ptr<Contour> &child)
+    void addChild( std::shared_ptr<Contour> &child )
     {
       children_.push_back(child);
     }
@@ -234,7 +244,7 @@ namespace tuw
 
     double length();
 
-    bool optimizeLines(const unsigned int iterations);
+    bool optimizeLines( const unsigned int iterations );
 
   private:
     std::vector<std::shared_ptr<Beam>> beams_;
@@ -244,6 +254,7 @@ namespace tuw
     std::vector<std::shared_ptr<Contour>> children_;
     bool length_cache_uptodate_;
     double length_;
+    double likelyhood_;
     size_t num_corners_;
     cv::Mat rendering_;
     bool is_door_candidate_;
