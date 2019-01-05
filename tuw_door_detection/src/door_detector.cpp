@@ -39,6 +39,7 @@ bool DoorDetector::merge( std::shared_ptr<image_processor::DoorDetectorImageProc
 
   const auto T_WC = image_measurement_->getTfWorldSensor();
   const auto T_WL = laser_measurement_->getTfWorldSensor();
+  const auto z_laser = T_WL(2, 3);
   const Eigen::Matrix4d T_CL = T_WC.inverse() * T_WL;
 
   auto &cmodel = image_measurement_->getCameraModel();
@@ -46,13 +47,14 @@ bool DoorDetector::merge( std::shared_ptr<image_processor::DoorDetectorImageProc
   auto img_width = image_measurement_->cv().size().width;
 
   std::for_each(detection_laser_.begin(), detection_laser_.end(),
-                [ &cmodel, &T_CL, img_height, img_width ]
+                [ &cmodel, &T_CL, img_height, img_width, z_laser ]
                     ( std::shared_ptr<Contour> &contr )
                 {
-                  contr->registerToImage(T_CL,
+                  contr->registerToImage(T_CL, z_laser,
                                          cmodel->fx(), cmodel->fy(),
                                          cmodel->cx(), cmodel->cy(),
                                          cmodel->Tx(), cmodel->Ty());
+                  //contr->registerFloorImage(T_WL)
 
                   contr->visibilityCheck(false, img_width, img_height);
                 });
@@ -121,6 +123,9 @@ void DoorDetector::display()
           auto &img_pnt = beam->img_coords;
           cv::circle(img_display, img_pnt.cv(),
                      rad, contour->getAssignedColor(), rad);
+          //auto &floor_pnt = beam->img_base_coords;
+          //cv::circle(img_display, floor_pnt.cv(),
+          //           rad, contour->getAssignedColor(), rad);
         }
       }
 
@@ -168,16 +173,20 @@ void DoorDetector::display()
   }
 }
 
-void DoorDetector::draw_roi( std::shared_ptr<Contour> &contour, cv::Mat &img_display )
+void
+DoorDetector::draw_roi( std::shared_ptr<Contour> &contour, cv::Mat &img_display )
 {
   Point2D right_most, left_most;
+  double x_offset = 4;
+  double y_offset = 4;
   if ( contour->beams().front()->get_is_visible() && contour->beams().back()->get_is_visible())
   {
-    right_most = contour->beams().front()->img_coords;
-    left_most = contour->beams().back()->img_coords;
+    right_most = contour->beams().front()->img_base_coords;
+    left_most = contour->beams().back()->img_base_coords;
+    double height = std::max(right_most.y(), left_most.y());
     //printf( "left (%.2f,%.2f)\n", left_most.x(), left_most.y());
     //printf( "right (%.2f,%.2f)\n", right_most.x(), right_most.y());
-    cv::Rect roi(left_most.x(), 0, right_most.x() - left_most.x(), img_display.size().height);
+    cv::Rect roi(left_most.x(), 0, right_most.x() - left_most.x(), height);
     cv::rectangle(img_display, roi, cv::Scalar(0, static_cast<int>(255 * contour->candidateLikelyhood()), 0), 1);
   }
 }

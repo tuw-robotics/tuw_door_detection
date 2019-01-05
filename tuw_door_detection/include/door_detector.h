@@ -38,6 +38,7 @@ namespace tuw
     image_processor::DoorDetectionPtr detection_image_;
     std::vector<std::shared_ptr<Contour>> detection_laser_;
     std::vector<std::shared_ptr<Contour>> door_candidates_;
+    double base_offset_image_y_;
   };
 
 };

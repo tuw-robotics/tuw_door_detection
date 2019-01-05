@@ -57,6 +57,7 @@ namespace tuw
 
       Point2D end_point;
       Point2D img_coords;
+      Point2D img_base_coords;
       double range;
       double angle;
 
@@ -116,7 +117,12 @@ namespace tuw
 
     void detectLines( LineSegment2DDetector &lineSegment2DDetector );
 
-    void registerToImage( const Eigen::Matrix4d &tf,
+    Point2D pointToImage( Eigen::Vector4d &pnt,
+                          double fx, double fy,
+                          double cx, double cy,
+                          double tx, double ty );
+
+    void registerToImage( const Eigen::Matrix4d &tf, const double z_laser,
                           double fx, double fy,
                           double cx, double cy,
                           double tx, double ty );

@@ -210,6 +210,7 @@ std::vector<std::shared_ptr<tuw::Contour>> DoorDepthDetector::contourMode( const
     elem->detectLines(line_segment_detector_);
     //elem->optimizeLines( 10 );
     elem->set_door_candidate(false);
+    elem->candidateLikelyhood(0.0);
 
     //elem->cvConvexityDefects(ws_map_);
     isDoorCandidate(elem);
