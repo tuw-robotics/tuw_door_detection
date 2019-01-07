@@ -25,39 +25,45 @@ bool DoorDetector::merge( std::shared_ptr<image_processor::DoorDetectorImageProc
   {
     return false;
   }
-
+  
   auto laser_processor_dyn = std::dynamic_pointer_cast<door_laser_proc::DoorDepthDetector>(
-      laser_processor);
-
+      laser_processor );
+  
   if ( !laser_processor_dyn )
   {
     return false;
   }
-
+  
   detection_image_ = img_processor->getResult();
   detection_laser_ = laser_processor_dyn->getContours();
-
+  
   const auto T_WC = image_measurement_->getTfWorldSensor();
   const auto T_WL = laser_measurement_->getTfWorldSensor();
-  const auto z_laser = T_WL(2, 3);
+  const auto z_laser = T_WL( 2, 3 );
   const Eigen::Matrix4d T_CL = T_WC.inverse() * T_WL;
-
+  
   auto &cmodel = image_measurement_->getCameraModel();
   auto img_height = image_measurement_->cv().size().height;
   auto img_width = image_measurement_->cv().size().width;
-
-  std::for_each(detection_laser_.begin(), detection_laser_.end(),
-                [ &cmodel, &T_CL, img_height, img_width, z_laser ]
-                    ( std::shared_ptr<Contour> &contr )
-                {
-                  contr->registerToImage(T_CL, z_laser,
-                                         cmodel->fx(), cmodel->fy(),
-                                         cmodel->cx(), cmodel->cy(),
-                                         cmodel->Tx(), cmodel->Ty());
-                  //contr->registerFloorImage(T_WL)
-
-                  contr->visibilityCheck(false, img_width, img_height);
-                });
+  
+  //bottom left, top left, top right, bottom right
+  std::vector<cv::Point2d> bb;
+  
+  std::for_each( detection_laser_.begin(), detection_laser_.end(),
+                 [&cmodel, &T_CL, img_height, img_width, z_laser, this]
+                     ( std::shared_ptr<Contour> &contr )
+                 {
+                   //TODO clean up this mess
+                   contr->registerToImage( T_CL, z_laser + bb_h_off_,
+                                           cmodel->fx(), cmodel->fy(),
+                                           cmodel->cx(), cmodel->cy(),
+                                           cmodel->Tx(), cmodel->Ty());
+    
+    
+                   //contr->registerFloorImage(T_WL)
+    
+                   contr->visibilityCheck( false, img_width, img_height );
+                 } );
   //for ( const std::shared_ptr<Contour> &c : detection_laser_ )
   //{
   //  if ( c->is_door_candidate())
@@ -72,7 +78,7 @@ bool DoorDetector::merge( std::shared_ptr<image_processor::DoorDetectorImageProc
   //    }
   //  }
   //}
-
+  
   return true;
 }
 
@@ -94,49 +100,49 @@ void DoorDetector::setLaserMeasurement( std::shared_ptr<tuw::LaserMeasurement> &
 
 void DoorDetector::display()
 {
-
+  
   if ( image_measurement_ && laser_measurement_ )
   {
     cv::Mat img_display;
-    detection_image_->getImageMeasurement()->cv().copyTo(img_display);
+    detection_image_->getImageMeasurement()->cv().copyTo( img_display );
     if ( img_display.channels() != 3 )
     {
-      cv::cvtColor(img_display, img_display, CV_GRAY2BGR);
+      cv::cvtColor( img_display, img_display, CV_GRAY2BGR );
     }
-
+    
     for ( const auto &contour : detection_laser_ )
     {
-
+      
       for ( auto it_beams = contour->begin();
             it_beams != contour->end(); ++it_beams )
       {
         std::shared_ptr<Contour::Beam> &beam = *it_beams;
-
+        
         double rad = 1;
-        if ( it_beams == contour->begin() || it_beams == ( contour->end() - 1 ))
+        if ( it_beams == contour->begin() || it_beams == (contour->end() - 1))
         {
           rad = 2;
         }
-
+        
         if ( beam->get_is_visible())
         {
           auto &img_pnt = beam->img_coords;
-          cv::circle(img_display, img_pnt.cv(),
-                     rad, contour->getAssignedColor(), rad);
+          cv::circle( img_display, img_pnt.cv(),
+                      rad, contour->getAssignedColor(), rad );
           //auto &floor_pnt = beam->img_base_coords;
           //cv::circle(img_display, floor_pnt.cv(),
           //           rad, contour->getAssignedColor(), rad);
         }
       }
-
+      
       for ( const auto &line_seg : contour->getLineSegmentImageCoords())
       {
         cv::Point2d p0 = line_seg.first.cv();
         cv::Point2d p1 = line_seg.second.cv();
-        cv::line(img_display, p0, p1, cv::Scalar(255, 255, 255), 2);
+        cv::line( img_display, p0, p1, cv::Scalar( 255, 255, 255 ), 2 );
       }
     }
-
+    
     //std::cout << "door candidates size " << door_candidates_.size() << std::endl << std::endl;
     //
     for ( auto it_contour = detection_laser_.begin();
@@ -146,23 +152,23 @@ void DoorDetector::display()
       std::shared_ptr<Contour> contour = *it_contour;
       if ( contour->is_door_candidate())
       {
-        draw_roi(contour, img_display);
+        draw_roi( contour, img_display );
       }
       for ( auto chld: contour->getChildren())
       {
         if ( chld->is_door_candidate())
         {
-          draw_roi(chld, img_display);
+          draw_roi( chld, img_display );
         }
       }
     }
-
-    cv::namedWindow("rgb image processed");
-    cv::imshow("rgb image processed", img_display);
-    cv::waitKey(100);
-
+    
+    cv::namedWindow( "rgb image processed" );
+    cv::imshow( "rgb image processed", img_display );
+    cv::waitKey( 100 );
+    
   }
-
+  
   for ( const auto c : detection_laser_ )
   {
     //auto corners = c->getCorners();
@@ -176,17 +182,16 @@ void DoorDetector::display()
 void
 DoorDetector::draw_roi( std::shared_ptr<Contour> &contour, cv::Mat &img_display )
 {
-  Point2D right_most, left_most;
-  double x_offset = 4;
-  double y_offset = 4;
-  if ( contour->beams().front()->get_is_visible() && contour->beams().back()->get_is_visible())
-  {
-    right_most = contour->beams().front()->img_base_coords;
-    left_most = contour->beams().back()->img_base_coords;
-    double height = std::max(right_most.y(), left_most.y());
-    //printf( "left (%.2f,%.2f)\n", left_most.x(), left_most.y());
-    //printf( "right (%.2f,%.2f)\n", right_most.x(), right_most.y());
-    cv::Rect roi(left_most.x(), 0, right_most.x() - left_most.x(), height);
-    cv::rectangle(img_display, roi, cv::Scalar(0, static_cast<int>(255 * contour->candidateLikelyhood()), 0), 1);
-  }
+  std::vector<Point2D> points = contour->getBoundingBox();
+  std::vector<cv::Point2i> points_cv( points.size());
+  
+  std::size_t i = 0;
+  std::for_each( points.begin(), points.end(),
+                 [&i, &points_cv]( const Point2D &e )
+                 {
+                   points_cv[i++] = std::move( cv::Point2i( e.x(), e.y()));
+                 } );
+  
+  cv::polylines( img_display, points_cv, true,
+                 cv::Scalar( 0, static_cast<int>(255 * contour->candidateLikelyhood()), 1, 8 ));
 }
