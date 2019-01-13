@@ -1,39 +1,39 @@
 <launch>
-  <arg name="laser_scan" default="/r0/laser0/scan/raw"/>
-  <arg name="fs" default="felix/c8b268c7-3328-46f6-abfc-6cff02c5326c"/>
-  <arg name="camera_source_frame" default="/r0/realsense"/>
-  <arg name="publisher_topic" default="door_objects"/>
-  <arg name="laser_source_frame" default="/r0/laser0"/>
-  <arg name="world_frame" default="/r0/base_link"/>
-  <arg name="launch_rosbag" default="false"/>
-  <arg name="skip_rosbag" default="0"/>
-  <arg name="debug" default="false"/>
-  <arg name="bag_file" default="/media/$(arg fs)/bag_data/intel_d435_2.bag"/>
+    <arg name="launch_rosbag" default="false"/>
+    <arg name="laser_scan" default="/r0/laser0/scan/raw"/>
+    <arg name="fs" default="felix/c8b268c7-3328-46f6-abfc-6cff02c5326c"/>
+    <arg name="camera" default="/r0/realsense"/>
+    <arg name="publisher_topic" default="door_objects"/>
+    <arg name="laser_source_frame" default="/r0/laser0"/>
+    <arg name="world_frame" default="/r0/base_link"/>
+    <arg name="skip_rosbag" default="0"/>
+    <arg name="debug" default="false"/>
+    <arg name="bag_file" default="/media/$(arg fs)/bag_data/intel_d435_2.bag"/>
 
-  <group if="$(arg launch_rosbag)">
-    <node pkg="rosbag" type="play" name="player" output="screen"
-          args="--clock -d 4 -s $(arg skip_rosbag) $(arg bag_file)"/>
-  </group>
+    <group if="$(arg launch_rosbag)">
+        <node pkg="rosbag" type="play" name="player" output="screen"
+              args="--clock -d 4 -s $(arg skip_rosbag) $(arg bag_file)"/>
+    </group>
 
-  <!-- if no bag file is played assume live settings with predefined calibration -->
-  <group unless="$(arg launch_rosbag)">
-    <include file="$(find tuw_realsense_d435)/launch/realsense_transform_node.launch">
-      <arg name="publisher_topic" value="camera_source_frame"/>
-    </include>
-  </group>
+    <!-- if no bag file is played assume live settings with predefined calibration -->
+    <group unless="$(arg launch_rosbag)">
+        <include file="$(find tuw_realsense_d435)/launch/realsense_transform_node.launch">
+            <arg name="publisher_topic" value="$(arg camera)"/>
+        </include>
+    </group>
 
-  <node name="door_detector_node" pkg="tuw_door_detection" type="door_detector_node" output="screen">
-    <param name="mode" value="depth"/>
-    <param name="publisher_topic" value="$(arg publisher_topic)"/>
-    <param name="debug" value="$(arg debug)"/>
-    <param name="internal_mode" value="contour"/>
-    <param name="camera_source_frame" value="$(arg camera_source_frame)"/>
-    <param name="laser_source_frame" value="$(arg laser_source_frame)"/>
-    <param name="world_frame" value="$(arg world_frame)"/>
-    <remap from="scan" to="$(arg laser_scan)"/>
-    <remap from="image_rgb" to="$(arg camera_source_frame)/color/image_raw"/>
-    <remap from="image_depth" to="$(arg camera_source_frame)/depth/image_rect_raw"/>
-    <remap from="camera_info_rgb" to="$(arg camera_source_frame)/color/camera_info"/>
-    <remap from="camera_info_depth" to="$(arg camera_source_frame)/depth/camera_info"/>
-  </node>
+    <node name="door_detector_node" pkg="tuw_door_detection" type="door_detector_node" output="screen">
+        <param name="mode" value="depth"/>
+        <param name="publisher_topic" value="$(arg publisher_topic)"/>
+        <param name="debug" value="$(arg debug)"/>
+        <param name="internal_mode" value="contour"/>
+        <param name="camera_source_frame" value="$(arg camera)"/>
+        <param name="laser_source_frame" value="$(arg laser_source_frame)"/>
+        <param name="world_frame" value="$(arg world_frame)"/>
+        <remap from="scan" to="$(arg laser_scan)"/>
+        <remap from="image_rgb" to="$(arg camera)/color/image_raw"/>
+        <remap from="image_depth" to="$(arg camera)/depth/image_rect_raw"/>
+        <remap from="camera_info_rgb" to="$(arg camera)/color/camera_info"/>
+        <remap from="camera_info_depth" to="$(arg camera)/depth/camera_info"/>
+    </node>
 </launch>
