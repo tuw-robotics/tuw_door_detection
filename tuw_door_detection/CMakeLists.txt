@@ -14,10 +14,11 @@ find_package(catkin REQUIRED COMPONENTS
         sensor_msgs
         tuw_geometry
         tuw_geometry_msgs
+        tuw_object_msgs
+        tuw_measurement_utils
         dynamic_reconfigure
         cv_bridge
         image_geometry
-        tuw_measurement_utils
         )
 
 ## System dependencies are found with CMake's conventions
@@ -120,6 +121,7 @@ catkin_package(
         rospy
         tuw_geometry
         tuw_geometry_msgs
+        tuw_object_msgs
         tf2_ros
         tf_conversions
         cv_bridge

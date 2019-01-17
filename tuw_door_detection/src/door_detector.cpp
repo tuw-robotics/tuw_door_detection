@@ -10,12 +10,12 @@ using namespace tuw;
 
 DoorDetector::DoorDetector()
 {
-  
+
 }
 
 DoorDetector::~DoorDetector()
 {
-  
+
 }
 
 bool DoorDetector::merge( std::shared_ptr<image_processor::DoorDetectorImageProcessor> &img_processor,
@@ -56,7 +56,7 @@ bool DoorDetector::merge( std::shared_ptr<image_processor::DoorDetectorImageProc
                  {
                    std::cout << "beams size " << contr->beams().size() << std::endl;
                    //TODO clean up this mess
-                   contr->registerToImage( T_CL, z_laser + bb_h_off_,
+                   contr->registerToImage( T_CL, z_laser,
                                            cmodel->fx(), cmodel->fy(),
                                            cmodel->cx(), cmodel->cy(),
                                            cmodel->Tx(), cmodel->Ty());
@@ -66,6 +66,7 @@ bool DoorDetector::merge( std::shared_ptr<image_processor::DoorDetectorImageProc
     
                    contr->visibilityCheck( false, img_width, img_height );
                  } );
+  
   //for ( const std::shared_ptr<Contour> &c : detection_laser_ )
   //{
   //  if ( c->is_door_candidate())
@@ -98,6 +99,60 @@ void DoorDetector::setImageMeasurement( std::shared_ptr<ImageMeasurement> &img_m
 void DoorDetector::setLaserMeasurement( std::shared_ptr<tuw::LaserMeasurement> &laser_meas )
 {
   laser_measurement_ = laser_meas;
+}
+
+tuw_object_msgs::ObjectWithCovariance DoorDetector::generateObjMessage( std::shared_ptr<Contour> &contour, int32_t id )
+{
+  using tuw_object_msgs::ObjectWithCovariance;
+  using tuw_object_msgs::Object;
+  
+  tuw_object_msgs::ObjectWithCovariance obj;
+  obj.object.ids = {id};
+  
+  //@ToDo: which orientation how did i define it?
+  //@ToDo: refine opening angle and bounding box
+  auto pos_left_ws = contour->getBoundingBoxObjSpace().front();
+  auto pos_right_ws = contour->getBoundingBoxObjSpace().back();
+  obj.object.pose.position.x = pos_left_ws.x();
+  obj.object.pose.position.y = pos_left_ws.y();
+  obj.object.pose.position.z = pos_left_ws.z();
+  
+  obj.object.pose.orientation.x = 0;
+  obj.object.pose.orientation.y = 0;
+  obj.object.pose.orientation.z = 0;
+  obj.object.pose.orientation.w = 1;
+  
+  obj.object.shape = Object::SHAPE_DOOR;
+  
+  return std::move( obj );
+}
+
+tuw_object_msgs::ObjectDetection DoorDetector::getResultAsMessage()
+{
+  tuw_object_msgs::ObjectDetection det_msg;
+  det_msg.header.stamp = ros::Time::now();
+  det_msg.header.frame_id = laser_measurement_->getLaser().header.frame_id;
+  det_msg.type = tuw_object_msgs::ObjectDetection::OBJECT_TYPE_DOOR;
+  
+  int32_t id = 0;
+  
+  for ( auto it_contour = detection_laser_.begin();
+        it_contour != detection_laser_.end();
+        ++it_contour )
+  {
+    std::shared_ptr<Contour> contour = *it_contour;
+    if ( contour->is_door_candidate())
+    {
+      det_msg.objects.push_back( std::move( generateObjMessage( contour, id++ )));
+    }
+    for ( auto chld: contour->getChildren())
+    {
+      if ( chld->is_door_candidate())
+      {
+        det_msg.objects.push_back( std::move( generateObjMessage( chld, id++ )));
+      }
+    }
+  }
 }
 
 void DoorDetector::display()

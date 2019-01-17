@@ -7,6 +7,7 @@
 
 #include <imgproc/door_detector_imgproc.h>
 #include <laserproc/door_depth_detector.h>
+#include <tuw_object_msgs/ObjectDetection.h>
 
 namespace tuw
 {
@@ -29,6 +30,10 @@ namespace tuw
     void clear();
     
     void display();
+    
+    tuw_object_msgs::ObjectWithCovariance generateObjMessage( std::shared_ptr<Contour> &_contour, int32_t id);
+    
+    tuw_object_msgs::ObjectDetection getResultAsMessage();
     
     void draw_roi( std::shared_ptr<Contour> &contour, cv::Mat &img_display );
   

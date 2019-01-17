@@ -253,6 +253,16 @@ namespace tuw
       bb_ = bb;
     }
     
+    const std::vector<Eigen::Vector3d> &getBoundingBoxObjSpace() const
+    {
+      return bb_objspace_;
+    }
+    
+    std::vector<Eigen::Vector3d> &getBoundingBoxObjSpace()
+    {
+      return bb_objspace_;
+    }
+    
     std::vector<cv::Point2d> getBoundingBoxCV()
     {
       return std::vector<cv::Point2d>{
@@ -295,6 +305,7 @@ namespace tuw
     
     std::vector<std::unique_ptr<CVDefect>> convexity_defects_;
     std::vector<Point2D> bb_;
+    std::vector<Eigen::Vector3d> bb_objspace_;
   };
 };
 

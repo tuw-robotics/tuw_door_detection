@@ -274,7 +274,6 @@ void Contour::detectLines( LineSegment2DDetector &lineSegment2DDetector )
 
 bool Contour::optimizeLines( const unsigned int iterations )
 {
-  
   return true;
 }
 
@@ -357,15 +356,24 @@ void Contour::calculateBoundingBox( Eigen::Matrix4d tf, double z_laser,
   beams_ends.push_back( beams().back());
   
   //@ToDo: magic numbers
+  size_t i_bm = 0;
   for ( auto &beam : beams_ends )
   {
+    
+    auto dir_vec = Eigen::Vector2d( beam->end_point.x(),
+                                    beam->end_point.y());
+    Eigen::Vector2d dn = dir_vec.normalized();
+    
+    bb_objspace_.push_back( Eigen::Vector3d( beam->end_point.x(), beam->end_point.y(), -(z_laser + 0.25)));
+    bb_objspace_.push_back( Eigen::Vector3d( beam->end_point.x(), beam->end_point.y(), 0.25 + 2.0 - z_laser ));
+    
     Eigen::Vector4d vbot = tf * Eigen::Vector4d( beam->end_point.x(),
                                                  beam->end_point.y(),
-                                                 -(z_laser + 0.15),
+                                                 -(z_laser + 0.25),
                                                  1 );
     Eigen::Vector4d vtop = tf * Eigen::Vector4d( beam->end_point.x(),
                                                  beam->end_point.y(),
-                                                 0.15 + 2.0 - z_laser,
+                                                 0.25 + 2.0 - z_laser,
                                                  1 );
     vbot = vbot / vbot[3];
     vtop = vtop / vtop[3];
@@ -374,8 +382,12 @@ void Contour::calculateBoundingBox( Eigen::Matrix4d tf, double z_laser,
     Point2D top = pointToImage( vtop, fx, fy, cx, cy, tx, ty );
     bb_.push_back( bot );
     bb_.push_back( top );
+    i_bm++;
+    
   }
+  
   std::swap( bb_[2], bb_[3] );
+  std::swap( bb_objspace_[2], bb_objspace_[3] );
 }
 
 void Contour::visibilityCheck( bool shift_lines, int img_width, int img_height )

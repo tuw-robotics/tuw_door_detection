@@ -185,6 +185,8 @@ void DoorDetectorNode::process()
     
     door_detector_->merge( img_processor_, door_detector_laser_ );
     
+    door_detector_->getResultAsMessage();
+    
     door_detector_->display();
     
     laser_measurement_ = nullptr;
