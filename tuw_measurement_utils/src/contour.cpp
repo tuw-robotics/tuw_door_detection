@@ -305,6 +305,7 @@ void Contour::registerToImage( const Eigen::Matrix4d &tf, const double z_laser,
     base = tf * base;
     base = base / base[3];
     elem->img_base_coords = pointToImage( base, fx, fy, cx, cy, tx, ty );
+    
   }
   
   for ( LineSegment2D &ls : line_segments_ )
@@ -379,10 +380,14 @@ void Contour::calculateBoundingBox( Eigen::Matrix4d tf, double z_laser,
 
 void Contour::visibilityCheck( bool shift_lines, int img_width, int img_height )
 {
+  unsigned int cnt = 0;
   for ( auto &b : beams_ )
   {
     bool not_vis = b->img_coords.x() < 0 || b->img_coords.x() > img_height || b->img_coords.y() < 0 ||
                    b->img_coords.y() > img_width;
     b->set_is_visible( !not_vis );
+    if ( b->get_is_visible())
+      cnt++;
   }
+  std::cout << "visible beams: " << cnt << std::endl;
 }

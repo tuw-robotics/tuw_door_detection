@@ -5,6 +5,7 @@
     <arg name="camera" default="/r0/realsense"/>
     <arg name="publisher_topic" default="door_objects"/>
     <arg name="laser_source_frame" default="/r0/laser0"/>
+    <arg name="camera_source_frame" default="$(arg camera)"/>
     <arg name="world_frame" default="/r0/base_link"/>
     <arg name="skip_rosbag" default="0"/>
     <arg name="debug" default="false"/>
@@ -27,7 +28,7 @@
         <param name="publisher_topic" value="$(arg publisher_topic)"/>
         <param name="debug" value="$(arg debug)"/>
         <param name="internal_mode" value="contour"/>
-        <param name="camera_source_frame" value="$(arg camera)"/>
+        <param name="camera_source_frame" value="$(arg camera_source_frame)"/>
         <param name="laser_source_frame" value="$(arg laser_source_frame)"/>
         <param name="world_frame" value="$(arg world_frame)"/>
         <remap from="scan" to="$(arg laser_scan)"/>

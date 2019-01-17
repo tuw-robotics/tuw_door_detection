@@ -96,7 +96,9 @@ void DoorDetectorNode::callbackImage( const sensor_msgs::ImageConstPtr &_img )
   cv::cvtColor( image->image, image->image, CV_RGB2GRAY );
   
   geometry_msgs::TransformStampedPtr tf;
-  if ( getStaticTF( params_.world_frame, _img->header.frame_id, tf, params_.debug ))
+  std::cout << "camera source frame " << params_.camera_source_frame << std::endl;
+  std::cout << _img->header.frame_id << std::endl;
+  if ( getStaticTF( params_.world_frame, params_.camera_source_frame/* _img->header.frame_id */, tf, params_.debug ))
   {
     
     //@ToDo: reset not mandatory

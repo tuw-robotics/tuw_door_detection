@@ -10,12 +10,12 @@ using namespace tuw;
 
 DoorDetector::DoorDetector()
 {
-
+  
 }
 
 DoorDetector::~DoorDetector()
 {
-
+  
 }
 
 bool DoorDetector::merge( std::shared_ptr<image_processor::DoorDetectorImageProcessor> &img_processor,
@@ -48,11 +48,13 @@ bool DoorDetector::merge( std::shared_ptr<image_processor::DoorDetectorImageProc
   
   //bottom left, top left, top right, bottom right
   std::vector<cv::Point2d> bb;
+  std::cout << " having " << detection_laser_.size() << " detections " << std::endl;
   
   std::for_each( detection_laser_.begin(), detection_laser_.end(),
                  [&cmodel, &T_CL, img_height, img_width, z_laser, this]
                      ( std::shared_ptr<Contour> &contr )
                  {
+                   std::cout << "beams size " << contr->beams().size() << std::endl;
                    //TODO clean up this mess
                    contr->registerToImage( T_CL, z_laser + bb_h_off_,
                                            cmodel->fx(), cmodel->fy(),
