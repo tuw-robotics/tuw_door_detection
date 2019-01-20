@@ -8,6 +8,7 @@
 #include <imgproc/door_detector_imgproc.h>
 #include <laserproc/door_depth_detector.h>
 #include <tuw_object_msgs/ObjectDetection.h>
+#include <tuw_measurement_utils/laser_measurement.h>
 
 namespace tuw
 {

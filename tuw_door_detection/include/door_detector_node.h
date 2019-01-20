@@ -47,7 +47,7 @@
 #include <sensor_msgs/Image.h>
 #include <cv_bridge/cv_bridge.h>
 #include <map>
-#include <tuw_measurement_utils/measurements.h>
+#include <tuw_measurement_utils/measurement.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/buffer.h>
 #include <door_detector.h>

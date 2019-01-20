@@ -111,7 +111,7 @@ catkin_package(
         LIBRARIES tuw_measurement_utils
         CATKIN_DEPENDS roscpp rospy tuw_geometry tuw_geometry_msgs tf tf_conversions cv_bridge image_geometry
         DEPENDS OpenCV
-                Eigen
+        Eigen
 )
 
 ###########
@@ -141,7 +141,9 @@ include_directories(
 ## Declare a C++ executable
 # add_executable(tuw_linedetection_node src/tuw_linedetection_node.cpp)
 add_library(tuw_measurement_utils
-        src/measurements.cpp
+        src/measurement.cpp
+        src/laser_measurement.cpp
+        src/image_measurement.cpp
         src/contour.cpp)
 
 ## Add cmake target dependencies of the executable
