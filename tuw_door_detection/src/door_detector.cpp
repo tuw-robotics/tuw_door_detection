@@ -111,11 +111,12 @@ tuw_object_msgs::ObjectWithCovariance DoorDetector::generateObjMessage( std::sha
   
   //@ToDo: which orientation how did i define it?
   //@ToDo: refine opening angle and bounding box
-  auto pos_left_ws = contour->getBoundingBoxObjSpace().front();
-  auto pos_right_ws = contour->getBoundingBoxObjSpace().back();
-  obj.object.pose.position.x = pos_left_ws.x();
-  obj.object.pose.position.y = pos_left_ws.y();
-  obj.object.pose.position.z = pos_left_ws.z();
+  Eigen::Vector3d pos_left_so = contour->getBoundingBoxObjSpace().front();
+  Eigen::Vector3d pos_right_so = contour->getBoundingBoxObjSpace().back();
+  
+  obj.object.pose.position.x = pos_left_so.x();
+  obj.object.pose.position.y = pos_left_so.y();
+  obj.object.pose.position.z = pos_left_so.z();
   
   obj.object.pose.orientation.x = 0;
   obj.object.pose.orientation.y = 0;
@@ -136,11 +137,12 @@ tuw_object_msgs::ObjectDetection DoorDetector::getResultAsMessage()
   
   int32_t id = 0;
   
-  for ( auto it_contour = detection_laser_.begin();
-        it_contour != detection_laser_.end();
+  for ( std::vector<std::shared_ptr<Contour>>::iterator it_contour = detection_laser_.begin();
+        it_contour < detection_laser_.end();
         ++it_contour )
   {
     std::shared_ptr<Contour> contour = *it_contour;
+    std::cout << id++ << std::endl;
     if ( contour->is_door_candidate())
     {
       det_msg.objects.push_back( std::move( generateObjMessage( contour, id++ )));
@@ -153,6 +155,8 @@ tuw_object_msgs::ObjectDetection DoorDetector::getResultAsMessage()
       }
     }
   }
+  
+  return std::move( det_msg );
 }
 
 void DoorDetector::display()

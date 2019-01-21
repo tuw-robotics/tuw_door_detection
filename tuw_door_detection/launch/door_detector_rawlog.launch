@@ -1,0 +1,83 @@
+<launch>
+    <arg name="launch_rosbag" default="true"/>
+    <arg name="launch_realsense_transforms_node" default="true"/>
+    <arg name="robot_name" default="r0"/>
+    <arg name="laser_scan" default="/r0/laser0/scan/raw"/>
+    <arg name="fs" default="felix/c8b268c7-3328-46f6-abfc-6cff02c5326c"/>
+    <arg name="camera" default="/r0/realsense"/>
+    <arg name="realsense_transforms_tf" default="$(arg camera)_rgb"/>
+    <arg name="publisher_topic" default="door_objects"/>
+    <arg name="laser_source_frame" default="/r0/laser0"/>
+    <arg name="camera_source_frame" default="$(arg camera)"/>
+    <arg name="world_frame" default="/r0/base_link"/>
+    <arg name="skip_rosbag" default="0"/>
+    <arg name="debug" default="false"/>
+    <arg name="bag_file" default="/media/$(arg fs)/bag_data/intel_d435_2.bag"/>
+    <arg name="bearing_topic" default="/observations"/>
+
+    <group if="$(arg launch_rosbag)">
+        <rosparam param="use_sim_time" subst_value="True"/>
+        <node pkg="rosbag" type="play" name="player" output="screen"
+              args="--clock -d 1 -s $(arg skip_rosbag) $(arg bag_file)"/>
+    </group>
+
+    <!-- if no bag file is played assume live settings with predefined calibration -->
+    <group unless="$(arg launch_rosbag)">
+        <include file="$(find tuw_realsense_d435)/launch/realsense_transform_node.launch">
+            <arg name="publisher_topic" value="$(arg camera)"/>
+        </include>
+    </group>
+
+    <group if="$(launch_realsense_transforms_node">
+        <node name="realsense_transforms_node" pkg="tuw_realsense_d435" type="realsense_transforms_node"
+              output="screen">
+            <param name="publisher_topic" value="$(arg realsense_transforms_tf)"/>
+            <param name="debug" value="$(arg debug)"/>
+            <param name="passthrough" value="true"/>
+        </node>
+    </group>
+
+    <node name="door_detector_node" pkg="tuw_door_detection" type="door_detector_node" output="screen">
+        <param name="mode" value="depth"/>
+        <param name="publisher_topic" value="$(arg publisher_topic)"/>
+        <param name="debug" value="$(arg debug)"/>
+        <param name="internal_mode" value="contour"/>
+        <group if="$(launch realsense_transforms_node)">
+            <param name="camera_source_frame" value="$(arg realsense_transforms_tf)"/>
+        </group>
+        <group unless="$(launch realsense_transforms_node)">
+            <param name="camera_source_frame" value="$(arg camera)"/>
+        </group>
+        <param name="laser_source_frame" value="$(arg laser_source_frame)"/>
+        <param name="world_frame" value="$(arg world_frame)"/>
+        <remap from="scan" to="$(arg laser_scan)"/>
+        <remap from="image_rgb" to="$(arg camera)/color/image_raw"/>
+        <remap from="image_depth" to="$(arg camera)/depth/image_rect_raw"/>
+        <remap from="camera_info_rgb" to="$(arg camera)/color/camera_info"/>
+        <remap from="camera_info_depth" to="$(arg camera)/depth/camera_info"/>
+    </node>
+
+    <include file="$(find mrpt_object_converter)/launch/demo_object_converter.launch">
+        <arg name="object_detections_topic_name" value="$(arg publisher_topic)"/>
+        <arg name="bearing_topic_name" value="$(arg bearing_topic)"/>
+        <arg name="world_frame" value="$(arg world_frame)"/>
+        <arg name="source_frame" value="$(arg laser_source_frame)"/>
+        <arg name="scan" value="$(arg laser_scan)"/>
+    </include>
+
+    <node pkg="mrpt_rawlog" type="rawlog_record_node" name="rawlog" output="screen">
+        <remap from="odom" to="$(arg robot_name)/aria/odom"/>
+        <remap from="scan" to="$(arg robot_name)/laser0/scan"/>
+        <remap from="objects" to="$(arg bearing_topic)"/>
+        <param name="base_frame_id" value="$(arg robot_name)/base_link"/>
+        <param name="raw_log_folder" value="$(find mrpt_map)/tutorial"/>
+        <param name="record_range_scan" value="true"/>
+        <param name="record_bearing_range" value="false"/>
+        <param name="record_object_observation" value="true"/>
+        <param name="record_beacon_range" value="false"/>
+        <param name="rate" value="45"/>
+        <param name="debug" value="$(arg debug_mode)"/>
+        <param name="ignore_timestamp_difference" value="true"/>
+    </node>
+
+</launch>
