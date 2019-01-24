@@ -238,9 +238,24 @@ namespace tuw
       return children_;
     }
     
+    void setParent( const std::shared_ptr<Contour> &parent )
+    {
+      parent_ = parent;
+    }
+    
     void addChild( std::shared_ptr<Contour> &child )
     {
       children_.push_back( child );
+    }
+    
+    std::vector<std::shared_ptr<Contour>> &getChildCandidates()
+    {
+      return child_candidates_;
+    }
+    
+    void addChildCandidate( std::shared_ptr<Contour> &child_candidate )
+    {
+      child_candidates_.push_back( child_candidate );
     }
     
     const cv::Scalar &getAssignedColor() const
@@ -293,6 +308,8 @@ namespace tuw
     std::vector<LineSegment2DDetector::LineSegment> line_segments_;
     std::vector<std::pair<Point2D, Point2D>> line_segment_img_coords_;
     std::vector<std::shared_ptr<Contour>> children_;
+    std::vector<std::shared_ptr<Contour>> child_candidates_;
+    std::shared_ptr<Contour> parent_;
     bool length_cache_uptodate_;
     double length_;
     double likelyhood_;

@@ -99,6 +99,8 @@ namespace tuw
         return contours_;
       }
       
+      void determineHandle( const std::shared_ptr<Contour> &contour );
+      
       void reconfigureCallback( tuw_door_detection::DepthDetectorConfig &_config, uint32_t level );
     
     protected:
