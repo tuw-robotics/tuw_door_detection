@@ -364,8 +364,8 @@ void Contour::calculateBoundingBox( Eigen::Matrix4d tf, double z_laser,
                                     beam->end_point.y());
     Eigen::Vector2d dn = dir_vec.normalized();
     
-    bb_objspace_.push_back( Eigen::Vector3d( beam->end_point.x(), beam->end_point.y(), -(z_laser + 0.25)));
-    bb_objspace_.push_back( Eigen::Vector3d( beam->end_point.x(), beam->end_point.y(), 0.25 + 2.0 - z_laser ));
+    bb_objspace_.push_back( Eigen::Vector3d( beam->end_point.x(), beam->end_point.y(), -z_laser ));
+    bb_objspace_.push_back( Eigen::Vector3d( beam->end_point.x(), beam->end_point.y(), 2.0 - z_laser ));
     
     Eigen::Vector4d vbot = tf * Eigen::Vector4d( beam->end_point.x(),
                                                  beam->end_point.y(),
