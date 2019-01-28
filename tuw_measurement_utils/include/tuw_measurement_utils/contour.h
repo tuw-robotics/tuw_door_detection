@@ -10,6 +10,7 @@
 #include <tuw_geometry/world_scoped_maps.h>
 #include <tuw_geometry/linesegment2d_detector.h>
 #include <Eigen/Core>
+#include <boost/uuid/uuid.hpp>
 
 namespace tuw
 {
@@ -105,7 +106,14 @@ namespace tuw
       size_t idx;
     };
     
-    Contour();
+    explicit Contour( boost::uuids::uuid uuid );
+    
+    boost::uuids::uuid &id()
+    {
+      return uuid_;
+    }
+    
+    const boost::uuids::uuid &id() const;
     
     void push_back( std::shared_ptr<Beam> beam );
     
@@ -131,10 +139,15 @@ namespace tuw
     
     const std::vector<std::unique_ptr<Corner>> &getCorners();
     
-    const std::vector<LineSegment2DDetector::LineSegment> &getLineSegments()
+    const std::vector<LineSegment2DDetector::LineSegment> &getLineSegments() const
     {
       return line_segments_;
     };
+    
+    std::vector<LineSegment2DDetector::LineSegment> &getLineSegments()
+    {
+      return line_segments_;
+    }
     
     const std::vector<std::pair<Point2D, Point2D>> &getLineSegmentImageCoords()
     {
@@ -238,9 +251,9 @@ namespace tuw
       return children_;
     }
     
-    void setParent( const std::shared_ptr<Contour> &parent )
+    std::vector<std::shared_ptr<Contour>> &getChildren()
     {
-      parent_ = parent;
+      return children_;
     }
     
     void addChild( std::shared_ptr<Contour> &child )
@@ -309,7 +322,7 @@ namespace tuw
     std::vector<std::pair<Point2D, Point2D>> line_segment_img_coords_;
     std::vector<std::shared_ptr<Contour>> children_;
     std::vector<std::shared_ptr<Contour>> child_candidates_;
-    std::shared_ptr<Contour> parent_;
+    boost::uuids::uuid uuid_;
     bool length_cache_uptodate_;
     double length_;
     double likelyhood_;

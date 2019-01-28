@@ -135,6 +135,30 @@ std::vector<T> DoorDepthDetector::normalize( std::vector<T> &_v )
   return std::move( c );
 }
 
+/**
+ * Sort from right to left (scan range )
+ *
+ * @param contour
+ */
+void DoorDepthDetector::sortLinesChildren( std::shared_ptr<Contour> &contour )
+{
+  std::cout << "sorting " << std::endl;
+  std::vector<std::shared_ptr<Contour>> &children = contour->getChildren();
+  std::sort( children.begin(), children.end(),
+             []( const std::shared_ptr<Contour> &c0, const std::shared_ptr<Contour> &c1 )
+             {
+               return c0->getLineSegments().front().idx0_ < c1->getLineSegments().front().idx0_;
+             } );
+  
+  std::vector<LineSegment2DDetector::LineSegment> &line_segments = contour->getLineSegments();
+  std::sort( line_segments.begin(), line_segments.end(),
+             []( const LineSegment2DDetector::LineSegment &c0, const LineSegment2DDetector::LineSegment &c1 )
+             {
+               return c0.idx0_ < c1.idx1_;
+             } );
+  std::cout << "sorting " << std::endl;
+}
+
 std::vector<std::shared_ptr<tuw::Contour>> DoorDepthDetector::contourMode( const sensor_msgs::LaserScan &_scan )
 {
   
@@ -157,7 +181,7 @@ std::vector<std::shared_ptr<tuw::Contour>> DoorDepthDetector::contourMode( const
   }
   
   std::vector<std::shared_ptr<Contour>> contours;
-  contours.push_back( std::make_shared<Contour>());
+  contours.push_back( std::make_shared<Contour>( uuid_generator_()));
   
   for ( size_t i = last_range_idx; i < N; i++ )
   {
@@ -179,7 +203,7 @@ std::vector<std::shared_ptr<tuw::Contour>> DoorDepthDetector::contourMode( const
       {
         contour_cnt += 1;
         const auto beam = Contour::Beam::make_beam( _scan.ranges[i], angle, ptnext );
-        std::shared_ptr<Contour> contr = std::make_shared<Contour>();
+        std::shared_ptr<Contour> contr = std::make_shared<Contour>( uuid_generator_());
         contours.push_back( contr );
         contr->push_back( beam );
       }
@@ -213,17 +237,24 @@ std::vector<std::shared_ptr<tuw::Contour>> DoorDepthDetector::contourMode( const
     elem->candidateLikelyhood( 0.0 );
     
     //elem->cvConvexityDefects(ws_map_);
+    std::cout << "candidate?" << std::endl;
     isDoorCandidate( elem );
+    std::cout << "candidate?" << std::endl;
+    
+    sortLinesChildren( elem );
+    
     if ( elem->is_door_candidate())
     {
-      determineHandle( elem );
+      //@ToDo: Strategy missing
+      //determineHandle( elem );
     }
     if ( !elem->getChildCandidates().empty())
     {
-      for ( auto chld : elem->getChildCandidates())
-      {
-        determineHandle( chld );
-      }
+      //for ( auto chld : elem->getChildCandidates())
+      //{
+      //  determineHandle( chld );
+      //}
+      determineHandle( elem );
     }
     
     //Only length requirement satisfied -> likelyhood is low
@@ -247,10 +278,86 @@ std::vector<std::shared_ptr<tuw::Contour>> DoorDepthDetector::contourMode( const
 
 void DoorDepthDetector::determineHandle( const std::shared_ptr<Contour> &contour )
 {
-  //TODO: implement
+  std::cout << "det handle" << std::endl;
+  for ( std::shared_ptr<Contour> chld : contour->getChildCandidates())
+  {
+    std::shared_ptr<Contour> neighbor_right = nullptr;
+    std::shared_ptr<Contour> neighbor_left = nullptr;
+    
+    if ( contour->getChildren().size() > 1 )
+    {
+      //Search the child nodes for a wall
+      uint32_t counter = 0;
+      for ( std::shared_ptr<Contour> sibling : contour->getChildren())
+      {
+        if ( chld->id() == sibling->id())
+        {
+          if ( counter == 0 )
+          {
+            neighbor_left = contour->getChildren()[counter + 1];
+          }
+          if ( counter == (contour->getChildren().size() - 1))
+          {
+            neighbor_right = contour->getChildren()[counter - 2];
+          } else
+          {
+            neighbor_right = contour->getChildren()[counter + 1];
+            neighbor_left = contour->getChildren()[counter - 1];
+          }
+          counter++;
+        }
+      }
+    } else
+    {
+      //Search the neighboring contours for child nodes with a wall -> however highly unlikely
+    }
+    
+    if ( neighbor_left && neighbor_right )
+    {
+      ROS_WARN( "door has two neighbors, should not happen" );
+    }
+    
+    if ( neighbor_left ) //post is on the left
+    {
+      ROS_INFO( "door has left neighbor" );
+      //Reminder: indices start right, end left
+      auto ls = neighbor_left->getLineSegments().front();
+      std::vector<cv::Point2d> v_ls_right_left = {
+          neighbor_left->beams().back()->end_point.cv() - neighbor_left->beams().front()->end_point.cv()
+      };
+      
+      std::vector<cv::Point2d> v_chld_ls_left_right = {
+          chld->beams().front()->end_point.cv() - chld->beams().back()->end_point.cv()
+      };
+      
+      v_ls_right_left[0] = v_ls_right_left[0] / cv::norm( v_ls_right_left, cv::NORM_L2SQR );
+      v_chld_ls_left_right[0] = v_chld_ls_left_right[0] / cv::norm( v_chld_ls_left_right, cv::NORM_L2SQR );
+      
+      double angle = std::acos( v_ls_right_left[0].dot( v_chld_ls_left_right[0] ));
+    }
+    if ( neighbor_right ) //post is on the right
+    {
+      ROS_INFO( "door has right neighbor" );
+      
+      auto ls = neighbor_left->getLineSegments().front();
+      std::vector<cv::Point2d> v_ls_right_left = {
+          neighbor_left->beams().back()->end_point.cv() - neighbor_left->beams().front()->end_point.cv()
+      };
+      
+      std::vector<cv::Point2d> v_chld_ls_left_right = {
+          chld->beams().front()->end_point.cv() - chld->beams().back()->end_point.cv()
+      };
+      
+      v_ls_right_left[0] = v_ls_right_left[0] / cv::norm( v_ls_right_left, cv::NORM_L2SQR );
+      v_chld_ls_left_right[0] = v_chld_ls_left_right[0] / cv::norm( v_chld_ls_left_right, cv::NORM_L2SQR );
+      
+      double angle = std::acos( v_ls_right_left[0].dot( v_chld_ls_left_right[0] ));
+    }
+  }
+  std::cout << "det handle" << std::endl;
 }
 
-const bool DoorDepthDetector::isDoorCandidate( const std::shared_ptr<Contour> &contour ) const
+const bool DoorDepthDetector::isDoorCandidate( const std::shared_ptr<Contour> &contour )
 {
   //@ToDo: move child construction to separate function?!
   if ( contour->length() > detector_config_.min_door_len
@@ -261,17 +368,20 @@ const bool DoorDepthDetector::isDoorCandidate( const std::shared_ptr<Contour> &c
   }
   
   auto lSegs = contour->getLineSegments();
+  std::cout << "has lsegs: " << lSegs.size() << std::endl;
   for ( int ii = 0; ii < lSegs.size(); ii++ )
   {
     auto lSeg = lSegs[ii];
     unsigned int idx0 = lSeg.idx0_;
     unsigned int idx1 = lSeg.idx1_;
-    std::shared_ptr<Contour> cChild = std::make_shared<Contour>();
+    std::shared_ptr<Contour> cChild = std::make_shared<Contour>( uuid_generator_());
     
-    for ( ; idx0 < idx1; idx0++ )
+    std::cout << "push back beams (" << idx0 << ", " << idx1 << ")/" << contour->beams().size() << std::endl;
+    for ( ; idx0 < (idx1 - 1); idx0++ )
     {
       cChild->push_back( contour->beams()[idx0] );
     }
+    cChild->getLineSegments() = {lSeg};
     
     if ( cChild->beams().size() > 1 )
     {
@@ -281,7 +391,6 @@ const bool DoorDepthDetector::isDoorCandidate( const std::shared_ptr<Contour> &c
         contour->addChildCandidate( cChild );
       }
       contour->addChild( cChild );
-      cChild->setParent( contour );
     }
   }
   

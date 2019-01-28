@@ -11,12 +11,14 @@
 
 using namespace tuw;
 
-Contour::Contour() : length_( 0.0 )
+Contour::Contour( boost::uuids::uuid uuid ) : length_( 0.0 ), uuid_( uuid )
 {
   is_door_candidate_ = false;
   candidate_color_ = cv::Scalar( 0, 255, 0 );
   assigned_color_ = cv::Scalar( 255, 255, 255 );
   line_segments_ = std::vector<LineSegment2DDetector::LineSegment>( 0 );
+  children_ = std::vector<std::shared_ptr<Contour>>( 0 );
+  child_candidates_ = std::vector<std::shared_ptr<Contour>>( 0 );
 }
 
 Contour::Beam::Beam( double _range, double _angle, Point2D _end_point )
