@@ -11,12 +11,14 @@
 
 using namespace tuw;
 
-Contour::Contour() : length_( 0.0 )
+Contour::Contour( boost::uuids::uuid uuid ) : length_( 0.0 ), uuid_( uuid )
 {
   is_door_candidate_ = false;
   candidate_color_ = cv::Scalar( 0, 255, 0 );
   assigned_color_ = cv::Scalar( 255, 255, 255 );
   line_segments_ = std::vector<LineSegment2DDetector::LineSegment>( 0 );
+  children_ = std::vector<std::shared_ptr<Contour>>( 0 );
+  child_candidates_ = std::vector<std::shared_ptr<Contour>>( 0 );
 }
 
 Contour::Beam::Beam( double _range, double _angle, Point2D _end_point )
@@ -364,8 +366,8 @@ void Contour::calculateBoundingBox( Eigen::Matrix4d tf, double z_laser,
                                     beam->end_point.y());
     Eigen::Vector2d dn = dir_vec.normalized();
     
-    bb_objspace_.push_back( Eigen::Vector3d( beam->end_point.x(), beam->end_point.y(), -(z_laser + 0.25)));
-    bb_objspace_.push_back( Eigen::Vector3d( beam->end_point.x(), beam->end_point.y(), 0.25 + 2.0 - z_laser ));
+    bb_objspace_.push_back( Eigen::Vector3d( beam->end_point.x(), beam->end_point.y(), -z_laser ));
+    bb_objspace_.push_back( Eigen::Vector3d( beam->end_point.x(), beam->end_point.y(), 2.0 - z_laser ));
     
     Eigen::Vector4d vbot = tf * Eigen::Vector4d( beam->end_point.x(),
                                                  beam->end_point.y(),

@@ -58,9 +58,14 @@ DoorDetectorNode::ParametersNode::ParametersNode() : node( "~" )
   }
 }
 
-DoorDetectorNode::DoorDetectorNode() : nh_( "" ), display_window_( true ), modify_laser_scan_( true ),
-                                       tf_buffer_( ros::Duration( 50, 0 )), tf_listener_( tf_buffer_ )
+DoorDetectorNode::DoorDetectorNode() : nh_( "" ),
+                                       display_window_( true ),
+                                       modify_laser_scan_( true ),
+                                       tf_buffer_( ros::Duration( 50, 0 )),
+                                       tf_listener_( tf_buffer_ ),
+                                       detection_result_( nullptr )
 {
+  
   door_detector_ = std::make_unique<DoorDetector>();
   sub_laser_ = nh_.subscribe( "scan", 1000, &DoorDetectorNode::callbackLaser, this );
   sub_image_ = nh_.subscribe( "image_rgb", 1000, &DoorDetectorNode::callbackImage, this );
@@ -68,6 +73,8 @@ DoorDetectorNode::DoorDetectorNode() : nh_( "" ), display_window_( true ), modif
   sub_camera_info_depth_ = nh_.subscribe( "camera_info_depth", 1000, &DoorDetectorNode::callbackCameraInfoDepth, this );
   sub_image_depth_ = nh_.subscribe( "image_depth", 1000, &DoorDetectorNode::callbackDepthImage, this );
   img_processor_.reset( new image_processor::DoorDetectorImageProcessor());
+  
+  pub_detections_ = nh_.advertise<tuw_object_msgs::ObjectDetection>( "object_detections", 1000 );
   //line_pub_ = nh_.advertise<tuw_geometry_msgs::LineSegments>("line_segments", 1000);
   //door_pub_ = nh_.advertise<tuw_object_msgs::ObjectDetection>("object_detection", 1000);
   //measurement_laser_ = std::make_shared<tuw::MeasurementLaser>();
@@ -80,6 +87,7 @@ DoorDetectorNode::DoorDetectorNode() : nh_( "" ), display_window_( true ), modif
   {
     door_detector_laser_.reset( new door_laser_proc::DoorLineDetector( nh_ ));
   }
+  
 }
 
 DoorDetectorNode::~DoorDetectorNode() = default;
@@ -96,8 +104,6 @@ void DoorDetectorNode::callbackImage( const sensor_msgs::ImageConstPtr &_img )
   cv::cvtColor( image->image, image->image, CV_RGB2GRAY );
   
   geometry_msgs::TransformStampedPtr tf;
-  std::cout << "camera source frame " << params_.camera_source_frame << std::endl;
-  std::cout << _img->header.frame_id << std::endl;
   if ( getStaticTF( params_.world_frame, params_.camera_source_frame/* _img->header.frame_id */, tf, params_.debug ))
   {
     
@@ -153,6 +159,11 @@ void DoorDetectorNode::callbackDepthImage( const sensor_msgs::ImageConstPtr &_im
 void DoorDetectorNode::publish()
 {
   //door_detector_laser_->publish();
+  if ( detection_result_ )
+  {
+    pub_detections_.publish( detection_result_ );
+    detection_result_ = nullptr;
+  }
 }
 
 void DoorDetectorNode::callbackLaser( const sensor_msgs::LaserScan &_laser )
@@ -177,15 +188,19 @@ void DoorDetectorNode::process()
     
     img_processor_->processImage( image_rgb_, image_depth_ );
     
+    std::cout << "laserproc" << std::endl;
     bool success = door_detector_laser_->processLaser( laser_measurement_->getLaser());
+    std::cout << "laserproc" << std::endl;
     
     door_detector_->setImageMeasurement( image_rgb_ );
     
     door_detector_->setLaserMeasurement( laser_measurement_ );
     
+    std::cout << "merge" << std::endl;
     door_detector_->merge( img_processor_, door_detector_laser_ );
+    std::cout << "merge" << std::endl;
     
-    door_detector_->getResultAsMessage();
+    detection_result_.reset( new tuw_object_msgs::ObjectDetection( door_detector_->getResultAsMessage()));
     
     door_detector_->display();
     
@@ -218,7 +233,7 @@ bool DoorDetectorNode::getStaticTF( const std::string &world_frame, const std::s
   
   std::string key = _target_frame + "->" + _world_frame;
   
-  if ( !tfMap_[key] )
+  if ( tfMap_.find( key ) == std::end( tfMap_ ))
   {
     try
     {
@@ -231,7 +246,7 @@ bool DoorDetectorNode::getStaticTF( const std::string &world_frame, const std::s
     } catch (tf2::TransformException &ex)
     {
       
-      ROS_INFO( "getStaticTF" );
+      ROS_INFO( "DoorDetectorNode::getStaticTF" );
       ROS_ERROR( "%s", ex.what());
       ros::Duration( 1.0 ).sleep();
       return false;

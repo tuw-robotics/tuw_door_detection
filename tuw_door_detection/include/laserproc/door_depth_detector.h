@@ -11,6 +11,7 @@
 
 #include <dynamic_reconfigure/server.h>
 #include <tuw_door_detection/DepthDetectorConfig.h>
+#include <boost/uuid/uuid_generators.hpp>
 
 namespace tuw
 {
@@ -99,6 +100,8 @@ namespace tuw
         return contours_;
       }
       
+      void determineHandle( const std::shared_ptr<Contour> &contour );
+      
       void reconfigureCallback( tuw_door_detection::DepthDetectorConfig &_config, uint32_t level );
     
     protected:
@@ -124,6 +127,7 @@ namespace tuw
       std::vector<std::shared_ptr<tuw::Contour>> contours_;
       LineSegment2DDetector line_segment_detector_;
       ReconfigureParams detector_config_;
+      boost::uuids::random_generator uuid_generator_;
       
       //reconfigure stuff
       dynamic_reconfigure::Server<tuw_door_detection::DepthDetectorConfig>::CallbackType cb_type_;
@@ -140,7 +144,14 @@ namespace tuw
       
       std::vector<std::shared_ptr<tuw::Contour>> contourMode( const sensor_msgs::LaserScan &_laser );
       
-      const bool isDoorCandidate( const std::shared_ptr<Contour> &contour ) const;
+      /**
+       * Sorts the lines (and children) of a contour from right to left. i.e. in ascending order of their laserscan indices.
+       *
+       * @param contour
+       */
+      void sortLinesChildren( std::shared_ptr<Contour> &contour );
+      
+      const bool isDoorCandidate( const std::shared_ptr<Contour> &contour );
       
     };
   }

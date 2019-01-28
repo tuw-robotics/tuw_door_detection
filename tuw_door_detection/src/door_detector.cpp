@@ -125,6 +125,16 @@ tuw_object_msgs::ObjectWithCovariance DoorDetector::generateObjMessage( std::sha
   
   obj.object.shape = Object::SHAPE_DOOR;
   
+  //@TODO magic values
+  obj.object.shape_variables = {
+      0.9,
+      2.0,
+      0,
+      0,
+      1,
+      0
+  };
+  
   return std::move( obj );
 }
 
@@ -136,13 +146,11 @@ tuw_object_msgs::ObjectDetection DoorDetector::getResultAsMessage()
   det_msg.type = tuw_object_msgs::ObjectDetection::OBJECT_TYPE_DOOR;
   
   int32_t id = 0;
-  
   for ( std::vector<std::shared_ptr<Contour>>::iterator it_contour = detection_laser_.begin();
         it_contour < detection_laser_.end();
         ++it_contour )
   {
     std::shared_ptr<Contour> contour = *it_contour;
-    std::cout << id++ << std::endl;
     if ( contour->is_door_candidate())
     {
       det_msg.objects.push_back( std::move( generateObjMessage( contour, id++ )));

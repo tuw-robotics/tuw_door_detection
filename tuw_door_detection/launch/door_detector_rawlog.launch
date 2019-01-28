@@ -3,7 +3,6 @@
     <arg name="launch_realsense_transforms_node" default="true"/>
     <arg name="robot_name" default="r0"/>
     <arg name="laser_scan" default="/r0/laser0/scan/raw"/>
-    <arg name="fs" default="felix/c8b268c7-3328-46f6-abfc-6cff02c5326c"/>
     <arg name="camera" default="/r0/realsense"/>
     <arg name="realsense_transforms_tf" default="$(arg camera)_rgb"/>
     <arg name="publisher_topic" default="door_objects"/>
@@ -12,7 +11,7 @@
     <arg name="world_frame" default="/r0/base_link"/>
     <arg name="skip_rosbag" default="0"/>
     <arg name="debug" default="false"/>
-    <arg name="bag_file" default="/media/$(arg fs)/bag_data/intel_d435_2.bag"/>
+    <arg name="bag_file" default="/media/felix/usb_roblab/bag_data/l2.bag"/>
     <arg name="bearing_topic" default="/observations"/>
 
     <group if="$(arg launch_rosbag)">
@@ -28,12 +27,14 @@
         </include>
     </group>
 
-    <group if="$(launch_realsense_transforms_node">
+    <group if="$(arg launch_realsense_transforms_node)">
         <node name="realsense_transforms_node" pkg="tuw_realsense_d435" type="realsense_transforms_node"
               output="screen">
             <param name="publisher_topic" value="$(arg realsense_transforms_tf)"/>
             <param name="debug" value="$(arg debug)"/>
             <param name="passthrough" value="true"/>
+            <param name="calib_file" value="$(find tuw_realsense_d435)/config/intel_rsd435_calib.xml"/>
+            <param name="external_calib_file" value="$(find tuw_realsense_d435)/config/external_calibration.csv"/>
         </node>
     </group>
 
@@ -42,12 +43,8 @@
         <param name="publisher_topic" value="$(arg publisher_topic)"/>
         <param name="debug" value="$(arg debug)"/>
         <param name="internal_mode" value="contour"/>
-        <group if="$(launch realsense_transforms_node)">
-            <param name="camera_source_frame" value="$(arg realsense_transforms_tf)"/>
-        </group>
-        <group unless="$(launch realsense_transforms_node)">
-            <param name="camera_source_frame" value="$(arg camera)"/>
-        </group>
+        <param name="camera_source_frame" value="$(arg realsense_transforms_tf)"/>
+        <!-- <param name="camera_source_frame" value="$(arg camera)"/> -->
         <param name="laser_source_frame" value="$(arg laser_source_frame)"/>
         <param name="world_frame" value="$(arg world_frame)"/>
         <remap from="scan" to="$(arg laser_scan)"/>
@@ -55,13 +52,14 @@
         <remap from="image_depth" to="$(arg camera)/depth/image_rect_raw"/>
         <remap from="camera_info_rgb" to="$(arg camera)/color/camera_info"/>
         <remap from="camera_info_depth" to="$(arg camera)/depth/camera_info"/>
+        <remap from="object_detections" to="$(arg publisher_topic)"/>
     </node>
 
     <include file="$(find mrpt_object_converter)/launch/demo_object_converter.launch">
         <arg name="object_detections_topic_name" value="$(arg publisher_topic)"/>
         <arg name="bearing_topic_name" value="$(arg bearing_topic)"/>
         <arg name="world_frame" value="$(arg world_frame)"/>
-        <arg name="source_frame" value="$(arg laser_source_frame)"/>
+        <arg name="target_frame" value="$(arg laser_source_frame)"/>
         <arg name="scan" value="$(arg laser_scan)"/>
     </include>
 
@@ -76,7 +74,7 @@
         <param name="record_object_observation" value="true"/>
         <param name="record_beacon_range" value="false"/>
         <param name="rate" value="45"/>
-        <param name="debug" value="$(arg debug_mode)"/>
+        <param name="debug" value="$(arg debug)"/>
         <param name="ignore_timestamp_difference" value="true"/>
     </node>
 
