@@ -149,7 +149,7 @@ namespace tuw
        *
        * @param contour
        */
-      void sortLinesChildren( std::shared_ptr<Contour> &contour );
+      void sortLines( std::shared_ptr<Contour> &contour );
       
       const bool isDoorCandidate( const std::shared_ptr<Contour> &contour );
       
