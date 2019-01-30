@@ -22,8 +22,9 @@ Contour::Contour( boost::uuids::uuid uuid ) : length_( 0.0 ), uuid_( uuid )
   child_candidates_ = std::vector<std::shared_ptr<Contour>>( 0 );
 }
 
-Contour::Beam::Beam( double _range, double _angle, Point2D _end_point )
+Contour::Beam::Beam( size_t global_idx, double _range, double _angle, Point2D _end_point )
 {
+  global_idx_ = global_idx;
   range = _range;
   angle = _angle;
   end_point = _end_point;
@@ -51,9 +52,9 @@ const bool Contour::Beam::get_is_visible() const
 }
 
 std::shared_ptr<Contour::Beam>
-Contour::Beam::make_beam( double range, double angle, Point2D end_point )
+Contour::Beam::make_beam( size_t global_idx, double range, double angle, Point2D end_point )
 {
-  return std::make_shared<Beam>( range, angle, end_point );
+  return std::make_shared<Beam>( global_idx, range, angle, end_point );
 }
 
 void Contour::push_back( std::shared_ptr<Contour::Beam> beam )
@@ -347,6 +348,21 @@ void Contour::registerToImage( const Eigen::Matrix4d &tf, const double z_laser,
   }
 }
 
+void Contour::calculateBoundingBoxObjSpace()
+{
+  std::vector<std::shared_ptr<Contour::Beam>> beams_ends;
+  beams_ends.push_back( beams().front());
+  beams_ends.push_back( beams().back());
+  
+  for ( auto &beam : beams_ends )
+  {
+    bb_objspace_.push_back( Eigen::Vector3d( beam->end_point.x(), beam->end_point.y(), -0.05 ));
+    bb_objspace_.push_back( Eigen::Vector3d( beam->end_point.x(), beam->end_point.y(), 0.05 ));
+  }
+  
+  std::swap( bb_objspace_[2], bb_objspace_[3] );
+}
+
 void Contour::calculateBoundingBox( Eigen::Matrix4d tf, double z_laser,
                                     double fx, double fy,
                                     double cx, double cy,
@@ -357,6 +373,9 @@ void Contour::calculateBoundingBox( Eigen::Matrix4d tf, double z_laser,
   std::vector<std::shared_ptr<Contour::Beam>> beams_ends;
   beams_ends.push_back( beams().front());
   beams_ends.push_back( beams().back());
+  
+  bb_.clear();
+  bb_objspace_.clear();
   
   //@ToDo: magic numbers
   size_t i_bm = 0;

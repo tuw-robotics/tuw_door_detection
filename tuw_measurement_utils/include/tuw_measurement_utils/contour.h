@@ -44,11 +44,11 @@ namespace tuw
     class Beam
     {
     public:
-      Beam()
-      {
-      };
+      //Beam()
+      //{
+      //};
       
-      Beam( double range, double angle, Point2D end_point );
+      Beam( size_t global_idx, double range, double angle, Point2D end_point );
       
       //Beam(const Beam &) = delete;
       
@@ -61,6 +61,7 @@ namespace tuw
       Point2D img_base_coords;
       double range;
       double angle;
+      size_t global_idx_;
       
       const bool is_valid() const;
       
@@ -70,7 +71,7 @@ namespace tuw
       
       void set_is_visible( const bool v );
       
-      static std::shared_ptr<Beam> make_beam( double range, double angle, Point2D end_point );
+      static std::shared_ptr<Beam> make_beam( size_t idx, double range, double angle, Point2D end_point );
     
     private:
       bool valid_beam;
@@ -108,16 +109,26 @@ namespace tuw
     
     explicit Contour( boost::uuids::uuid uuid );
     
-    boost::uuids::uuid &id()
+    boost::uuids::uuid id()
     {
       return uuid_;
     }
     
-    const boost::uuids::uuid &id() const;
+    const boost::uuids::uuid id() const;
     
     void push_back( std::shared_ptr<Beam> beam );
     
     void detectCorners( const size_t KERNEL_SIZE );
+    
+    void doorPostLeft( const bool left_post )
+    {
+      door_post_left_ = left_post;
+    }
+    
+    const bool doorPostLeft() const
+    {
+      return door_post_left_;
+    }
     
     void cvConvexityDefects( tuw::WorldScopedMaps &_map );
     
@@ -306,6 +317,8 @@ namespace tuw
       return bb_;
     }
     
+    void calculateBoundingBoxObjSpace();
+    
     void calculateBoundingBox( Eigen::Matrix4d tf, double z_laser,
                                double fx, double fy,
                                double cx, double cy,
@@ -322,6 +335,7 @@ namespace tuw
     std::vector<std::pair<Point2D, Point2D>> line_segment_img_coords_;
     std::vector<std::shared_ptr<Contour>> children_;
     std::vector<std::shared_ptr<Contour>> child_candidates_;
+    bool door_post_left_;
     boost::uuids::uuid uuid_;
     bool length_cache_uptodate_;
     double length_;
