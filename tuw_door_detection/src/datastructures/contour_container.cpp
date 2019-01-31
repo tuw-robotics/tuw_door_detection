@@ -67,7 +67,6 @@ void ContourContainer::sortLines()
 
 void ContourContainer::sortLines( std::shared_ptr<Contour> &c )
 {
-  std::cout << "sort" << std::endl;
   std::vector<LineSegment2DDetector::LineSegment> &line_segments = c->getLineSegments();
   std::sort( line_segments.begin(), line_segments.end(),
              [this]( const LineSegment2DDetector::LineSegment &c0, const LineSegment2DDetector::LineSegment &c1 )
@@ -80,7 +79,6 @@ void ContourContainer::sortLines( std::shared_ptr<Contour> &c )
                  return c0.idx0_ > c1.idx0_;
                }
              } );
-  std::cout << "sort" << std::endl;
 }
 
 size_t ContourContainer::size()
@@ -143,12 +141,6 @@ void ContourContainer::insert( const std::vector<std::shared_ptr<Contour>> &cont
   }
   
   assertContourOrder();
-  
-  if ( contours_sorted_.size() > 1 )
-  {
-    std::cout << "uuid front " << boost::lexical_cast<std::string>( contours_sorted_.front()->id()) << std::endl;
-    std::cout << "uuid back " << boost::lexical_cast<std::string>( contours_sorted_.back()->id()) << std::endl;
-  }
   
   unsigned int ii = 0;
   for ( std::shared_ptr<Contour> c : contours_sorted_ )

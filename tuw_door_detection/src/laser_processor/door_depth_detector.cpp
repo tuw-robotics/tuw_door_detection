@@ -201,13 +201,10 @@ std::vector<std::shared_ptr<tuw::Contour>> DoorDepthDetector::contourMode( const
                                   } ),
                   contours.end());
   
-  std::cout << "having contours " << contours.size() << std::endl;
   contour_container_.clear();
   contour_container_.insert( contours );
-  std::cout << "size container " << contour_container_.size() << std::endl;
   
   contour_cnt = 0;
-  
   for ( size_t c_idx = 0; c_idx < contour_container_.size(); ++c_idx )
   {
     contour_cnt += 1;
