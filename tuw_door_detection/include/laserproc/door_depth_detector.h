@@ -8,6 +8,7 @@
 #include <geometry_msgs/PoseWithCovariance.h>
 #include <tuw_geometry/figure.h>
 #include <tuw_measurement_utils/contour.h>
+#include <datastructures/contour_container.h>
 
 #include <dynamic_reconfigure/server.h>
 #include <tuw_door_detection/DepthDetectorConfig.h>
@@ -128,6 +129,7 @@ namespace tuw
       LineSegment2DDetector line_segment_detector_;
       ReconfigureParams detector_config_;
       boost::uuids::random_generator uuid_generator_;
+      ContourContainer contour_container_;
       
       //reconfigure stuff
       dynamic_reconfigure::Server<tuw_door_detection::DepthDetectorConfig>::CallbackType cb_type_;

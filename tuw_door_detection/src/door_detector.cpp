@@ -60,10 +60,7 @@ bool DoorDetector::merge( std::shared_ptr<image_processor::DoorDetectorImageProc
                                            cmodel->fx(), cmodel->fy(),
                                            cmodel->cx(), cmodel->cy(),
                                            cmodel->Tx(), cmodel->Ty());
-    
-    
                    //contr->registerFloorImage(T_WL)
-    
                    contr->visibilityCheck( false, img_width, img_height );
                  } );
   

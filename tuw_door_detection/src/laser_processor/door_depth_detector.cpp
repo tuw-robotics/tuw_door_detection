@@ -36,6 +36,9 @@ DoorDepthDetector::DoorDepthDetector( ros::NodeHandle &_nh ) : params_( new Door
                                                                figure_local_( "KernelResponses" )
 {
   init( params_->publisher_topic );
+  
+  contour_container_ = ContourContainer( ContourContainer::Order::RIGHT2LEFT );
+  
   wm_config_.reset( new WorldscopedMapConfig());
   
   figure_local_.init( wm_config_->map_pix_x, wm_config_->map_pix_y,
@@ -135,23 +138,6 @@ std::vector<T> DoorDepthDetector::normalize( std::vector<T> &_v )
   return std::move( c );
 }
 
-/**
- * Sort from right to left (scan range )
- *
- * @param contour
- */
-void DoorDepthDetector::sortLines( std::shared_ptr<Contour> &contour )
-{
-  std::cout << "sorting " << std::endl;
-  std::vector<LineSegment2DDetector::LineSegment> &line_segments = contour->getLineSegments();
-  std::sort( line_segments.begin(), line_segments.end(),
-             []( const LineSegment2DDetector::LineSegment &c0, const LineSegment2DDetector::LineSegment &c1 )
-             {
-               return c0.idx0_ < c1.idx0_;
-             } );
-  std::cout << "sorting " << std::endl;
-}
-
 std::vector<std::shared_ptr<tuw::Contour>> DoorDepthDetector::contourMode( const sensor_msgs::LaserScan &_scan )
 {
   
@@ -215,17 +201,23 @@ std::vector<std::shared_ptr<tuw::Contour>> DoorDepthDetector::contourMode( const
                                   } ),
                   contours.end());
   
+  std::cout << "having contours " << contours.size() << std::endl;
+  contour_container_.clear();
+  contour_container_.insert( contours );
+  std::cout << "size container " << contour_container_.size() << std::endl;
+  
   contour_cnt = 0;
-  size_t potential_doors = 0;
-  for ( auto &elem : contours )
+  
+  for ( size_t c_idx = 0; c_idx < contour_container_.size(); ++c_idx )
   {
     contour_cnt += 1;
     cv::Scalar color = colorMap_[contour_cnt];
+    std::shared_ptr<Contour> elem = contour_container_.getContours()[c_idx];
     
     elem->renderInternal( ws_map_ );
     elem->cvDetectCorners();
     elem->detectLines( line_segment_detector_ );
-    sortLines( elem );
+    contour_container_.sortLines( elem );
     elem->calculateBoundingBoxObjSpace();
     //elem->optimizeLines( 10 );
     elem->set_door_candidate( false );

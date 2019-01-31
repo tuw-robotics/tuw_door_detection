@@ -2,8 +2,8 @@
 // Created by felix on 29.10.18.
 //
 
-#ifndef CONTOUR_H
-#define CONTOUR_H
+#ifndef TUW_MEASUREMENT_UTILS_CONTOUR_H
+#define TUW_MEASUREMENT_UTILS_CONTOUR_H
 
 #include <tuw_geometry/point2d.h>
 #include <memory>
@@ -47,6 +47,8 @@ namespace tuw
       //Beam()
       //{
       //};
+      
+      Beam();
       
       Beam( size_t global_idx, double range, double angle, Point2D end_point );
       
@@ -107,7 +109,9 @@ namespace tuw
       size_t idx;
     };
     
-    explicit Contour( boost::uuids::uuid uuid );
+    Contour( boost::uuids::uuid uuid );
+    
+    Contour();
     
     boost::uuids::uuid id()
     {

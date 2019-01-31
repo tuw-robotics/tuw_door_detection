@@ -166,7 +166,7 @@ add_executable(door_detector_node
         src/laser_processor/door_depth_detector.cpp
         src/laser_processor/door_detection.cpp
         src/image_processor/door_detector_imgproc.cpp
-        src/datastructures/contour_tree.cpp
+        src/datastructures/contour_container.cpp
         src/door_detector.cpp
         )
 

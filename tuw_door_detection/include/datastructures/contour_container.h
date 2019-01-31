@@ -15,7 +15,7 @@
 
 namespace tuw
 {
-  class ContourTree
+  class ContourContainer
   {
   public:
     enum class Order
@@ -26,11 +26,29 @@ namespace tuw
   
   public:
     
-    ContourTree( Order order = Order::RIGHT2LEFT );
+    ContourContainer( Order order = Order::RIGHT2LEFT );
     
     void assertBeamOrder( const std::shared_ptr<Contour> &c );
     
     void assertContourOrder();
+    
+    void clear();
+    
+    std::vector<std::shared_ptr<Contour>>::iterator begin();
+    
+    std::vector<std::shared_ptr<Contour>>::iterator end();
+    
+    size_t size();
+    
+    std::vector<std::shared_ptr<Contour>> &getContours();
+    
+    std::shared_ptr<Contour> getNeighborNext( const std::shared_ptr<Contour> &c );
+    
+    std::shared_ptr<Contour> getNeighborPrev( const std::shared_ptr<Contour> &c );
+    
+    void sortLines();
+    
+    void sortLines( std::shared_ptr<Contour> &c );
     
     /**
      * Inserts the contours into the vector sorted either from right to left or left to right (as seen from laser scan)
@@ -42,7 +60,7 @@ namespace tuw
   private:
     Order sorting_order_;
     std::vector<std::shared_ptr<Contour>> contours_sorted_;
-    std::map<boost::uuids::uuid, std::shared_ptr<Contour>> id2contour_map_;
+    std::map<boost::uuids::uuid, unsigned int> id2contour_map_;
   };
 }
 
