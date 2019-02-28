@@ -188,7 +188,7 @@ void DoorDetector::display()
       for ( auto it_beams = contour->begin();
             it_beams != contour->end(); ++it_beams )
       {
-        std::shared_ptr<Contour::Beam> &beam = *it_beams;
+        std::shared_ptr<Beam> &beam = *it_beams;
         
         double rad = 1;
         if ( it_beams == contour->begin() || it_beams == (contour->end() - 1))

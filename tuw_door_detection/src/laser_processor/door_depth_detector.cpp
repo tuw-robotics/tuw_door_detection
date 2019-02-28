@@ -116,7 +116,7 @@ void DoorDepthDetector::plot( const std::vector<double> &_responses )
   cv::imshow( "plot", plotResponses );
 }
 
-template<typename T>
+template <typename T>
 std::vector<T> DoorDepthDetector::normalize( std::vector<T> &_v )
 {
   std::vector<T> c( _v );
@@ -177,11 +177,11 @@ std::vector<std::shared_ptr<tuw::Contour>> DoorDepthDetector::contourMode( const
       if ( abs( _scan.ranges[i] - last_range ) < detector_config_.contour_cut_thresh )
       {
         //const int color_idx = jet_sampler[contour_cnt % jet_sampler.size()];
-        contours.back()->push_back( Contour::Beam::make_beam( i, _scan.ranges[i], angle, ptnext ));
+        contours.back()->push_back( Beam::make_beam( i, _scan.ranges[i], angle, ptnext ));
       } else
       {
         contour_cnt += 1;
-        const auto beam = Contour::Beam::make_beam( i, _scan.ranges[i], angle, ptnext );
+        const auto beam = Beam::make_beam( i, _scan.ranges[i], angle, ptnext );
         std::shared_ptr<Contour> contr = std::make_shared<Contour>( uuid_generator_());
         contours.push_back( contr );
         contr->push_back( beam );

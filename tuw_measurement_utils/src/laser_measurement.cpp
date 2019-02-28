@@ -34,7 +34,7 @@ void LaserMeasurement::initFromScan( const sensor_msgs::LaserScan &_scan )
       
       const double angle = laser.angle_min + (laser.angle_increment * ii);
       const Point2D pt( cos( angle ) * range, sin( angle ) * range );
-      push_back( Contour::Beam( ii, range, angle, pt ));
+      push_back( Beam( ii, range, angle, pt ));
       
       max_reading_ = std::max( max_reading_, range );
       min_reading_ = std::min( min_reading_, range );
@@ -47,7 +47,7 @@ const sensor_msgs::LaserScan &LaserMeasurement::getLaser() const
   return laser;
 }
 
-void LaserMeasurement::push_back( const tuw::Contour::Beam &_beam )
+void LaserMeasurement::push_back( const tuw::Beam &_beam )
 {
   this->beams_.push_back( _beam );
 }
@@ -57,22 +57,22 @@ void LaserMeasurement::push_back( const tuw::Contour::Beam &_beam )
 //  beams_.resize( _sz );
 //}
 
-const Contour::Beam &LaserMeasurement::operator[]( const size_t _sz ) const
+const Beam &LaserMeasurement::operator[]( const size_t _sz ) const
 {
   return beams_[_sz];
 }
 
-Contour::Beam &LaserMeasurement::operator[]( const size_t _sz )
+Beam &LaserMeasurement::operator[]( const size_t _sz )
 {
   return beams_[_sz];
 }
 
-std::vector<Contour::Beam>::iterator LaserMeasurement::begin()
+std::vector<Beam>::iterator LaserMeasurement::begin()
 {
   return beams_.begin();
 }
 
-std::vector<Contour::Beam>::iterator LaserMeasurement::end()
+std::vector<Beam>::iterator LaserMeasurement::end()
 {
   return beams_.end();
 }

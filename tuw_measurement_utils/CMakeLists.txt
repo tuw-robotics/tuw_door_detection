@@ -109,7 +109,15 @@ find_package(OpenCV REQUIRED)
 catkin_package(
         INCLUDE_DIRS include
         LIBRARIES tuw_measurement_utils
-        CATKIN_DEPENDS roscpp rospy tuw_geometry tuw_geometry_msgs tf tf_conversions cv_bridge image_geometry
+        CATKIN_DEPENDS
+        roscpp
+        rospy
+        tuw_geometry
+        tuw_geometry_msgs
+        tf
+        tf_conversions
+        cv_bridge
+        image_geometry
         DEPENDS OpenCV
         Eigen
 )
@@ -144,7 +152,8 @@ add_library(tuw_measurement_utils
         src/measurement.cpp
         src/laser_measurement.cpp
         src/image_measurement.cpp
-        src/contour.cpp)
+        src/contour.cpp
+        src/beam.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above

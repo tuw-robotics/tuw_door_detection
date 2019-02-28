@@ -86,6 +86,23 @@ size_t ContourContainer::size()
   return contours_sorted_.size();
 }
 
+std::shared_ptr<Contour> ContourContainer::getEuclideanClosest( const std::shared_ptr<tuw::Contour> &c )
+{
+  auto nb_next = getNeighborNext( c );
+  auto nb_prev = getNeighborPrev( c );
+  
+  if ( nb_next && nb_prev )
+  {
+    c->beams().back()->end_point.distanceTo( nb_next->beams().front()->end_point );
+  } else if ( nb_next )
+  {
+    return nb_next;
+  } else if ( nb_prev )
+  {
+    return nb_prev;
+  }
+}
+
 std::shared_ptr<Contour> ContourContainer::getNeighborNext( const std::shared_ptr<Contour> &c )
 {
   auto it = id2contour_map_.find( c->id());

@@ -7,6 +7,7 @@
 
 #include <tuw_measurement_utils/measurement.h>
 #include <tuw_measurement_utils/contour.h>
+#include <tuw_measurement_utils/beam.h>
 #include <sensor_msgs/LaserScan.h>
 
 namespace tuw
@@ -16,7 +17,7 @@ namespace tuw
   {
   protected:
     sensor_msgs::LaserScan laser;
-    std::vector<Contour::Beam> beams_;
+    std::vector<Beam> beams_;
   
   public:
     LaserMeasurement( const geometry_msgs::TransformStampedPtr _tf );
@@ -27,7 +28,7 @@ namespace tuw
     
     const sensor_msgs::LaserScan &getLaser() const;
     
-    void push_back( const Contour::Beam &_beam );
+    void push_back( const Beam &_beam );
     
     //void resize( const size_t _sz );
     
@@ -41,13 +42,13 @@ namespace tuw
       return beams_.size();
     }
     
-    std::vector<Contour::Beam>::iterator begin();
+    std::vector<Beam>::iterator begin();
     
-    std::vector<Contour::Beam>::iterator end();
+    std::vector<Beam>::iterator end();
     
-    const Contour::Beam &operator[]( const size_t _sz ) const;
+    const Beam &operator[]( const size_t _sz ) const;
     
-    Contour::Beam &operator[]( const size_t _sz );
+    Beam &operator[]( const size_t _sz );
     
     void clear();
     
@@ -55,5 +56,6 @@ namespace tuw
     double min_reading_;
   };
   
+  using LaserMeasurementPtr = std::shared_ptr<LaserMeasurement>;
 }
 #endif //PROJECT_LASER_MEASUREMENT_H

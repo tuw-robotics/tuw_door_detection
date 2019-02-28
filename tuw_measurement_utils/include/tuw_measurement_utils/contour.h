@@ -11,6 +11,7 @@
 #include <tuw_geometry/linesegment2d_detector.h>
 #include <Eigen/Core>
 #include <boost/uuid/uuid.hpp>
+#include <tuw_measurement_utils/beam.h>
 
 namespace tuw
 {
@@ -41,44 +42,7 @@ namespace tuw
     //  bool door_candidate_;
     //};
     
-    class Beam
-    {
-    public:
-      //Beam()
-      //{
-      //};
-      
-      Beam();
-      
-      Beam( size_t global_idx, double range, double angle, Point2D end_point );
-      
-      //Beam(const Beam &) = delete;
-      
-      //Beam &operator=(const Beam &) = delete;
-      
-      ~Beam() = default;
-      
-      Point2D end_point;
-      Point2D img_coords;
-      Point2D img_base_coords;
-      double range;
-      double angle;
-      size_t global_idx_;
-      
-      const bool is_valid() const;
-      
-      void set_valid( const bool v );
-      
-      const bool get_is_visible() const;
-      
-      void set_is_visible( const bool v );
-      
-      static std::shared_ptr<Beam> make_beam( size_t idx, double range, double angle, Point2D end_point );
     
-    private:
-      bool valid_beam;
-      bool is_visible_;
-    };
     
     struct CVDefect
     {

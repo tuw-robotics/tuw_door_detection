@@ -33,47 +33,7 @@ Contour::Contour( boost::uuids::uuid uuid ) : length_( 0.0 ), uuid_( uuid )
   child_candidates_ = std::vector<std::shared_ptr<Contour>>( 0 );
 }
 
-Contour::Beam::Beam()
-{
-  valid_beam = false;
-}
-
-Contour::Beam::Beam( size_t global_idx, double _range, double _angle, Point2D _end_point )
-{
-  global_idx_ = global_idx;
-  range = _range;
-  angle = _angle;
-  end_point = _end_point;
-  valid_beam = true;
-}
-
-const bool Contour::Beam::is_valid() const
-{
-  return valid_beam;
-}
-
-void Contour::Beam::set_valid( const bool v )
-{
-  valid_beam = v;
-}
-
-void Contour::Beam::set_is_visible( const bool v )
-{
-  is_visible_ = v;
-}
-
-const bool Contour::Beam::get_is_visible() const
-{
-  return is_visible_;
-}
-
-std::shared_ptr<Contour::Beam>
-Contour::Beam::make_beam( size_t global_idx, double range, double angle, Point2D end_point )
-{
-  return std::make_shared<Beam>( global_idx, range, angle, end_point );
-}
-
-void Contour::push_back( std::shared_ptr<Contour::Beam> beam )
+void Contour::push_back( std::shared_ptr<Beam> beam )
 {
   if ( !beams_.empty())
   {
@@ -115,7 +75,7 @@ void Contour::detectCorners( const size_t KERNEL_SIZE )
     ranges[i] = (*begin())->range;
   }
   
-  for ( std::vector<std::shared_ptr<Contour::Beam>>::const_iterator it_beam = begin();
+  for ( std::vector<std::shared_ptr<Beam>>::const_iterator it_beam = begin();
         it_beam != (end() - 1); ++it_beam, ++i )
   {
     const auto beam = *it_beam;
@@ -252,7 +212,7 @@ void Contour::render( WorldScopedMaps &map, cv::Mat &img, cv::Scalar &color, dou
     assigned_color_ = candidate_color_;
   }
   
-  for ( std::vector<std::shared_ptr<Contour::Beam>>::const_iterator it_beam = begin();
+  for ( std::vector<std::shared_ptr<Beam>>::const_iterator it_beam = begin();
         it_beam != (end() - 1); ++it_beam )
   {
     map.line( img, (*it_beam)->end_point, (*(it_beam + 1))->end_point, assigned_color_, rad );
@@ -353,7 +313,7 @@ void Contour::registerToImage( const Eigen::Matrix4d &tf, const double z_laser,
   }
   
   //bottom left, top left, top right, bottom right
-  std::vector<std::shared_ptr<Contour::Beam>> beams_ends;
+  std::vector<std::shared_ptr<Beam>> beams_ends;
   beams_ends.push_back( beams().front());
   beams_ends.push_back( beams().back());
   
@@ -366,7 +326,7 @@ void Contour::registerToImage( const Eigen::Matrix4d &tf, const double z_laser,
 
 void Contour::calculateBoundingBoxObjSpace()
 {
-  std::vector<std::shared_ptr<Contour::Beam>> beams_ends;
+  std::vector<std::shared_ptr<Beam>> beams_ends;
   beams_ends.push_back( beams().front());
   beams_ends.push_back( beams().back());
   
@@ -386,7 +346,7 @@ void Contour::calculateBoundingBox( Eigen::Matrix4d tf, double z_laser,
 {
   
   //bottom left, top left, top right, bottom right
-  std::vector<std::shared_ptr<Contour::Beam>> beams_ends;
+  std::vector<std::shared_ptr<Beam>> beams_ends;
   beams_ends.push_back( beams().front());
   beams_ends.push_back( beams().back());
   

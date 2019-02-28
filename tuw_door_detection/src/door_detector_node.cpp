@@ -88,6 +88,15 @@ DoorDetectorNode::DoorDetectorNode() : nh_( "" ),
     door_detector_laser_.reset( new door_laser_proc::DoorLineDetector( nh_ ));
   }
   
+  printf(
+      "msg:         %i x %i @ %4.3fm/p, %4.3f, %4.3f, %4.3f, %4.3f\n",
+      resp_map_.map.info.width, resp_map_.map.info.height,
+      resp_map_.map.info.resolution, resp_map_.map.info.origin.position.x,
+      resp_map_.map.info.origin.position.y,
+      resp_map_.map.info.width * resp_map_.map.info.resolution +
+      resp_map_.map.info.origin.position.x,
+      resp_map_.map.info.height * resp_map_.map.info.resolution +
+      resp_map_.map.info.origin.position.y );
 }
 
 DoorDetectorNode::~DoorDetectorNode() = default;
@@ -175,6 +184,8 @@ void DoorDetectorNode::callbackLaser( const sensor_msgs::LaserScan &_laser )
     
     laser_measurement_.reset( new LaserMeasurement( tf ));
     laser_measurement_->initFromScan( _laser );
+    
+    sensor_model_evaluator_.reset( new SensorModelEvaluator( resp_map_.map ));
     
   }
   

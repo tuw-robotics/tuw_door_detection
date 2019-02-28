@@ -46,6 +46,8 @@ namespace tuw
     
     std::shared_ptr<Contour> getNeighborPrev( const std::shared_ptr<Contour> &c );
     
+    std::shared_ptr<Contour> getEuclideanClosest( const std::shared_ptr<Contour> &c );
+    
     void sortLines();
     
     void sortLines( std::shared_ptr<Contour> &c );

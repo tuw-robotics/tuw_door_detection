@@ -35,6 +35,7 @@
 #define LINESEGMENT2D_DETECTOR_NODE_H
 
 #include <laserproc/door_depth_detector.h>
+#include <laserproc/sensor_model_evaluator.h>
 #include <imgproc/door_detector_imgproc.h>
 #include <ros/ros.h>
 #include <sensor_msgs/LaserScan.h>
@@ -51,6 +52,7 @@
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/buffer.h>
 #include <door_detector.h>
+#include <nav_msgs/GetMap.h>
 
 namespace tuw
 {
@@ -110,6 +112,8 @@ namespace tuw
     std::shared_ptr<ImageMeasurement> image_depth_;
     std::shared_ptr<ImageMeasurement> image_rgb_;
     std::shared_ptr<LaserMeasurement> laser_measurement_;
+    SensorModelEvaluatorPtr sensor_model_evaluator_;
+    nav_msgs::GetMap::Response resp_map_;
     std::shared_ptr<image_processor::DoorDetectorImageProcessor> img_processor_;
     sensor_msgs::CameraInfoPtr camera_info_depth_;
     sensor_msgs::CameraInfoPtr camera_info_rgb_;
