@@ -20,14 +20,15 @@ namespace tuw
   class SensorModelEvaluator
   {
   public:
-    SensorModelEvaluator( const nav_msgs::OccupancyGrid &map );
+    SensorModelEvaluator( const nav_msgs::OccupancyGridConstPtr &map );
     
     void evaluate( LaserMeasurementPtr &scan );
     
-    bool convert( const nav_msgs::OccupancyGrid &src, cv::Mat &des );
+    bool convert( const nav_msgs::OccupancyGridConstPtr &src, cv::Mat &des );
   
   private:
     using measurement_table = std::map<unsigned int, Point2D>;
+    using map_info_type = nav_msgs::OccupancyGrid_<std::allocator<void>>::_info_type;
     
     Point2DPtr rayTrace( const double scale, const Beam &b, const Eigen::Matrix4d &tf_ML );
     
@@ -35,8 +36,13 @@ namespace tuw
     
     void updateObservedMeasurementTable( const Point2DPtr &obs );
     
+    void downscaleImshow( const cv::Mat &des );
+    
+    void clear();
+    
     measurement_table expected_meas_;
     measurement_table observed_meas_;
+    map_info_type map_info_;
     
     cv::Mat map_;
   };

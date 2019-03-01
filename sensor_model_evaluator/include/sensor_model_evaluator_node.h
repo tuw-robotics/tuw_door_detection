@@ -22,14 +22,22 @@ namespace tuw
     SensorModelEvaluatorNode( ros::NodeHandle &nh );
     
     void callbackLaser( const sensor_msgs::LaserScan &laser );
+    
+    void callbackMap( const nav_msgs::OccupancyGridConstPtr &map );
   
   private:
     
+    ros::Subscriber sub_laser_;
+    ros::Subscriber sub_map_;
+    ros::NodeHandle nh_;
+    
     tf2_ros::Buffer tf_buffer_;
     tf2_ros::TransformListener tf_listener_;
+    
+    nav_msgs::OccupancyGridConstPtr map_;
+    
     LaserMeasurementPtr laser_measurement_;
     SensorModelEvaluatorPtr evaluator_;
-    nav_msgs::GetMap::Response resp_map_;
     
   };
   
