@@ -2,7 +2,7 @@
 // Created by felix on 28.02.19.
 //
 
-#include <laserproc/sensor_model_evaluator.h>
+#include <sensor_model_evaluator.h>
 
 using namespace tuw;
 
@@ -30,7 +30,7 @@ bool SensorModelEvaluator::convert( const nav_msgs::OccupancyGrid &src, cv::Mat 
   float xmax = xmin + src.info.width * src.info.resolution;
   float ymax = ymin + src.info.height * src.info.resolution;
   
-  des = cv::Mat::zeros( cv::Size( ymax - ymin, xmax - xmin ), CV_8UC3);
+  des = cv::Mat::zeros( cv::Size( ymax - ymin, xmax - xmin ), CV_8UC3 );
   // printf("--------convert:  %i x %i, %4.3f, %4.3f, %4.3f, %4.3f,
   // r:%4.3f\n",des.getSizeX(), des.getSizeY(), des.getXMin(), des.getXMax(),
   // des.getYMin(), des.getYMax(), des.getResolution());

@@ -185,8 +185,6 @@ void DoorDetectorNode::callbackLaser( const sensor_msgs::LaserScan &_laser )
     laser_measurement_.reset( new LaserMeasurement( tf ));
     laser_measurement_->initFromScan( _laser );
     
-    sensor_model_evaluator_.reset( new SensorModelEvaluator( resp_map_.map ));
-    
   }
   
 }
@@ -199,17 +197,13 @@ void DoorDetectorNode::process()
     
     img_processor_->processImage( image_rgb_, image_depth_ );
     
-    std::cout << "laserproc" << std::endl;
     bool success = door_detector_laser_->processLaser( laser_measurement_->getLaser());
-    std::cout << "laserproc" << std::endl;
     
     door_detector_->setImageMeasurement( image_rgb_ );
     
     door_detector_->setLaserMeasurement( laser_measurement_ );
     
-    std::cout << "merge" << std::endl;
     door_detector_->merge( img_processor_, door_detector_laser_ );
-    std::cout << "merge" << std::endl;
     
     detection_result_.reset( new tuw_object_msgs::ObjectDetection( door_detector_->getResultAsMessage()));
     
