@@ -27,20 +27,26 @@ void SensorModelEvaluatorNode::callbackLaser( const sensor_msgs::LaserScan &_las
   if ( evaluator_ )
   {
     
-    geometry_msgs::TransformStampedPtr tf = boost::make_shared<geometry_msgs::TransformStamped>();
-    tf->transform.translation.x = 0;
-    tf->transform.translation.y = 0;
-    tf->transform.translation.z = 0;
-    
-    tf->transform.rotation.x = 0;
-    tf->transform.rotation.y = 0;
-    tf->transform.rotation.z = 0;
-    tf->transform.rotation.w = 1;
-    
-    laser_measurement_.reset( new LaserMeasurement( tf ));
-    laser_measurement_->initFromScan( _laser );
-    
-    evaluator_->evaluate( laser_measurement_ );
+    try
+    {
+      
+      std::cout << "header " << _laser.header.frame_id.c_str() << std::endl;
+      
+      geometry_msgs::TransformStamped stamped_tf = tf_buffer_.lookupTransform(
+          "map", "r0/laser0", ros::Time( 0 ));
+      
+      
+      geometry_msgs::TransformStampedPtr tf = boost::make_shared<geometry_msgs::TransformStamped>( stamped_tf );
+      laser_measurement_.reset( new LaserMeasurement( tf ));
+      laser_measurement_->initFromScan( _laser );
+      
+      evaluator_->evaluate( laser_measurement_ );
+      
+    } catch (tf2::TransformException &ex)
+    {
+      ROS_WARN( "transform lookup failed SensorModelEvaluatorNode::callbackLaser\n" );
+      ROS_WARN( "what(): %s\n", ex.what());
+    }
     
   }
   
