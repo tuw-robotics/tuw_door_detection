@@ -44,6 +44,13 @@ namespace tuw
       double origin_x;
       double origin_y;
       cv::Mat cv_ui8;
+      //For rendermap
+      cv::Mat cv_untouched_initial;
+      
+      void clear()
+      {
+        cv_untouched_initial.copyTo(cv_ui8);
+      }
       
       // Convert from world coords to map coords
       double get_mx_from_wx( double x )
@@ -79,23 +86,27 @@ namespace tuw
       }
     };
     
-    bool convert( const nav_msgs::OccupancyGridConstPtr &src, std::unique_ptr<InternalMap> &map );
+    bool convert( const nav_msgs::OccupancyGridConstPtr &src, std::shared_ptr<InternalMap> &map );
     
-    Point2DPtr rayTrace( const double scale, const Beam &b, const Eigen::Matrix4d &tf_ML );
+    Point2DPtr rayTrace( const double scale, const Beam &b, const Eigen::Matrix4d &tf_ML);
     
     void updateExpectedMeasurementTable( const Beam &b, const Point2DPtr &intersection );
     
     void updateObservedMeasurementTable( const Point2DPtr &obs );
     
-    void downscaleImshow( const std::unique_ptr<InternalMap> &map, LaserMeasurementPtr meas = nullptr );
+    void downscaleImshow( LaserMeasurementPtr meas = nullptr );
+    
+    std::shared_ptr<InternalMap> constructDownscaled(const std::shared_ptr<InternalMap> &source, const double scale_factor);
     
     void clear();
     
     measurement_table expected_meas_;
     measurement_table observed_meas_;
     
-    std::unique_ptr<InternalMap> map_;
+    std::shared_ptr<InternalMap> map_;
+    std::shared_ptr<InternalMap> render_map_;
     nav_msgs::OccupancyGrid map_msg_;
+    cv::Mat raytrace_image_dbg_;
   };
   
   using SensorModelEvaluatorPtr = std::shared_ptr<SensorModelEvaluator>;

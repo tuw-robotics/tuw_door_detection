@@ -14,9 +14,17 @@ SensorModelEvaluator::SensorModelEvaluator( const nav_msgs::OccupancyGridConstPt
   {
     ROS_ERROR( "ERROR CONVERTING MAP TO CV" );
   }
+  if ( map_ )
+  {
+    render_map_ = constructDownscaled( map_, 4.0 );
+    render_map_->cv_ui8.copyTo( render_map_->cv_untouched_initial );
+    
+    map_ = constructDownscaled( map_, 4.0 );
+    cv::cvtColor(map_->cv_ui8, map_->cv_ui8, CV_BGR2GRAY);
+  }
 }
 
-bool SensorModelEvaluator::convert( const nav_msgs::OccupancyGridConstPtr &src, std::unique_ptr<InternalMap> &des )
+bool SensorModelEvaluator::convert( const nav_msgs::OccupancyGridConstPtr &src, std::shared_ptr<InternalMap> &des )
 {
   des = std::make_unique<InternalMap>();
   ROS_INFO( "convert" );
@@ -50,11 +58,11 @@ bool SensorModelEvaluator::convert( const nav_msgs::OccupancyGridConstPtr &src, 
   // Convert to player format
   memcpy( des->cv_ui8.data, src->data.data(), static_cast<std::size_t>(des->size_x * des->size_y));
   
-  std::cout << "map init " << std::endl;
-  std::cout << des->to_string() << std::endl;
-  std::cout << "origin in image space " << std::endl;
-  std::cout << des->get_mx_from_wx( des->origin_x ) << std::endl;
-  std::cout << des->get_my_from_wy( des->origin_y ) << std::endl;
+  //std::cout << "map init " << std::endl;
+  //std::cout << des->to_string() << std::endl;
+  //std::cout << "origin in image space " << std::endl;
+  //std::cout << des->get_mx_from_wx( des->origin_x ) << std::endl;
+  //std::cout << des->get_my_from_wy( des->origin_y ) << std::endl;
   
   //for ( unsigned int h = 0; h < src->info.height; h++ )
   //{
@@ -73,39 +81,38 @@ void SensorModelEvaluator::clear()
 {
   expected_meas_.clear();
   observed_meas_.clear();
+  render_map_->clear();
 }
 
-void SensorModelEvaluator::downscaleImshow( const std::unique_ptr<InternalMap> &map, LaserMeasurementPtr meas )
+std::shared_ptr<SensorModelEvaluator::InternalMap>
+SensorModelEvaluator::constructDownscaled( const std::shared_ptr<InternalMap> &map, const double scale_factor )
 {
-  float scale_factor = 4.0;
+  std::shared_ptr<InternalMap> downscaled = std::make_shared<InternalMap>();
+  map->cv_ui8.copyTo( downscaled->cv_ui8 );
+  downscaled->scale = map->scale * scale_factor;
+  downscaled->size_x = map->size_x / scale_factor;
+  downscaled->size_y = map->size_y / scale_factor;
+  downscaled->map_info_ = map->map_info_;
   
-  std::cout << "map init " << std::endl;
-  std::cout << map->to_string() << std::endl;
-  std::cout << "origin in image space " << std::endl;
-  std::cout << map->get_mx_from_wx( map->origin_x ) << std::endl;
-  std::cout << map->get_my_from_wy( map->origin_y ) << std::endl;
+  downscaled->origin_x = downscaled->map_info_.origin.position.x + (downscaled->size_x / 2) * downscaled->scale;
+  downscaled->origin_y = downscaled->map_info_.origin.position.y + (downscaled->size_y / 2) * downscaled->scale;
   
-  InternalMap downscaled;
-  map->cv_ui8.copyTo( downscaled.cv_ui8 );
-  downscaled.scale = map->scale * scale_factor;
-  downscaled.size_x = map->size_x / scale_factor;
-  downscaled.size_y = map->size_y / scale_factor;
-  downscaled.map_info_ = map->map_info_;
+  cv::resize( downscaled->cv_ui8, downscaled->cv_ui8, cv::Size( downscaled->size_x, downscaled->size_y ));
+  if ( downscaled->cv_ui8.channels() == 1 )
+  {
+    cv::cvtColor( downscaled->cv_ui8, downscaled->cv_ui8, CV_GRAY2BGR );
+  }
   
-  downscaled.origin_x = downscaled.map_info_.origin.position.x + (downscaled.size_x / 2) * downscaled.scale;
-  downscaled.origin_y = downscaled.map_info_.origin.position.y + (downscaled.size_y / 2) * downscaled.scale;
+  return downscaled;
+}
+
+void SensorModelEvaluator::downscaleImshow( LaserMeasurementPtr meas )
+{
   
-  cv::resize( downscaled.cv_ui8, downscaled.cv_ui8, cv::Size( downscaled.size_x, downscaled.size_y ));
-  cv::cvtColor( downscaled.cv_ui8, downscaled.cv_ui8, CV_GRAY2BGR );
+  cv::Point2d origin_img( render_map_->get_mx_from_wx( render_map_->origin_x ),
+                          render_map_->get_my_from_wy( render_map_->origin_y ));
   
-  cv::Point2d origin_img( downscaled.get_mx_from_wx( downscaled.origin_x ),
-                          downscaled.get_my_from_wy( downscaled.origin_y ));
-  
-  std::cout << "o img: (" << origin_img.x << ", " << origin_img.y << ")" << std::endl;
-  cv::circle( downscaled.cv_ui8, origin_img, 5, cv::Scalar( 255, 255, 0 ), 3 );
-  
-  std::cout << "downscaled version" << std::endl;
-  std::cout << downscaled.to_string() << std::endl;
+  //cv::circle( render_map_->cv_ui8, origin_img, 5, cv::Scalar( 255, 255, 0 ), 3 );
   
   if ( meas )
   {
@@ -118,14 +125,14 @@ void SensorModelEvaluator::downscaleImshow( const std::unique_ptr<InternalMap> &
       Eigen::Vector4d ws_p_b = tf * Eigen::Vector4d( b_it->end_point.x(), b_it->end_point.y(), 0, 1 );
       ws_p_b = ws_p_b / ws_p_b[3];
       
-      cv::Point2d i_p_b( downscaled.get_mx_from_wx( ws_p_b( 0 )),
-                         downscaled.get_my_from_wy( ws_p_b( 1 )));
+      cv::Point2d i_p_b( render_map_->get_mx_from_wx( ws_p_b( 0 )),
+                         render_map_->get_my_from_wy( ws_p_b( 1 )));
       
-      cv::circle( downscaled.cv_ui8, i_p_b, 2, cv::Scalar( 255, 0, 0 ), 2 );
+      cv::circle( render_map_->cv_ui8, i_p_b, 1, cv::Scalar( 255, 0, 0 ), 1 );
     }
   }
   
-  cv::imshow( "map", downscaled.cv_ui8 );
+  cv::imshow( "map", render_map_->cv_ui8 );
   cv::waitKey( 5 );
 }
 
@@ -136,38 +143,127 @@ void SensorModelEvaluator::evaluate( LaserMeasurementPtr &scan )
   Eigen::Matrix4d tf_ML = scan->getTfWorldSensor();
   uint32_t intersect = 0;
   
+  auto origin_view = tf_ML.topRightCorner<2, 1>( 0, 3 );
+  cv::Point2d origin = cv::Point2d( tf_ML( 0, 3 ), tf_ML( 1, 3 ));
+  Eigen::Vector2d origin_eigen = Eigen::Vector2d( origin.x, origin.y );
+  cv::Point2d origin_px = cv::Point2d(
+      render_map_->get_mx_from_wx( tf_ML( 0, 3 )),
+      render_map_->get_my_from_wy( tf_ML( 1, 3 ))
+  );
+  
+  cv::circle( render_map_->cv_ui8, origin_px, 2.0, cv::Scalar( 0, 0, 255 ), 2.0 );
+  raytrace_image_dbg_ = cv::Mat::ones(map_->cv_ui8.rows, map_->cv_ui8.cols, CV_8U);
+  raytrace_image_dbg_ = raytrace_image_dbg_* 255;
+  ROS_WARN("%d", static_cast<int>(raytrace_image_dbg_.channels()));
+  
   for ( std::vector<Beam>::const_iterator beam_it = scan->begin();
         beam_it != scan->end();
         ++beam_it )
   {
     Beam beam = *beam_it;
     Point2DPtr intersection = rayTrace( scan->getLaser().range_max, beam, tf_ML );
+    
+    {
+      //Eigen::Vector4d vbeamend( beam.end_point.x(), beam.end_point.y(), 0, 1 );
+      //vbeamend = tf_ML * vbeamend;
+      //vbeamend = vbeamend / vbeamend( 3 );
+      //vbeamend.normalize();
+      //
+      //cv::Point2d dir_beam = cv::Point2d( vbeamend.x(), vbeamend.y());
+      //
+      ////double d_x = w_start_hit.x - origin.x;
+      ////double d_y = w_start_hit.y - origin.y;
+      ////double distance = std::sqrt(d_x * d_x + d_y * d_y);
+      //
+      //Eigen::Vector2d end_point_ws = beam.transform<Eigen::Vector2d>( tf_ML );
+      //Eigen::Vector2d end_vec_rs = (end_point_ws - origin_eigen) / (end_point_ws - origin_eigen).norm();
+      //Eigen::Vector2d end_extended = end_point_ws + (end_vec_rs * scan->getLaser().range_max);
+      //cv::Point2d w_range_max = cv::Point2d( end_extended.x(), end_extended.y());
+      //cv::Point2d w_start_hit = cv::Point2d( end_point_ws.x(), end_point_ws.y());//beam.transform<cv::Point2d>( tf_ML );
+      //
+      //w_start_hit.x = render_map_->get_mx_from_wx( w_start_hit.x );
+      //w_start_hit.y = render_map_->get_my_from_wy( w_start_hit.y );
+      //w_range_max.x = render_map_->get_mx_from_wx( w_range_max.x );
+      //w_range_max.y = render_map_->get_my_from_wy( w_range_max.y );
+      //
+      //cv::line( render_map_->cv_ui8, w_start_hit, w_range_max, cv::Scalar( 0, 0, 255 ));
+      //cv::circle( render_map_->cv_ui8, w_range_max, 2, cv::Scalar( 255, 0, 255 ), 2 );
+    }
+    
     if ( intersection )
     {
-      cv::circle( map_->cv_ui8, intersection->cv(), 2.0, cv::Scalar( 0, 0, 255 ), 2 );
+      cv::circle( render_map_->cv_ui8, intersection->cv(), 1.5, cv::Scalar( 0, 255, 0 ), 1.5 );
     } else
     {
       intersect++;
     }
   }
+  cv::imshow("raytrace image", raytrace_image_dbg_);
+  cv::waitKey(5);
   
-  std::cout << "no intersections " << intersect << "/" << scan->size() << std::endl;
-  downscaleImshow( map_, scan );
+  std::cout << intersect << "/" << scan->size() << " no intersections" << std::endl;
+  downscaleImshow( scan );
+  //render_map_ = constructDownscaled( map_, 4.0 );
 }
 
-Point2DPtr SensorModelEvaluator::rayTrace( const double scale, const Beam &b, const Eigen::Matrix4d &tf_ML )
+Point2DPtr SensorModelEvaluator::rayTrace( const double scale, const Beam &beam, const Eigen::Matrix4d &tf_ML)
 {
-  cv::Point2d dir_beam = b.get_direction_vector<cv::Point2d>( tf_ML );
-  auto origin_view = tf_ML.topRightCorner<2, 1>( 0, 3 );
-  cv::Point2d origin = cv::Point2d( origin_view( 0 ), origin_view( 1 ));
-  cv::LineIterator ray_tracer( map_->cv_ui8, origin + b.end_point.cv(), dir_beam * scale );
+  Eigen::Vector2d origin_eigen( tf_ML( 0, 3 ), tf_ML( 1, 3 ));
+  Eigen::Vector4d vbeamend( beam.end_point.x(), beam.end_point.y(), 0, 1 );
+  vbeamend = tf_ML * vbeamend;
+  vbeamend = vbeamend / vbeamend( 3 );
+  vbeamend.normalize();
+  
+  cv::Point2d dir_beam = cv::Point2d( vbeamend.x(), vbeamend.y());
+  
+  //double d_x = w_start_hit.x - origin.x;
+  //double d_y = w_start_hit.y - origin.y;
+  //double distance = std::sqrt(d_x * d_x + d_y * d_y);
+  
+  Eigen::Vector2d end_point_ws = beam.transform<Eigen::Vector2d>( tf_ML );
+  Eigen::Vector2d end_vec_rs = (end_point_ws - origin_eigen) / (end_point_ws - origin_eigen).norm();
+  Eigen::Vector2d end_extended = end_point_ws + (end_vec_rs * scale);
+  cv::Point2d w_range_max = cv::Point2d( end_extended.x(), end_extended.y());
+  cv::Point2d w_start_hit = cv::Point2d( end_point_ws.x(), end_point_ws.y());//beam.transform<cv::Point2d>( tf_ML );
+  
+  w_start_hit.x = map_->get_mx_from_wx( w_start_hit.x );
+  w_start_hit.y = map_->get_my_from_wy( w_start_hit.y );
+  w_range_max.x = map_->get_mx_from_wx( w_range_max.x );
+  w_range_max.y = map_->get_my_from_wy( w_range_max.y );
+  
+  cv::line( render_map_->cv_ui8, w_start_hit, w_range_max, cv::Scalar( 0, 0, 255 ));
+  cv::circle( render_map_->cv_ui8, w_range_max, 2, cv::Scalar( 255, 0, 255 ), 2 );
+  
+  //cv::line(map_->cv_ui8, w_start_hit, w_range_max, cv::Scalar(155), );
+  
+  cv::LineIterator ray_tracer( map_->cv_ui8, w_start_hit, w_range_max, 8);
   
   for ( int i = 0; i < ray_tracer.count; ++i, ++ray_tracer )
   {
-    if ( map_->cv_ui8.at<uint8_t>( ray_tracer.pos()) == 0 )
+    if ( map_->cv_ui8.channels() == 1 )
     {
-      return std::make_shared<Point2D>( ray_tracer.pos());
+      //if ( map_->cv_ui8.at<int>( ray_tracer.pos()) >= 200 )
+      //{
+      //  return std::make_shared<Point2D>( ray_tracer.pos().x, ray_tracer.pos().y );
+      //}
+      int valu = map_->cv_ui8.at<int>(ray_tracer.pos());
+      if (valu < 100)
+      {
+        //raytrace_image_dbg_.at<int>(ray_tracer.pos()) = valu;
+      }
+      else {
+        return nullptr;
+        //raytrace_image_dbg_.at<cv::Vec3i>(ray_tracer.pos()) = cv::Vec3i(255, 0, 0);
+      }
+    } else if (map_->cv_ui8.channels() == 3)
+    {
+      ROS_ERROR("multichannel iteration not supported");
+      //if ( map->cv_ui8.at<cv::Point3i>( ray_tracer.pos()).x >= 100)
+      //{
+      //  return std::make_shared<Point2D>( ray_tracer.pos().x, ray_tracer.pos().y );
+      //}
     }
+    
   }
   return nullptr;
 }
