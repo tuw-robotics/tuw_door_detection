@@ -2,7 +2,7 @@
 	
 	<arg name="laser_topic" default="r0/laser0"/>
 	<arg name="fs_root" default="/media/felix/c8b268c7-3328-46f6-abfc-6cff02c5326c"/>
-	<arg name="filename" default="laser_and_cam_with_amcl2.bag"/>
+	<arg name="filename" default="laser_and_cam_with_amcl.bag"/>
 	<arg name="bag_file" default="$(arg fs_root)/bag_data/$(arg filename)"/>
 	<arg name="skip_bag_s" default="0"/>
 	

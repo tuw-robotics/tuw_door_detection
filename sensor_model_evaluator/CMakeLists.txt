@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
         rospy
         nav_msgs
         sensor_msgs
+        grid_map_msgs
         tuw_geometry
         tuw_geometry_msgs
         tuw_measurement_utils
@@ -117,6 +118,7 @@ catkin_package(
         tuw_measurement_utils
         sensor_msgs
         nav_msgs
+        grid_map_msgs
 
         DEPENDS
         OpenCV

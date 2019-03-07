@@ -14,6 +14,7 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/core.hpp>
 #include <string>
+#include <map>
 
 namespace tuw
 {
@@ -43,13 +44,14 @@ namespace tuw
       double scale;
       double origin_x;
       double origin_y;
-      cv::Mat cv_ui8;
+      cv::Mat cv_uc8;
+      std::shared_ptr<InternalMap> parent;
       //For rendermap
       cv::Mat cv_untouched_initial;
       
       void clear()
       {
-        cv_untouched_initial.copyTo(cv_ui8);
+        cv_untouched_initial.copyTo(cv_uc8);
       }
       
       // Convert from world coords to map coords
@@ -90,9 +92,9 @@ namespace tuw
     
     Point2DPtr rayTrace( const double scale, const Beam &b, const Eigen::Matrix4d &tf_ML);
     
-    void updateExpectedMeasurementTable( const Beam &b, const Point2DPtr &intersection );
-    
-    void updateObservedMeasurementTable( const Point2DPtr &obs );
+    void updateExpectedMeasurementTable( unsigned int idx, const Point2D &expect);
+   
+    void updateObservedMeasurementTable( unsigned int idx, const Point2D &obs );
     
     void downscaleImshow( LaserMeasurementPtr meas = nullptr );
     

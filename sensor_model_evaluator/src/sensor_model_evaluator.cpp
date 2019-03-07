@@ -17,11 +17,26 @@ SensorModelEvaluator::SensorModelEvaluator( const nav_msgs::OccupancyGridConstPt
   if ( map_ )
   {
     render_map_ = constructDownscaled( map_, 4.0 );
-    render_map_->cv_ui8.copyTo( render_map_->cv_untouched_initial );
+    render_map_->cv_uc8.copyTo( render_map_->cv_untouched_initial );
+    render_map_->parent = map_;
     
-    map_ = constructDownscaled( map_, 4.0 );
-    cv::cvtColor(map_->cv_ui8, map_->cv_ui8, CV_BGR2GRAY);
+    auto tmp = constructDownscaled( map_, 4.0 );
+    tmp->parent = std::move( map_ );
+    map_ = std::move( tmp );
+    cv::cvtColor( map_->cv_uc8, map_->cv_uc8, CV_BGR2GRAY );
   }
+}
+
+void SensorModelEvaluator::updateObservedMeasurementTable( unsigned int idx, const tuw::Point2D &obs )
+{
+  assert( observed_meas_.find( idx ) == observed_meas_.end());
+  observed_meas_.insert(std::make_pair(idx, obs));
+}
+
+void SensorModelEvaluator::updateExpectedMeasurementTable( unsigned int idx, const tuw::Point2D &expect )
+{
+  assert( expected_meas_.find(idx) == expected_meas_.end());
+  expected_meas_.insert(std::make_pair(idx, expect));
 }
 
 bool SensorModelEvaluator::convert( const nav_msgs::OccupancyGridConstPtr &src, std::shared_ptr<InternalMap> &des )
@@ -47,7 +62,7 @@ bool SensorModelEvaluator::convert( const nav_msgs::OccupancyGridConstPtr &src, 
     return false;
   }
   
-  des->cv_ui8 = cv::Mat::zeros( cv::Size( src->info.width, src->info.height ), CV_8U );
+  des->cv_uc8 = cv::Mat::zeros( cv::Size( src->info.width, src->info.height ), CV_8U );
   des->size_x = src->info.width;
   des->size_y = src->info.height;
   des->scale = src->info.resolution;
@@ -56,7 +71,7 @@ bool SensorModelEvaluator::convert( const nav_msgs::OccupancyGridConstPtr &src, 
   des->map_info_ = src->info;
   
   // Convert to player format
-  memcpy( des->cv_ui8.data, src->data.data(), static_cast<std::size_t>(des->size_x * des->size_y));
+  memcpy( des->cv_uc8.data, src->data.data(), static_cast<std::size_t>(des->size_x * des->size_y));
   
   //std::cout << "map init " << std::endl;
   //std::cout << des->to_string() << std::endl;
@@ -88,7 +103,7 @@ std::shared_ptr<SensorModelEvaluator::InternalMap>
 SensorModelEvaluator::constructDownscaled( const std::shared_ptr<InternalMap> &map, const double scale_factor )
 {
   std::shared_ptr<InternalMap> downscaled = std::make_shared<InternalMap>();
-  map->cv_ui8.copyTo( downscaled->cv_ui8 );
+  map->cv_uc8.copyTo( downscaled->cv_uc8 );
   downscaled->scale = map->scale * scale_factor;
   downscaled->size_x = map->size_x / scale_factor;
   downscaled->size_y = map->size_y / scale_factor;
@@ -97,10 +112,10 @@ SensorModelEvaluator::constructDownscaled( const std::shared_ptr<InternalMap> &m
   downscaled->origin_x = downscaled->map_info_.origin.position.x + (downscaled->size_x / 2) * downscaled->scale;
   downscaled->origin_y = downscaled->map_info_.origin.position.y + (downscaled->size_y / 2) * downscaled->scale;
   
-  cv::resize( downscaled->cv_ui8, downscaled->cv_ui8, cv::Size( downscaled->size_x, downscaled->size_y ));
-  if ( downscaled->cv_ui8.channels() == 1 )
+  cv::resize( downscaled->cv_uc8, downscaled->cv_uc8, cv::Size( downscaled->size_x, downscaled->size_y ));
+  if ( downscaled->cv_uc8.channels() == 1 )
   {
-    cv::cvtColor( downscaled->cv_ui8, downscaled->cv_ui8, CV_GRAY2BGR );
+    cv::cvtColor( downscaled->cv_uc8, downscaled->cv_uc8, CV_GRAY2BGR );
   }
   
   return downscaled;
@@ -128,11 +143,11 @@ void SensorModelEvaluator::downscaleImshow( LaserMeasurementPtr meas )
       cv::Point2d i_p_b( render_map_->get_mx_from_wx( ws_p_b( 0 )),
                          render_map_->get_my_from_wy( ws_p_b( 1 )));
       
-      cv::circle( render_map_->cv_ui8, i_p_b, 1, cv::Scalar( 255, 0, 0 ), 1 );
+      cv::circle( render_map_->cv_uc8, i_p_b, 1, cv::Scalar( 255, 0, 0 ), 1 );
     }
   }
   
-  cv::imshow( "map", render_map_->cv_ui8 );
+  cv::imshow( "map", render_map_->cv_uc8 );
   cv::waitKey( 5 );
 }
 
@@ -151,62 +166,43 @@ void SensorModelEvaluator::evaluate( LaserMeasurementPtr &scan )
       render_map_->get_my_from_wy( tf_ML( 1, 3 ))
   );
   
-  cv::circle( render_map_->cv_ui8, origin_px, 2.0, cv::Scalar( 0, 0, 255 ), 2.0 );
-  raytrace_image_dbg_ = cv::Mat::ones(map_->cv_ui8.rows, map_->cv_ui8.cols, CV_8U);
-  raytrace_image_dbg_ = raytrace_image_dbg_* 255;
-  ROS_WARN("%d", static_cast<int>(raytrace_image_dbg_.channels()));
+  cv::circle( render_map_->cv_uc8, origin_px, 2.0, cv::Scalar( 0, 0, 255 ), 2.0 );
   
-  for ( std::vector<Beam>::const_iterator beam_it = scan->begin();
+  for ( std::vector<Beam>::iterator beam_it = scan->begin();
         beam_it != scan->end();
         ++beam_it )
   {
-    Beam beam = *beam_it;
-    Point2DPtr intersection = rayTrace( scan->getLaser().range_max, beam, tf_ML );
     
-    {
-      //Eigen::Vector4d vbeamend( beam.end_point.x(), beam.end_point.y(), 0, 1 );
-      //vbeamend = tf_ML * vbeamend;
-      //vbeamend = vbeamend / vbeamend( 3 );
-      //vbeamend.normalize();
-      //
-      //cv::Point2d dir_beam = cv::Point2d( vbeamend.x(), vbeamend.y());
-      //
-      ////double d_x = w_start_hit.x - origin.x;
-      ////double d_y = w_start_hit.y - origin.y;
-      ////double distance = std::sqrt(d_x * d_x + d_y * d_y);
-      //
-      //Eigen::Vector2d end_point_ws = beam.transform<Eigen::Vector2d>( tf_ML );
-      //Eigen::Vector2d end_vec_rs = (end_point_ws - origin_eigen) / (end_point_ws - origin_eigen).norm();
-      //Eigen::Vector2d end_extended = end_point_ws + (end_vec_rs * scan->getLaser().range_max);
-      //cv::Point2d w_range_max = cv::Point2d( end_extended.x(), end_extended.y());
-      //cv::Point2d w_start_hit = cv::Point2d( end_point_ws.x(), end_point_ws.y());//beam.transform<cv::Point2d>( tf_ML );
-      //
-      //w_start_hit.x = render_map_->get_mx_from_wx( w_start_hit.x );
-      //w_start_hit.y = render_map_->get_my_from_wy( w_start_hit.y );
-      //w_range_max.x = render_map_->get_mx_from_wx( w_range_max.x );
-      //w_range_max.y = render_map_->get_my_from_wy( w_range_max.y );
-      //
-      //cv::line( render_map_->cv_ui8, w_start_hit, w_range_max, cv::Scalar( 0, 0, 255 ));
-      //cv::circle( render_map_->cv_ui8, w_range_max, 2, cv::Scalar( 255, 0, 255 ), 2 );
-    }
+    Beam beam = *beam_it;
+    updateObservedMeasurementTable( std::distance( scan->begin(), beam_it ), beam.end_point );
+    
+    Point2DPtr intersection = rayTrace( scan->getLaser().range_max, beam, tf_ML );
     
     if ( intersection )
     {
-      cv::circle( render_map_->cv_ui8, intersection->cv(), 1.5, cv::Scalar( 0, 255, 0 ), 1.5 );
+      
+      cv::circle( render_map_->cv_uc8, intersection->cv(), 1.5, cv::Scalar( 0, 255, 0 ), 1.5 );
+      Point2D w_intersection(
+          map_->get_wx_from_mx( intersection->x()),
+          map_->get_wy_from_my( intersection->y())
+      );
+      updateExpectedMeasurementTable( std::distance( scan->begin(), beam_it ), w_intersection );
+      
     } else
     {
       intersect++;
     }
   }
-  cv::imshow("raytrace image", raytrace_image_dbg_);
-  cv::waitKey(5);
+  
+  //cv::imshow( "raytrace image", raytrace_image_dbg_ );
+  //cv::waitKey( 5 );
   
   std::cout << intersect << "/" << scan->size() << " no intersections" << std::endl;
   downscaleImshow( scan );
   //render_map_ = constructDownscaled( map_, 4.0 );
 }
 
-Point2DPtr SensorModelEvaluator::rayTrace( const double scale, const Beam &beam, const Eigen::Matrix4d &tf_ML)
+Point2DPtr SensorModelEvaluator::rayTrace( const double scale, const Beam &beam, const Eigen::Matrix4d &tf_ML )
 {
   Eigen::Vector2d origin_eigen( tf_ML( 0, 3 ), tf_ML( 1, 3 ));
   Eigen::Vector4d vbeamend( beam.end_point.x(), beam.end_point.y(), 0, 1 );
@@ -215,10 +211,6 @@ Point2DPtr SensorModelEvaluator::rayTrace( const double scale, const Beam &beam,
   vbeamend.normalize();
   
   cv::Point2d dir_beam = cv::Point2d( vbeamend.x(), vbeamend.y());
-  
-  //double d_x = w_start_hit.x - origin.x;
-  //double d_y = w_start_hit.y - origin.y;
-  //double distance = std::sqrt(d_x * d_x + d_y * d_y);
   
   Eigen::Vector2d end_point_ws = beam.transform<Eigen::Vector2d>( tf_ML );
   Eigen::Vector2d end_vec_rs = (end_point_ws - origin_eigen) / (end_point_ws - origin_eigen).norm();
@@ -231,39 +223,23 @@ Point2DPtr SensorModelEvaluator::rayTrace( const double scale, const Beam &beam,
   w_range_max.x = map_->get_mx_from_wx( w_range_max.x );
   w_range_max.y = map_->get_my_from_wy( w_range_max.y );
   
-  cv::line( render_map_->cv_ui8, w_start_hit, w_range_max, cv::Scalar( 0, 0, 255 ));
-  cv::circle( render_map_->cv_ui8, w_range_max, 2, cv::Scalar( 255, 0, 255 ), 2 );
+  cv::line( render_map_->cv_uc8, w_start_hit, w_range_max, cv::Scalar( 0, 0, 255 ));
+  cv::circle( render_map_->cv_uc8, w_range_max, 2, cv::Scalar( 255, 0, 255 ), 2 );
   
-  //cv::line(map_->cv_ui8, w_start_hit, w_range_max, cv::Scalar(155), );
-  
-  cv::LineIterator ray_tracer( map_->cv_ui8, w_start_hit, w_range_max, 8);
-  
+  cv::LineIterator ray_tracer( map_->cv_uc8, w_start_hit, w_range_max, 8 );
   for ( int i = 0; i < ray_tracer.count; ++i, ++ray_tracer )
   {
-    if ( map_->cv_ui8.channels() == 1 )
+    if ( map_->cv_uc8.channels() == 1 )
     {
-      //if ( map_->cv_ui8.at<int>( ray_tracer.pos()) >= 200 )
-      //{
-      //  return std::make_shared<Point2D>( ray_tracer.pos().x, ray_tracer.pos().y );
-      //}
-      int valu = map_->cv_ui8.at<int>(ray_tracer.pos());
-      if (valu < 100)
+      uchar obstacle = (uchar) map_->cv_uc8.at<uchar>( ray_tracer.pos());
+      if ( obstacle >= 100u )
       {
-        //raytrace_image_dbg_.at<int>(ray_tracer.pos()) = valu;
+        return std::make_shared<Point2D>( ray_tracer.pos().x, ray_tracer.pos().y );
       }
-      else {
-        return nullptr;
-        //raytrace_image_dbg_.at<cv::Vec3i>(ray_tracer.pos()) = cv::Vec3i(255, 0, 0);
-      }
-    } else if (map_->cv_ui8.channels() == 3)
+    } else if ( map_->cv_uc8.channels() == 3 )
     {
-      ROS_ERROR("multichannel iteration not supported");
-      //if ( map->cv_ui8.at<cv::Point3i>( ray_tracer.pos()).x >= 100)
-      //{
-      //  return std::make_shared<Point2D>( ray_tracer.pos().x, ray_tracer.pos().y );
-      //}
+      ROS_ERROR( "multichannel iteration not supported" );
     }
-    
   }
   return nullptr;
 }
