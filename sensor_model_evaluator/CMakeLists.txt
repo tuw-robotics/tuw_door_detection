@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
         nav_msgs
         sensor_msgs
         grid_map_msgs
+        grid_map_ros
         tuw_geometry
         tuw_geometry_msgs
         tuw_measurement_utils
@@ -119,6 +120,7 @@ catkin_package(
         sensor_msgs
         nav_msgs
         grid_map_msgs
+        grid_map_ros
 
         DEPENDS
         OpenCV

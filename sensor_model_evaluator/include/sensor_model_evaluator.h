@@ -15,6 +15,7 @@
 #include <opencv2/core.hpp>
 #include <string>
 #include <map>
+#include <grid_map_msgs/GridMap.h>
 
 namespace tuw
 {
@@ -23,9 +24,26 @@ namespace tuw
   {
   public:
     
-    SensorModelEvaluator( const nav_msgs::OccupancyGridConstPtr &map );
+    SensorModelEvaluator( const nav_msgs::OccupancyGridConstPtr &map, bool render = true );
     
     void evaluate( LaserMeasurementPtr &scan );
+    
+    void publish();
+    
+    template <typename M_DES>
+    bool getMap( M_DES &des )
+    {
+      if ( has_result_ )
+      {
+        return convert( map_, des );
+      }
+      return false;
+    }
+    
+    bool hasResult()
+    {
+      return has_result_;
+    }
   
   private:
     using measurement_table = std::map<unsigned int, Point2D>;
@@ -51,7 +69,7 @@ namespace tuw
       
       void clear()
       {
-        cv_untouched_initial.copyTo(cv_uc8);
+        cv_untouched_initial.copyTo( cv_uc8 );
       }
       
       // Convert from world coords to map coords
@@ -90,15 +108,20 @@ namespace tuw
     
     bool convert( const nav_msgs::OccupancyGridConstPtr &src, std::shared_ptr<InternalMap> &map );
     
-    Point2DPtr rayTrace( const double scale, const Beam &b, const Eigen::Matrix4d &tf_ML);
+    bool convert( const std::shared_ptr<InternalMap> &src, nav_msgs::OccupancyGrid &des );
     
-    void updateExpectedMeasurementTable( unsigned int idx, const Point2D &expect);
-   
+    bool convert( const std::shared_ptr<InternalMap> &src, grid_map_msgs::GridMap &des );
+    
+    Point2DPtr rayTrace( const double scale, const Beam &b, const Eigen::Matrix4d &tf_ML );
+    
+    void updateExpectedMeasurementTable( unsigned int idx, const Point2D &expect );
+    
     void updateObservedMeasurementTable( unsigned int idx, const Point2D &obs );
     
     void downscaleImshow( LaserMeasurementPtr meas = nullptr );
     
-    std::shared_ptr<InternalMap> constructDownscaled(const std::shared_ptr<InternalMap> &source, const double scale_factor);
+    std::shared_ptr<InternalMap>
+    constructDownscaled( const std::shared_ptr<InternalMap> &source, const double scale_factor );
     
     void clear();
     
@@ -107,8 +130,10 @@ namespace tuw
     
     std::shared_ptr<InternalMap> map_;
     std::shared_ptr<InternalMap> render_map_;
+    bool render_;
     nav_msgs::OccupancyGrid map_msg_;
     cv::Mat raytrace_image_dbg_;
+    bool has_result_;
   };
   
   using SensorModelEvaluatorPtr = std::shared_ptr<SensorModelEvaluator>;

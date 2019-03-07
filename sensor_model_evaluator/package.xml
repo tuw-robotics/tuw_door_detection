@@ -54,6 +54,7 @@
     <build_depend>tuw_measurement_utils</build_depend>
     <build_depend>nav_msgs</build_depend>
     <build_depend>grid_map_msgs</build_depend>
+    <build_depend>grid_map_ros</build_depend>
 
     <run_depend>tf2_ros</run_depend>
     <run_depend>cv_bridge</run_depend>
@@ -65,6 +66,8 @@
     <run_depend>tuw_measurement_utils</run_depend>
     <run_depend>nav_msgs</run_depend>
     <run_depend>grid_map_msgs</run_depend>
+    <run_depend>grid_map_ros</run_depend>
+    <run_depend>grid_map_rviz</run_depend>
 
     <!-- The export tag contains other, unspecified, tags -->
     <export>

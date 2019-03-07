@@ -4,17 +4,21 @@
 
 #include <sensor_model_evaluator.h>
 #include <opencv2/highgui.hpp>
+#include <grid_map_ros/GridMapRosConverter.hpp>
 
 using namespace tuw;
 
-SensorModelEvaluator::SensorModelEvaluator( const nav_msgs::OccupancyGridConstPtr &map )
+SensorModelEvaluator::SensorModelEvaluator( const nav_msgs::OccupancyGridConstPtr &map, bool render ) : has_result_(false)
 {
   map_msg_ = nav_msgs::OccupancyGrid( *map );
+  render_ = render;
+  
   if ( !convert( map, map_ ))
   {
     ROS_ERROR( "ERROR CONVERTING MAP TO CV" );
   }
-  if ( map_ )
+  
+  if ( map_ && render )
   {
     render_map_ = constructDownscaled( map_, 4.0 );
     render_map_->cv_uc8.copyTo( render_map_->cv_untouched_initial );
@@ -30,19 +34,18 @@ SensorModelEvaluator::SensorModelEvaluator( const nav_msgs::OccupancyGridConstPt
 void SensorModelEvaluator::updateObservedMeasurementTable( unsigned int idx, const tuw::Point2D &obs )
 {
   assert( observed_meas_.find( idx ) == observed_meas_.end());
-  observed_meas_.insert(std::make_pair(idx, obs));
+  observed_meas_.insert( std::make_pair( idx, obs ));
 }
 
 void SensorModelEvaluator::updateExpectedMeasurementTable( unsigned int idx, const tuw::Point2D &expect )
 {
-  assert( expected_meas_.find(idx) == expected_meas_.end());
-  expected_meas_.insert(std::make_pair(idx, expect));
+  assert( expected_meas_.find( idx ) == expected_meas_.end());
+  expected_meas_.insert( std::make_pair( idx, expect ));
 }
 
 bool SensorModelEvaluator::convert( const nav_msgs::OccupancyGridConstPtr &src, std::shared_ptr<InternalMap> &des )
 {
   des = std::make_unique<InternalMap>();
-  ROS_INFO( "convert" );
   ROS_INFO( "map dim %d, %d\norigin: (x=%lf,y=%lf,z=%lf)",
             (int) src->info.width, (int) src->info.height,
             src->info.origin.position.x,
@@ -73,22 +76,39 @@ bool SensorModelEvaluator::convert( const nav_msgs::OccupancyGridConstPtr &src, 
   // Convert to player format
   memcpy( des->cv_uc8.data, src->data.data(), static_cast<std::size_t>(des->size_x * des->size_y));
   
-  //std::cout << "map init " << std::endl;
-  //std::cout << des->to_string() << std::endl;
-  //std::cout << "origin in image space " << std::endl;
-  //std::cout << des->get_mx_from_wx( des->origin_x ) << std::endl;
-  //std::cout << des->get_my_from_wy( des->origin_y ) << std::endl;
+  return true;
+}
+
+bool SensorModelEvaluator::convert( const std::shared_ptr<InternalMap> &src, nav_msgs::OccupancyGrid &des )
+{
+  des.info.resolution = src->scale;
+  des.info.width = src->size_x;
+  des.info.height = src->size_y;
+  des.info.origin = src->map_info_.origin;
+  des.info.map_load_time = src->map_info_.map_load_time;
   
-  //for ( unsigned int h = 0; h < src->info.height; h++ )
-  //{
-  //  cv::Mat row_des = des.row( h );
-  //  const int8_t *pSrc = &src->data[h * src->info.width];
-  //  for ( unsigned int w = 0; w < src->info.width; w++ )
-  //  {
-  //    row_des.at<int8_t>( w ) = *pSrc++;
-  //  }
-  //}
+  des.data.resize( static_cast<std::size_t>(src->size_x * src->size_y));
   
+  memcpy( des.data.data(), src->cv_uc8.data, static_cast<std::size_t>(src->size_x * src->size_y));
+  
+  return true;
+}
+
+bool SensorModelEvaluator::convert( const std::shared_ptr<tuw::SensorModelEvaluator::InternalMap> &src,
+                                    grid_map_msgs::GridMap &des )
+{
+  nav_msgs::OccupancyGrid gm_ros;
+  grid_map::GridMap gm_eth;
+  convert( src, gm_ros );
+  
+  if ( !grid_map::GridMapRosConverter::fromOccupancyGrid( gm_ros, "global_map", gm_eth ))
+  {
+    ROS_ERROR( "could not convert nav_msgs::OccupancyGrid to grid_map::GridMap" );
+    return false;
+  } else
+  {
+    grid_map::GridMapRosConverter::toMessage( gm_eth, des );
+  }
   return true;
 }
 
@@ -194,12 +214,9 @@ void SensorModelEvaluator::evaluate( LaserMeasurementPtr &scan )
     }
   }
   
-  //cv::imshow( "raytrace image", raytrace_image_dbg_ );
-  //cv::waitKey( 5 );
-  
-  std::cout << intersect << "/" << scan->size() << " no intersections" << std::endl;
   downscaleImshow( scan );
-  //render_map_ = constructDownscaled( map_, 4.0 );
+  
+  has_result_ = true;
 }
 
 Point2DPtr SensorModelEvaluator::rayTrace( const double scale, const Beam &beam, const Eigen::Matrix4d &tf_ML )
@@ -238,7 +255,7 @@ Point2DPtr SensorModelEvaluator::rayTrace( const double scale, const Beam &beam,
       }
     } else if ( map_->cv_uc8.channels() == 3 )
     {
-      ROS_ERROR( "multichannel iteration not supported" );
+      ROS_ERROR( "SensorModelEvaluator::rayTrace  -- multichannel map not supported --" );
     }
   }
   return nullptr;

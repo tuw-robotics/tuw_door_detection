@@ -11,6 +11,7 @@ SensorModelEvaluatorNode::SensorModelEvaluatorNode( ros::NodeHandle &nh ) : eval
   nh_ = nh;
   sub_laser_ = nh.subscribe( "/r0/laser0/scan/raw", 1000, &SensorModelEvaluatorNode::callbackLaser, this );
   sub_map_ = nh.subscribe( "/map", 1, &SensorModelEvaluatorNode::callbackMap, this );
+  pub_map_eth_ = nh.advertise<grid_map_msgs::GridMap>( "/grid_map", 4 );
 }
 
 void SensorModelEvaluatorNode::callbackMap( const nav_msgs::OccupancyGridConstPtr &map )
@@ -29,8 +30,6 @@ void SensorModelEvaluatorNode::callbackLaser( const sensor_msgs::LaserScan &_las
     
     try
     {
-      
-      std::cout << "header " << _laser.header.frame_id.c_str() << std::endl;
       
       geometry_msgs::TransformStamped stamped_tf = tf_buffer_.lookupTransform(
           "map", "r0/laser0", ros::Time( 0 ));
@@ -52,6 +51,21 @@ void SensorModelEvaluatorNode::callbackLaser( const sensor_msgs::LaserScan &_las
   
 }
 
+void SensorModelEvaluatorNode::publish()
+{
+  grid_map_msgs::GridMap pub_map;
+  if ( evaluator_ )
+  {
+    if ( evaluator_->getMap( pub_map ))
+    {
+      pub_map_eth_.publish( pub_map );
+    } else
+    {
+      ROS_WARN( "publish called but no result available" );
+    }
+  }
+}
+
 int main( int argc, char **argv )
 {
   ros::init( argc, argv, "sensor_model_evaluator_node" );
@@ -61,7 +75,9 @@ int main( int argc, char **argv )
   
   while ( ros::ok())
   {
-    ros::spin();
+    ros::spinOnce();
+    
+    eval_node.publish();
   }
   return 0;
 }
