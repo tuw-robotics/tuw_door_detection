@@ -34,7 +34,6 @@ void SensorModelEvaluatorNode::callbackLaser( const sensor_msgs::LaserScan &_las
       geometry_msgs::TransformStamped stamped_tf = tf_buffer_.lookupTransform(
           "map", "r0/laser0", ros::Time( 0 ));
       
-      
       geometry_msgs::TransformStampedPtr tf = boost::make_shared<geometry_msgs::TransformStamped>( stamped_tf );
       laser_measurement_.reset( new LaserMeasurement( tf ));
       laser_measurement_->initFromScan( _laser );
@@ -53,16 +52,15 @@ void SensorModelEvaluatorNode::callbackLaser( const sensor_msgs::LaserScan &_las
 
 void SensorModelEvaluatorNode::publish()
 {
-  grid_map_msgs::GridMap pub_map;
   if ( evaluator_ )
   {
-    if ( evaluator_->getMap( pub_map ))
-    {
-      pub_map_eth_.publish( pub_map );
-    } else
-    {
-      ROS_WARN( "publish called but no result available" );
-    }
+    //if ( evaluator_->getMap( pub_map ))
+    //{
+    //  pub_map_eth_.publish( pub_map );
+    //} else
+    //{
+    //  ROS_WARN( "publish called but no result available" );
+    //}
   }
 }
 
@@ -75,9 +73,11 @@ int main( int argc, char **argv )
   
   while ( ros::ok())
   {
+    
     ros::spinOnce();
     
     eval_node.publish();
+    
   }
   return 0;
 }

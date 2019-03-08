@@ -41,27 +41,49 @@ const bool Beam::get_is_visible() const
 }
 
 template <>
+Eigen::Vector2d Beam::transform( const Eigen::Matrix4d &tf ) const
+{
+  Eigen::Vector4d p = tf * Eigen::Vector4d(end_point.x(), end_point.y(), 0, 1);
+  p = p / p[3];
+  return p.head<2>();
+}
+
+template <>
+cv::Point2d Beam::transform( const Eigen::Matrix4d &tf ) const
+{
+  auto p = transform<Eigen::Vector2d>(tf);
+  return cv::Point2d(p.x(), p.y());
+}
+
+template <>
+Point2D Beam::transform( const Eigen::Matrix4d &tf ) const
+{
+  auto p = transform<Eigen::Vector2d>(tf);
+  return Point2D(p.x(), p.y());
+}
+
+template <>
 Eigen::Vector4d Beam::get_direction_vector<Eigen::Vector4d>( const Eigen::Matrix4d &base ) const
 {
   Eigen::Vector4d beam_end = Eigen::Vector4d( end_point.x(), end_point.y(), 0, 1 );
   Eigen::Vector4d w_p_mp = base * beam_end;
   w_p_mp = w_p_mp / w_p_mp[3];
   w_p_mp.normalize();
-  return std::move( w_p_mp );
+  return w_p_mp;
 }
 
 template <>
 Eigen::Vector2d Beam::get_direction_vector<Eigen::Vector2d>( const Eigen::Matrix4d &tf ) const
 {
   Eigen::Vector4d ev = get_direction_vector < Eigen::Vector4d > (tf);
-  return std::move( Eigen::Vector2d( ev.x(), ev.y()));
+  return ev.head<2>();
 }
 
 template <>
 Eigen::Vector3d Beam::get_direction_vector( const Eigen::Matrix4d &tf ) const
 {
   Eigen::Vector4d ev = get_direction_vector < Eigen::Vector4d > (tf);
-  return std::move( Eigen::Vector3d( ev.x(), ev.y(), ev.z()));
+  return ev.head<3>();
 }
 
 template <>

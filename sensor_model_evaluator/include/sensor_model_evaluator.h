@@ -16,6 +16,7 @@
 #include <string>
 #include <map>
 #include <grid_map_msgs/GridMap.h>
+#include <boost/filesystem.hpp>
 
 namespace tuw
 {
@@ -45,6 +46,8 @@ namespace tuw
       return has_result_;
     }
   
+    void serializeResult( const std::string &filepath);
+    
   private:
     using measurement_table = std::map<unsigned int, Point2D>;
     using map_info_type = nav_msgs::OccupancyGrid_<std::allocator<void>>::_info_type;
@@ -112,6 +115,8 @@ namespace tuw
     
     bool convert( const std::shared_ptr<InternalMap> &src, grid_map_msgs::GridMap &des );
     
+    bool convert( const std::shared_ptr<InternalMap> &src, cv::Mat &mat);
+    
     Point2DPtr rayTrace( const double scale, const Beam &b, const Eigen::Matrix4d &tf_ML );
     
     void updateExpectedMeasurementTable( unsigned int idx, const Point2D &expect );
@@ -122,6 +127,8 @@ namespace tuw
     
     std::shared_ptr<InternalMap>
     constructDownscaled( const std::shared_ptr<InternalMap> &source, const double scale_factor );
+    
+    void internalSerialize(boost::filesystem::ofstream &of);
     
     void clear();
     
@@ -134,6 +141,9 @@ namespace tuw
     nav_msgs::OccupancyGrid map_msg_;
     cv::Mat raytrace_image_dbg_;
     bool has_result_;
+    bool filesys_force_override_;
+    
+    geometry_msgs::Pose laser_pose_;
   };
   
   using SensorModelEvaluatorPtr = std::shared_ptr<SensorModelEvaluator>;

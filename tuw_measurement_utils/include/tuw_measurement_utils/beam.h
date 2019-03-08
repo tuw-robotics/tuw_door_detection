@@ -46,6 +46,9 @@ namespace tuw
     template<typename T>
     T get_direction_vector( const Eigen::Matrix4d &tf ) const;
     
+    template<typename T>
+    T transform(const Eigen::Matrix4d &tf) const;
+    
     
     static std::shared_ptr<Beam> make_beam( size_t idx, double range, double angle, Point2D end_point );
   

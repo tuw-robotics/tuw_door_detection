@@ -5,10 +5,12 @@
 #include <sensor_model_evaluator.h>
 #include <opencv2/highgui.hpp>
 #include <grid_map_ros/GridMapRosConverter.hpp>
+#include <tuw_measurement_utils/transforms.h>
 
 using namespace tuw;
 
-SensorModelEvaluator::SensorModelEvaluator( const nav_msgs::OccupancyGridConstPtr &map, bool render ) : has_result_(false)
+SensorModelEvaluator::SensorModelEvaluator( const nav_msgs::OccupancyGridConstPtr &map, bool render ) : has_result_(
+    false ), filesys_force_override_( false )
 {
   map_msg_ = nav_msgs::OccupancyGrid( *map );
   render_ = render;
@@ -76,6 +78,12 @@ bool SensorModelEvaluator::convert( const nav_msgs::OccupancyGridConstPtr &src, 
   // Convert to player format
   memcpy( des->cv_uc8.data, src->data.data(), static_cast<std::size_t>(des->size_x * des->size_y));
   
+  return true;
+}
+
+bool SensorModelEvaluator::convert( const std::shared_ptr<InternalMap> &src, cv::Mat &des )
+{
+  src->cv_uc8.copyTo( des );
   return true;
 }
 
@@ -186,6 +194,8 @@ void SensorModelEvaluator::evaluate( LaserMeasurementPtr &scan )
       render_map_->get_my_from_wy( tf_ML( 1, 3 ))
   );
   
+  
+  
   cv::circle( render_map_->cv_uc8, origin_px, 2.0, cv::Scalar( 0, 0, 255 ), 2.0 );
   
   for ( std::vector<Beam>::iterator beam_it = scan->begin();
@@ -259,4 +269,37 @@ Point2DPtr SensorModelEvaluator::rayTrace( const double scale, const Beam &beam,
     }
   }
   return nullptr;
+}
+
+void SensorModelEvaluator::internalSerialize( boost::filesystem::ofstream &of )
+{
+  for ( auto &&exp = expected_meas_.begin();
+        exp != expected_meas_.end();
+        ++exp )
+  {
+    if ( observed_meas_.find( exp->first ) != observed_meas_.end())
+    {
+      Point2D &p_obs = observed_meas_.at(exp->first);
+      Point2D &p_exp = exp->second;
+    }
+  }
+}
+
+void SensorModelEvaluator::serializeResult( const std::string &filepath )
+{
+  using boost::filesystem::path;
+  path p( filepath );
+  if ( boost::filesystem::exists( p ))
+  {
+    if ( filesys_force_override_ )
+    {
+      boost::filesystem::ofstream of( p, std::ios::out );
+    }
+  } else if ( filesys_force_override_ )
+  {
+    boost::filesystem::create_directories( p.root_name());
+  } else
+  {
+    ROS_ERROR( "serializeResult(): not possible with given path" );
+  }
 }
