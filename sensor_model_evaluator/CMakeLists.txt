@@ -1,22 +1,22 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(tuw_measurement_utils)
+project(sensor_model_evaluator)
 add_compile_options(-std=c++14) ## for c++ 2014
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-        tf
-        tf_conversions
+        tf2_ros
+        geometry_msgs
         roscpp
         rospy
-        std_msgs
+        nav_msgs
         sensor_msgs
+        grid_map_msgs
+        grid_map_ros
         tuw_geometry
         tuw_geometry_msgs
-        dynamic_reconfigure
-        cv_bridge
-        image_geometry
+        tuw_measurement_utils
         )
 
 ## System dependencies are found with CMake's conventions
@@ -108,18 +108,23 @@ find_package(OpenCV REQUIRED)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
         INCLUDE_DIRS include
-        LIBRARIES tuw_measurement_utils
+        #  LIBRARIES tuw_linedetection
         CATKIN_DEPENDS
         roscpp
         rospy
         tuw_geometry
         tuw_geometry_msgs
-        tf
-        tf_conversions
+        tf2_ros
         cv_bridge
-        image_geometry
-        DEPENDS OpenCV
-        Eigen
+        tuw_measurement_utils
+        sensor_msgs
+        nav_msgs
+        grid_map_msgs
+        grid_map_ros
+
+        DEPENDS
+        OpenCV
+        Eigen3
 )
 
 ###########
@@ -148,20 +153,18 @@ include_directories(
 
 ## Declare a C++ executable
 # add_executable(tuw_linedetection_node src/tuw_linedetection_node.cpp)
-add_library(tuw_measurement_utils
-        src/measurement.cpp
-        src/laser_measurement.cpp
-        src/image_measurement.cpp
-        src/contour.cpp
-        src/beam.cpp)
+add_executable(${PROJECT_NAME}_node
+        src/sensor_model_evaluator.cpp
+        src/sensor_model_evaluator_node.cpp
+        )
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(tuw_linedetection_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(tuw_measurement_utils ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(tuw_measurement_utils
+target_link_libraries(${PROJECT_NAME}_node
         ${catkin_LIBRARIES}
         ${OpenCV_LIBRARIES}
         ${Boost_LIBRARIES}
@@ -183,18 +186,18 @@ target_link_libraries(tuw_measurement_utils
 # )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS tuw_measurement_utils tuw_measurement_utils
-        #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-        #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-        )
+# install(TARGETS tuw_linedetection tuw_linedetection_node
+#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
 
 ## Mark cpp header files for installation
-install(DIRECTORY include/${PROJECT_NAME}/
-        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-        FILES_MATCHING PATTERN "*.h"
-        PATTERN ".svn" EXCLUDE
-        )
+# install(DIRECTORY include/${PROJECT_NAME}/
+#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+#   FILES_MATCHING PATTERN "*.h"
+#   PATTERN ".svn" EXCLUDE
+# )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES

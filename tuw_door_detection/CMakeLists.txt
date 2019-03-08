@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
         rospy
         std_msgs
         sensor_msgs
+        nav_msgs
         tuw_geometry
         tuw_geometry_msgs
         tuw_object_msgs
@@ -127,6 +128,7 @@ catkin_package(
         cv_bridge
         image_geometry
         tuw_measurement_utils
+        nav_msgs
 
         DEPENDS
         OpenCV
@@ -166,6 +168,7 @@ add_executable(door_detector_node
         src/laser_processor/door_depth_detector.cpp
         src/laser_processor/door_detection.cpp
         src/image_processor/door_detector_imgproc.cpp
+        src/datastructures/contour_container.cpp
         src/door_detector.cpp
         )
 

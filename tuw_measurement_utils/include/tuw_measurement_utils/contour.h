@@ -2,8 +2,8 @@
 // Created by felix on 29.10.18.
 //
 
-#ifndef CONTOUR_H
-#define CONTOUR_H
+#ifndef TUW_MEASUREMENT_UTILS_CONTOUR_H
+#define TUW_MEASUREMENT_UTILS_CONTOUR_H
 
 #include <tuw_geometry/point2d.h>
 #include <memory>
@@ -11,6 +11,7 @@
 #include <tuw_geometry/linesegment2d_detector.h>
 #include <Eigen/Core>
 #include <boost/uuid/uuid.hpp>
+#include <tuw_measurement_utils/beam.h>
 
 namespace tuw
 {
@@ -41,41 +42,7 @@ namespace tuw
     //  bool door_candidate_;
     //};
     
-    class Beam
-    {
-    public:
-      Beam()
-      {
-      };
-      
-      Beam( double range, double angle, Point2D end_point );
-      
-      //Beam(const Beam &) = delete;
-      
-      //Beam &operator=(const Beam &) = delete;
-      
-      ~Beam() = default;
-      
-      Point2D end_point;
-      Point2D img_coords;
-      Point2D img_base_coords;
-      double range;
-      double angle;
-      
-      const bool is_valid() const;
-      
-      void set_valid( const bool v );
-      
-      const bool get_is_visible() const;
-      
-      void set_is_visible( const bool v );
-      
-      static std::shared_ptr<Beam> make_beam( double range, double angle, Point2D end_point );
     
-    private:
-      bool valid_beam;
-      bool is_visible_;
-    };
     
     struct CVDefect
     {
@@ -106,18 +73,30 @@ namespace tuw
       size_t idx;
     };
     
-    explicit Contour( boost::uuids::uuid uuid );
+    Contour( boost::uuids::uuid uuid );
     
-    boost::uuids::uuid &id()
+    Contour();
+    
+    boost::uuids::uuid id()
     {
       return uuid_;
     }
     
-    const boost::uuids::uuid &id() const;
+    const boost::uuids::uuid id() const;
     
     void push_back( std::shared_ptr<Beam> beam );
     
     void detectCorners( const size_t KERNEL_SIZE );
+    
+    void doorPostLeft( const bool left_post )
+    {
+      door_post_left_ = left_post;
+    }
+    
+    const bool doorPostLeft() const
+    {
+      return door_post_left_;
+    }
     
     void cvConvexityDefects( tuw::WorldScopedMaps &_map );
     
@@ -306,6 +285,8 @@ namespace tuw
       return bb_;
     }
     
+    void calculateBoundingBoxObjSpace();
+    
     void calculateBoundingBox( Eigen::Matrix4d tf, double z_laser,
                                double fx, double fy,
                                double cx, double cy,
@@ -322,6 +303,7 @@ namespace tuw
     std::vector<std::pair<Point2D, Point2D>> line_segment_img_coords_;
     std::vector<std::shared_ptr<Contour>> children_;
     std::vector<std::shared_ptr<Contour>> child_candidates_;
+    bool door_post_left_;
     boost::uuids::uuid uuid_;
     bool length_cache_uptodate_;
     double length_;

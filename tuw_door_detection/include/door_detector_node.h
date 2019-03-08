@@ -51,6 +51,7 @@
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/buffer.h>
 #include <door_detector.h>
+#include <nav_msgs/GetMap.h>
 
 namespace tuw
 {
@@ -110,6 +111,7 @@ namespace tuw
     std::shared_ptr<ImageMeasurement> image_depth_;
     std::shared_ptr<ImageMeasurement> image_rgb_;
     std::shared_ptr<LaserMeasurement> laser_measurement_;
+    nav_msgs::GetMap::Response resp_map_;
     std::shared_ptr<image_processor::DoorDetectorImageProcessor> img_processor_;
     sensor_msgs::CameraInfoPtr camera_info_depth_;
     sensor_msgs::CameraInfoPtr camera_info_rgb_;

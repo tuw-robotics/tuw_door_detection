@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-    <name>tuw_door_detection</name>
+    <name>sensor_model_evaluator</name>
     <version>0.0.0</version>
     <description>The tuw_doordetection package</description>
 
@@ -51,26 +51,23 @@
     <build_depend>sensor_msgs</build_depend>
     <build_depend>tuw_geometry</build_depend>
     <build_depend>tuw_geometry_msgs</build_depend>
-    <build_depend>tuw_object_msgs</build_depend>
-    <build_depend>dynamic_reconfigure</build_depend>
-    <build_depend>tf_conversions</build_depend>
-    <build_depend>image_geometry</build_depend>
     <build_depend>tuw_measurement_utils</build_depend>
     <build_depend>nav_msgs</build_depend>
+    <build_depend>grid_map_msgs</build_depend>
+    <build_depend>grid_map_ros</build_depend>
 
     <run_depend>tf2_ros</run_depend>
     <run_depend>cv_bridge</run_depend>
     <run_depend>roscpp</run_depend>
     <run_depend>rospy</run_depend>
-    <run_depend>tuw_geometry</run_depend>
     <run_depend>sensor_msgs</run_depend>
+    <run_depend>tuw_geometry</run_depend>
     <run_depend>tuw_geometry_msgs</run_depend>
-    <run_depend>tuw_object_msgs</run_depend>
-    <run_depend>dynamic_reconfigure</run_depend>
-    <run_depend>tf_conversions</run_depend>
-    <run_depend>image_geometry</run_depend>
     <run_depend>tuw_measurement_utils</run_depend>
     <run_depend>nav_msgs</run_depend>
+    <run_depend>grid_map_msgs</run_depend>
+    <run_depend>grid_map_ros</run_depend>
+    <run_depend>grid_map_rviz</run_depend>
 
     <!-- The export tag contains other, unspecified, tags -->
     <export>

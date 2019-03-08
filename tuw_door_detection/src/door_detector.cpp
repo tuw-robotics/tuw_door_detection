@@ -60,10 +60,7 @@ bool DoorDetector::merge( std::shared_ptr<image_processor::DoorDetectorImageProc
                                            cmodel->fx(), cmodel->fy(),
                                            cmodel->cx(), cmodel->cy(),
                                            cmodel->Tx(), cmodel->Ty());
-    
-    
                    //contr->registerFloorImage(T_WL)
-    
                    contr->visibilityCheck( false, img_width, img_height );
                  } );
   
@@ -111,12 +108,18 @@ tuw_object_msgs::ObjectWithCovariance DoorDetector::generateObjMessage( std::sha
   
   //@ToDo: which orientation how did i define it?
   //@ToDo: refine opening angle and bounding box
-  Eigen::Vector3d pos_left_so = contour->getBoundingBoxObjSpace().front();
-  Eigen::Vector3d pos_right_so = contour->getBoundingBoxObjSpace().back();
+  Eigen::Vector3d pos;
+  if ( contour->doorPostLeft())
+  {
+    pos = contour->getBoundingBoxObjSpace().back();
+  } else
+  {
+    pos = contour->getBoundingBoxObjSpace().front();
+  }
   
-  obj.object.pose.position.x = pos_left_so.x();
-  obj.object.pose.position.y = pos_left_so.y();
-  obj.object.pose.position.z = pos_left_so.z();
+  obj.object.pose.position.x = pos.x();
+  obj.object.pose.position.y = pos.y();
+  obj.object.pose.position.z = pos.z();
   
   obj.object.pose.orientation.x = 0;
   obj.object.pose.orientation.y = 0;
@@ -185,7 +188,7 @@ void DoorDetector::display()
       for ( auto it_beams = contour->begin();
             it_beams != contour->end(); ++it_beams )
       {
-        std::shared_ptr<Contour::Beam> &beam = *it_beams;
+        std::shared_ptr<Beam> &beam = *it_beams;
         
         double rad = 1;
         if ( it_beams == contour->begin() || it_beams == (contour->end() - 1))
@@ -263,4 +266,12 @@ DoorDetector::draw_roi( std::shared_ptr<Contour> &contour, cv::Mat &img_display 
   
   cv::polylines( img_display, points_cv, true,
                  cv::Scalar( 0, static_cast<int>(255 * contour->candidateLikelyhood()), 1, 8 ));
+  
+  if ( contour->doorPostLeft())
+  {
+    cv::line( img_display, points_cv[points_cv.size() - 1], points_cv[points_cv.size() - 2], cv::Scalar( 0, 0, 255 ));
+  } else
+  {
+    cv::line( img_display, points_cv[0], points_cv[1], cv::Scalar( 0, 0, 255 ));
+  }
 }
