@@ -20,45 +20,45 @@
 
 namespace tuw
 {
-  
+
   class SensorModelEvaluator
   {
   public:
-    
+    using measurement_table = std::map<unsigned int, Point2D>;
+    using map_info_type = nav_msgs::OccupancyGrid_<std::allocator<void>>::_info_type;
+
     SensorModelEvaluator( const nav_msgs::OccupancyGridConstPtr &map, bool render = true );
-    
+
     void evaluate( LaserMeasurementPtr &scan );
-    
+
     void publish();
-    
-    template <typename M_DES>
+
+    template<typename M_DES>
     bool getMap( M_DES &des )
     {
       if ( has_result_ )
       {
-        return convert( map_, des );
+        return convert(map_, des);
       }
       return false;
     }
-    
+
     bool hasResult()
     {
       return has_result_;
     }
-  
-    void serializeResult( const std::string &filepath);
-    
+
+    void serializeResult( const std::string &filepath );
+
   private:
-    using measurement_table = std::map<unsigned int, Point2D>;
-    using map_info_type = nav_msgs::OccupancyGrid_<std::allocator<void>>::_info_type;
-    
+
     struct InternalMap
     {
     public:
       InternalMap() = default;
-      
+
       ~InternalMap() = default;
-      
+
       map_info_type map_info_;
       int size_x;
       int size_y;
@@ -69,85 +69,86 @@ namespace tuw
       std::shared_ptr<InternalMap> parent;
       //For rendermap
       cv::Mat cv_untouched_initial;
-      
+
       void clear()
       {
-        cv_untouched_initial.copyTo( cv_uc8 );
+        cv_untouched_initial.copyTo(cv_uc8);
       }
-      
+
       // Convert from world coords to map coords
       double get_mx_from_wx( double x )
       {
-        return (floor((x - origin_x) / scale + 0.5 ) + size_x / 2);
+        return ( floor(( x - origin_x ) / scale + 0.5) + size_x / 2 );
       }
-      
+
       double get_my_from_wy( double y )
       {
-        return (floor((y - origin_y) / scale + 0.5 ) + size_y / 2);
+        return ( floor(( y - origin_y ) / scale + 0.5) + size_y / 2 );
       }
-      
+
       // Convert from map index to world coords
       double get_wx_from_mx( double x )
       {
-        return (origin_x + ((x) - size_x / 2) * scale);
+        return ( origin_x + (( x ) - size_x / 2 ) * scale );
       }
-      
+
       double get_wy_from_my( double y )
       {
-        return (origin_y + ((y) - size_y / 2) * scale);
+        return ( origin_y + (( y ) - size_y / 2 ) * scale );
       }
-      
+
       std::string to_string()
       {
-        std::stringstream sstr( "" );
-        sstr << "(sx, sy): \t" << ("( " + std::to_string( size_x ) + ", " + std::to_string( size_y ) + ")\n" +
-                                   "(ox, oy): \t" + "(" + std::to_string( origin_x ) + ", " +
-                                   std::to_string( origin_y ) +
-                                   ")\n" +
-                                   "scale: \t" + std::to_string( scale ) + "\n");
+        std::stringstream sstr("");
+        sstr << "(sx, sy): \t" << ( "( " + std::to_string(size_x) + ", " + std::to_string(size_y) + ")\n" +
+                                    "(ox, oy): \t" + "(" + std::to_string(origin_x) + ", " +
+                                    std::to_string(origin_y) +
+                                    ")\n" +
+                                    "scale: \t" + std::to_string(scale) + "\n" );
         return sstr.str();
       }
     };
-    
+
     bool convert( const nav_msgs::OccupancyGridConstPtr &src, std::shared_ptr<InternalMap> &map );
-    
+
     bool convert( const std::shared_ptr<InternalMap> &src, nav_msgs::OccupancyGrid &des );
-    
+
     bool convert( const std::shared_ptr<InternalMap> &src, grid_map_msgs::GridMap &des );
-    
-    bool convert( const std::shared_ptr<InternalMap> &src, cv::Mat &mat);
-    
+
+    bool convert( const std::shared_ptr<InternalMap> &src, cv::Mat &mat );
+
     Point2DPtr rayTrace( const double scale, const Beam &b, const Eigen::Matrix4d &tf_ML );
-    
+
     void updateExpectedMeasurementTable( unsigned int idx, const Point2D &expect );
-    
+
     void updateObservedMeasurementTable( unsigned int idx, const Point2D &obs );
-    
+
     void downscaleImshow( LaserMeasurementPtr meas = nullptr );
-    
+
     std::shared_ptr<InternalMap>
     constructDownscaled( const std::shared_ptr<InternalMap> &source, const double scale_factor );
-    
-    void internalSerialize(boost::filesystem::ofstream &of);
-    
+
+    void internalSerialize( boost::filesystem::ofstream &of );
+
     void clear();
-    
+
     measurement_table expected_meas_;
     measurement_table observed_meas_;
-    
+
     std::shared_ptr<InternalMap> map_;
     std::shared_ptr<InternalMap> render_map_;
+    LaserMeasurementPtr laser_meas_;
     bool render_;
     nav_msgs::OccupancyGrid map_msg_;
     cv::Mat raytrace_image_dbg_;
     bool has_result_;
     bool filesys_force_override_;
-    
+
     geometry_msgs::Pose laser_pose_;
   };
-  
+
   using SensorModelEvaluatorPtr = std::shared_ptr<SensorModelEvaluator>;
-  
+
 }
 
 #endif //PROJECT_SENSORMODELEVALUATOR_H
