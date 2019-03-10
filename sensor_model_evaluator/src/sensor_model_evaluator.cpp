@@ -33,16 +33,16 @@ SensorModelEvaluator::SensorModelEvaluator( const nav_msgs::OccupancyGridConstPt
   }
 }
 
-void SensorModelEvaluator::updateObservedMeasurementTable( unsigned int idx, const tuw::Point2D &obs )
+void SensorModelEvaluator::updateObservedMeasurementTable( double angle_idx, const tuw::Point2D &obs )
 {
   assert(observed_meas_.find(idx) == observed_meas_.end());
-  observed_meas_.insert(std::make_pair(idx, obs));
+  observed_meas_.insert(std::make_pair(angle_idx, obs));
 }
 
-void SensorModelEvaluator::updateExpectedMeasurementTable( unsigned int idx, const tuw::Point2D &expect )
+void SensorModelEvaluator::updateExpectedMeasurementTable( double angle_idx, const tuw::Point2D &expect )
 {
   assert(expected_meas_.find(idx) == expected_meas_.end());
-  expected_meas_.insert(std::make_pair(idx, expect));
+  expected_meas_.insert(std::make_pair(angle_idx, expect));
 }
 
 bool SensorModelEvaluator::convert( const nav_msgs::OccupancyGridConstPtr &src, std::shared_ptr<InternalMap> &des )
@@ -208,7 +208,7 @@ void SensorModelEvaluator::evaluate( LaserMeasurementPtr &scan )
         scan->getTfWorldSensor() * Eigen::Vector4d(beam.end_point.x(), beam.end_point.y(), 0, 1);
     end_point_w = end_point_w / end_point_w[3];
 
-    updateObservedMeasurementTable(std::distance(scan->begin(), beam_it), Point2D(end_point_w.x(), end_point_w.y()));
+    updateObservedMeasurementTable(beam_it->angle, Point2D(end_point_w.x(), end_point_w.y()));
 
     Point2DPtr intersection = rayTrace(scan->getLaser().range_max, beam, tf_ML);
 
@@ -220,7 +220,7 @@ void SensorModelEvaluator::evaluate( LaserMeasurementPtr &scan )
           map_->get_wx_from_mx(intersection->x()),
           map_->get_wy_from_my(intersection->y())
       );
-      updateExpectedMeasurementTable(std::distance(scan->begin(), beam_it), w_intersection);
+      updateExpectedMeasurementTable(beam_it->angle, w_intersection);
 
     } else
     {

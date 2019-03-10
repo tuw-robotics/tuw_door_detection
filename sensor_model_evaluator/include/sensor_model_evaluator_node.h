@@ -35,6 +35,7 @@ namespace tuw
     ros::NodeHandle nh_;
 
     std::string filepath_;
+    bool continuous_stream_;
 
     tf2_ros::Buffer tf_buffer_;
     tf2_ros::TransformListener tf_listener_;

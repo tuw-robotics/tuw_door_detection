@@ -9,6 +9,7 @@ SensorModelEvaluatorNode::SensorModelEvaluatorNode( ros::NodeHandle &nh ) : eval
                                                                             tf_listener_(tf_buffer_)
 {
   nh.param(std::string("out_filename"), filepath_, std::string(""));
+  nh.param(std::string("continuous_stream"), continuous_stream_, false);
 
   nh_ = nh;
   sub_laser_ = nh.subscribe("/r0/laser0/scan/raw", 1000, &SensorModelEvaluatorNode::callbackLaser, this);

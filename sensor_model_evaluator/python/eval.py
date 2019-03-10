@@ -25,29 +25,59 @@ def read(file):
 
 def eval(file_contents):
     for line in file_contents:
-        key = np.int(line[ID])
-        table_range[np.int(line[ID])] = (np.double(line[R_EXP]), np.double(line[R_OBS]))
+        key = np.double(line[ID])
+        table_range[np.double(line[ID])] = (np.double(line[R_EXP]), np.double(line[R_OBS]))
         # print("%d %lf %lf" % (key, table_range[key][0], table_range[key][1]))
     plot2d(table_range)
 
 
-def plot3d(table_range):
-    xrange = np.arange(1, len(table_range), 1)
-    yrange = np.arange(1, len(table_range), 1)
-    for key, val in table_range.items():
-        pass
+def lookup_table(table, x, y):
+    v = table.get((x, y))
+    if v is None:
+        return 0
+    return 1.0
+
+
+def plot3d(file_contents):
+    x_expected = np.array([np.double(x[P_EXP]) for x in file_contents])
+    y_expected = np.array([np.double(y[P_EXP + 1]) for y in file_contents])
+    expected_vals = np.array([np.double(v[R_EXP]) for v in file_contents])
+
+    table_expected = {(x, y): val for x, y, val in zip(x_expected, y_expected, expected_vals)}
+
+    x_observed = np.array([np.double(x[P_OBS]) for x in file_contents])
+    y_observed = np.array([np.double(y[P_OBS + 1]) for y in file_contents])
+    observed_vals = np.array([np.double(v[R_OBS]) for v in file_contents])
+
+    table_observed = {(x, y): val for x, y, val in zip(x_observed, y_observed, observed_vals)}
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    X, Y = np.meshgrid(x_expected, y_expected)
+    zs = np.array([lookup_table(table_expected, x, y) for x, y in zip(np.ravel(X), np.ravel(Y))])
+    Z = zs.reshape(X.shape)
+
+    ax.plot_surface(X, Y, Z)
+
+    ax.set_xlabel('X Label')
+    ax.set_ylabel('Y Label')
+    ax.set_zlabel('Z Label')
+    plt.show(block=True)
 
 
 def plot2d(table_range):
-    plt.xlabel('id')
+    plt.xlabel('angles')
     plt.ylabel('ranges')
 
-    expected = []
-    observed = []
-    idxs = np.arange(0, len(table_range), 1)
+    expected = [None for x in range(0, len(table_range))]
+    observed = [None for x in range(0, len(table_range))]
+    idxs = [None for x in range(0, len(table_range))]
+    ridx = 0
     for key, val in table_range.items():
-        expected.append(val[0])
-        observed.append(val[1])
+        expected[ridx] = val[0]
+        observed[ridx] = val[1]
+        idxs[ridx] = key
+        ridx += 1
 
     assert len(expected) == len(observed) == len(idxs), "HEAST!"
 
@@ -60,12 +90,12 @@ def plot2d(table_range):
 
 
 plt.ion()
-jj = 0
 while (True):
     file = open(os.path.abspath("../files/result.csv"), "r")
     lines = read(file)
     file.close()
     eval(lines)
+    # plot3d(lines)
     plt.clf()
     table_range.clear()
     time.sleep(0.5)

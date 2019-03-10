@@ -24,7 +24,7 @@ namespace tuw
   class SensorModelEvaluator
   {
   public:
-    using measurement_table = std::map<unsigned int, Point2D>;
+    using measurement_table = std::map<double, Point2D>;
     using map_info_type = nav_msgs::OccupancyGrid_<std::allocator<void>>::_info_type;
 
     SensorModelEvaluator( const nav_msgs::OccupancyGridConstPtr &map, bool render = true );
@@ -119,9 +119,9 @@ namespace tuw
 
     Point2DPtr rayTrace( const double scale, const Beam &b, const Eigen::Matrix4d &tf_ML );
 
-    void updateExpectedMeasurementTable( unsigned int idx, const Point2D &expect );
+    void updateExpectedMeasurementTable( double idx, const Point2D &expect );
 
-    void updateObservedMeasurementTable( unsigned int idx, const Point2D &obs );
+    void updateObservedMeasurementTable( double idx, const Point2D &obs );
 
     void downscaleImshow( LaserMeasurementPtr meas = nullptr );
 
