@@ -10,7 +10,7 @@
 using namespace tuw;
 
 SensorModelEvaluator::SensorModelEvaluator( const nav_msgs::OccupancyGridConstPtr &map, bool render ) : has_result_(
-    false), filesys_force_override_(true)
+    false), filesys_force_override_(true), continuous_outstream_(false)
 {
   map_msg_ = nav_msgs::OccupancyGrid(*map);
   render_ = render;
@@ -31,6 +31,11 @@ SensorModelEvaluator::SensorModelEvaluator( const nav_msgs::OccupancyGridConstPt
     map_ = std::move(tmp);
     cv::cvtColor(map_->cv_uc8, map_->cv_uc8, CV_BGR2GRAY);
   }
+}
+
+void SensorModelEvaluator::configure( const sensor_model_evaluator::SensorModelEvaluatorNodeConfig &cfg )
+{
+  continuous_outstream_ = cfg.continuous_outstream;
 }
 
 void SensorModelEvaluator::updateObservedMeasurementTable( double angle_idx, const tuw::Point2D &obs )
@@ -309,11 +314,16 @@ void SensorModelEvaluator::serializeResult( const std::string &filepath )
   path p(filepath);
   if ( boost::filesystem::exists(p))
   {
-    if ( filesys_force_override_ )
+    if ( continuous_outstream_ )
+    {
+      boost::filesystem::ofstream of(p, std::ios::app | std::ios::ate);
+      internalSerialize(of);
+      //of << std::endl;
+      of.close();
+    } else if ( filesys_force_override_ )
     {
       boost::filesystem::ofstream of(p, std::ios::out);
       internalSerialize(of);
-      //of << std::endl;
       of.close();
     }
   } else if ( filesys_force_override_ )

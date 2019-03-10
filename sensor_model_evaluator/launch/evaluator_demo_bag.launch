@@ -21,6 +21,8 @@
   <node pkg="rosbag" type="play" name="player" output="screen"
         args="--clock -d 4 $(arg bag_file)"/>
 
+  <node pkg="rqt_reconfigure" type="rqt_reconfigure" name="rqt_reconfigure" output="screen"/>
+
   <node name="sensor_model_evaluator_node" pkg="sensor_model_evaluator" type="sensor_model_evaluator_node"
         output="screen">
     <param name="laser_topic" value="$(arg laser_topic)"/>

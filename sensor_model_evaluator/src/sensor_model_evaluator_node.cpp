@@ -9,12 +9,23 @@ SensorModelEvaluatorNode::SensorModelEvaluatorNode( ros::NodeHandle &nh ) : eval
                                                                             tf_listener_(tf_buffer_)
 {
   nh.param(std::string("out_filename"), filepath_, std::string(""));
-  nh.param(std::string("continuous_stream"), continuous_stream_, false);
 
   nh_ = nh;
   sub_laser_ = nh.subscribe("/r0/laser0/scan/raw", 1000, &SensorModelEvaluatorNode::callbackLaser, this);
   sub_map_ = nh.subscribe("/map", 1, &SensorModelEvaluatorNode::callbackMap, this);
   pub_map_eth_ = nh.advertise<grid_map_msgs::GridMap>("/grid_map", 4);
+  f_callback = boost::bind(&SensorModelEvaluatorNode::reconfigureCallback, this, _1, _2);
+  server.setCallback(f_callback);
+}
+
+void SensorModelEvaluatorNode::reconfigureCallback(
+    const sensor_model_evaluator::SensorModelEvaluatorNodeConfig &callback, uint32_t level )
+{
+  config_ = callback;
+  if ( evaluator_ )
+  {
+    evaluator_->configure(callback);
+  }
 }
 
 void SensorModelEvaluatorNode::callbackMap( const nav_msgs::OccupancyGridConstPtr &map )
@@ -22,6 +33,7 @@ void SensorModelEvaluatorNode::callbackMap( const nav_msgs::OccupancyGridConstPt
   if ( !evaluator_ )
   {
     evaluator_.reset(new SensorModelEvaluator(map));
+    evaluator_->configure(config_);
   }
 }
 
@@ -64,7 +76,7 @@ void SensorModelEvaluatorNode::publish()
     //{
     //  ROS_WARN( "publish called but no result available" );
     //}
-    if ( filepath_ != std::string(""))
+    if ( filepath_ != std::string("") && config_.serialize )
     {
       evaluator_->serializeResult(filepath_);
     }

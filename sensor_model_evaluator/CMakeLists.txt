@@ -17,7 +17,12 @@ find_package(catkin REQUIRED COMPONENTS
         tuw_geometry
         tuw_geometry_msgs
         tuw_measurement_utils
+        dynamic_reconfigure
         )
+
+generate_dynamic_reconfigure_options(
+        cfg/SensorModelEvaluatorNode.cfg
+)
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
@@ -121,6 +126,7 @@ catkin_package(
         nav_msgs
         grid_map_msgs
         grid_map_ros
+        dynamic_reconfigure
 
         DEPENDS
         OpenCV
@@ -162,6 +168,7 @@ add_executable(${PROJECT_NAME}_node
 ## same as for the library above
 # add_dependencies(tuw_linedetection_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME}_node ${PROJECT_NAME}_gencfg)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node

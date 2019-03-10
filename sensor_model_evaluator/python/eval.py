@@ -10,25 +10,100 @@ R_OBS = 2
 P_EXP = 3
 P_OBS = 5
 
-table_range = {}
+
+class AngularRepresentation:
+    angle_id_ = 0
+    position_expected_ = np.array([], dtype=np.double)
+    position_observed_ = np.array([], dtype=np.double)
+    range_expected_ = np.array([], dtype=np.double)
+    range_observed_ = np.array([], dtype=np.double)
+
+    def __init__(self, angle_id, range_expected, range_observed, position_expected, position_observed):
+        self.angle_id_ = angle_id
+        self.range_expected_ = np.concatenate([self.range_expected_, np.array([range_expected], dtype=np.double)])
+        self.range_observed_ = np.concatenate([self.range_observed_, np.array([range_observed], dtype=np.double)])
+        self.position_expected_ = np.array([[position_expected[0]], [position_expected[1]]], dtype=np.double)
+        self.position_observed_ = np.array([[position_observed[0]], [position_observed[1]]], dtype=np.double)
+
+    def add(self, range_expected, range_observed, position_expected, position_observed):
+        self.range_expected_ = np.concatenate([self.range_expected_, np.array([range_expected], dtype=np.double)])
+        self.range_observed_ = np.concatenate([self.range_observed_, np.array([range_observed], dtype=np.double)])
+        self.position_expected_ = np.concatenate([self.position_expected_, position_expected.reshape(2, 1)], axis=0)
+        self.position_observed_ = np.concatenate([self.position_observed_, position_observed.reshape(2, 1)], axis=0)
+
+    def normalize_observations(self):
+        '''
+            Calculates the distance between observations and expected measurements
+        :return:
+        '''
+        self.normalized_observations_ = self.range_expected_ - self.range_observed_
 
 
-def read(file):
+class StatisticsEvaluator:
+
+    def __init__(self):
+        pass
+
+
+def parse(file, max_lines=100000000):
     lines = []
+    cntr = 0
     for l in file.readlines():
+        if cntr >= max_lines:
+            return lines
         lelems = l.split(", ")
-        assert len(lelems) == 7, "inconsistent file, 7 entries per line expected"
+        if len(lelems) != 7:
+            print("WARNING: line {} inconsistent, 7 entries per line expected, therefore aborting parse operation " % (
+                    len(lines) + 1))
+            return lines
         # print('%s, %s, %s, %s, %s' % (lelems[0], lelems[R_EXP], lelems[R_OBS], lelems[P_EXP], lelems[P_OBS]))
         lines.append(lelems)
+        cntr += 1
     return lines
 
 
-def eval(file_contents):
-    for line in file_contents:
-        key = np.double(line[ID])
-        table_range[np.double(line[ID])] = (np.double(line[R_EXP]), np.double(line[R_OBS]))
+def agglomerate(lines):
+    '''
+        agglomerates for each angle the respective measurements to perform a statistic on how many measurements
+        lie within the boundaries of the expected measurements etc...
+    :param lines: the individual lines read from result.csv
+    :return: datastructure containing the agglomerated result for further processing
+    '''
+    angle2measurements = {}
+    for line in lines:
+        angle_id = np.double(line[ID])
+        range_exp = np.double(line[R_EXP])
+        range_obs = np.double(line[R_OBS])
+        position_exp = np.array([np.double(line[P_EXP]), np.double(line[P_EXP + 1])], dtype=np.double)
+        position_obs = np.array([np.double(line[P_OBS]), np.double(line[P_OBS + 1])], dtype=np.double)
+
+        val = angle2measurements.get(angle_id)
+        if val is None:
+            angle2measurements[angle_id] = AngularRepresentation(angle_id,
+                                                                 range_exp,
+                                                                 range_obs,
+                                                                 position_exp,
+                                                                 position_obs)
+        else:
+            val.add(range_exp,
+                    range_obs,
+                    position_exp,
+                    position_obs)
+    return angle2measurements
+
+
+def eval(angle2meas):
+    total_meas = len(angle2meas.items())
+    print("eval: ", total_meas)
+
+    cntr = 0
+    for k, v in angle2meas.items():
+        v.normalize_observations()
+        print("", cntr, total_meas)
+        cntr += 1
+
         # print("%d %lf %lf" % (key, table_range[key][0], table_range[key][1]))
-    plot2d(table_range)
+    plot2d(angle2meas, -1, normalized=True)
 
 
 def lookup_table(table, x, y):
@@ -65,37 +140,60 @@ def plot3d(file_contents):
     plt.show(block=True)
 
 
-def plot2d(table_range):
+def plot2d(angle2meas, idx=-1, normalized=False):
     plt.xlabel('angles')
     plt.ylabel('ranges')
 
-    expected = [None for x in range(0, len(table_range))]
-    observed = [None for x in range(0, len(table_range))]
-    idxs = [None for x in range(0, len(table_range))]
-    ridx = 0
-    for key, val in table_range.items():
-        expected[ridx] = val[0]
-        observed[ridx] = val[1]
-        idxs[ridx] = key
-        ridx += 1
+    if not normalized:
+        expected = np.array([], dtype=np.double)
+        observed = np.array([], dtype=np.double)
+        idxs = np.array([], dtype=np.double)
+        if idx >= 0:
+            for key, val in angle2meas.items():
+                if (len(val.range_expected_) > idx):
+                    expected.append(val.range_expected_[idx])
+                    observed.append(val.range_observed_[idx])
+                    idxs.append(val.angle_id_)
+        elif idx == -1:
+            for key, val in angle2meas.items():
+                expected.append(val.range_expected_)
+                observed.append(val.range_observed_)
+                idxs.append(val.angle_id_)
 
-    assert len(expected) == len(observed) == len(idxs), "HEAST!"
+        plt.plot(idxs, expected, 'or', label='expected', markersize=2)
+        plt.plot(idxs, observed, 'ob', label='observed', markersize=2)
+        plt.title("Measurements")
+        plt.legend()
+        plt.draw()
+        plt.pause(0.1)
+    else:
+        normalized_vals = np.array([], dtype=np.double)
+        idxs = np.array([], dtype=np.double)
 
-    plt.plot(idxs, expected, 'or', label='expected', markersize=2)
-    plt.plot(idxs, observed, 'ob', label='observed', markersize=2)
-    plt.title("Measurements")
-    plt.legend()
-    plt.draw()
-    plt.pause(0.1)
-
+        for key, val in angle2meas.items():
+            idxs = np.concatenate(
+                [idxs, np.array([key for _ in range(len(val.normalized_observations_))], dtype=np.double)])
+            normalized_vals = np.concatenate([normalized_vals, val.normalized_observations_])
+        print("plotting vals")
+        plt.plot(idxs, normalized_vals, 'or', label='normalized obs', markersize=2)
+        plt.title("Measurements")
+        plt.legend()
+        plt.draw()
+        plt.pause(50)
 
 plt.ion()
-while (True):
-    file = open(os.path.abspath("../files/result.csv"), "r")
-    lines = read(file)
-    file.close()
-    eval(lines)
-    # plot3d(lines)
-    plt.clf()
-    table_range.clear()
-    time.sleep(0.5)
+tstart = time.time()
+print("tic > parse")
+file = open(os.path.abspath("../files/result.csv"), "r")
+lines = parse(file, 200000)
+file.close()
+print("parsed > agglomerate")
+angle2meas = agglomerate(lines)
+print("agglomerate > eval")
+eval(angle2meas)
+print("toc ")
+print(time.time() - tstart)
+## plot3d(lines)
+# plt.clf()
+# table_range.clear()
+# time.sleep(0.5)

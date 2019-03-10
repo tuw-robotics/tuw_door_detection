@@ -18,6 +18,9 @@
 #include <grid_map_msgs/GridMap.h>
 #include <boost/filesystem.hpp>
 
+#include <sensor_model_evaluator/SensorModelEvaluatorNodeConfig.h>
+
+
 namespace tuw
 {
 
@@ -49,6 +52,8 @@ namespace tuw
     }
 
     void serializeResult( const std::string &filepath );
+
+    void configure( const sensor_model_evaluator::SensorModelEvaluatorNodeConfig &cfg );
 
   private:
 
@@ -143,6 +148,7 @@ namespace tuw
     cv::Mat raytrace_image_dbg_;
     bool has_result_;
     bool filesys_force_override_;
+    bool continuous_outstream_;
 
     geometry_msgs::Pose laser_pose_;
   };
