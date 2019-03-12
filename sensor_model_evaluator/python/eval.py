@@ -3,6 +3,8 @@ import os
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
+from matplotlib import cm
+from matplotlib.colors import LightSource
 
 ID = 0
 R_EXP = 1
@@ -26,17 +28,49 @@ class AngularRepresentation:
         self.position_observed_ = np.array([[position_observed[0]], [position_observed[1]]], dtype=np.double)
 
     def add(self, range_expected, range_observed, position_expected, position_observed):
+        if hasattr(self, 'cutoff_x'):
+            self.cutoff_x
         self.range_expected_ = np.concatenate([self.range_expected_, np.array([range_expected], dtype=np.double)])
         self.range_observed_ = np.concatenate([self.range_observed_, np.array([range_observed], dtype=np.double)])
         self.position_expected_ = np.concatenate([self.position_expected_, position_expected.reshape(2, 1)], axis=0)
         self.position_observed_ = np.concatenate([self.position_observed_, position_observed.reshape(2, 1)], axis=0)
+
+    def set_cutoff(self, x_cutoff=np.finfo(np.double).max, y_cutoff=np.finfo(np.double).max):
+        self.cutoff_x = x_cutoff
+        self.cutoff_y = y_cutoff
 
     def normalize_observations(self):
         '''
             Calculates the distance between observations and expected measurements
         :return:
         '''
-        self.normalized_observations_ = self.range_expected_ - self.range_observed_
+        if not hasattr(self, 'normalized_observations'):
+            self.normalized_observations_ = self.range_expected_ - self.range_observed_
+
+    def getIdxArray(self):
+        if not hasattr(self, 'idx_array_'):
+            self.idx_array_ = np.array([self.angle_id_ for _ in range(self.range_observed_)], dtype=np.double)
+        return self.idx_array_
+
+    def getMaxExp(self):
+        if not hasattr(self, 'maxval_exp'):
+            self.maxval_exp = np.max(self.range_expected_)
+        return self.maxval_exp
+
+    def getMaxObs(self):
+        if not hasattr(self, 'maxval_obs'):
+            self.maxval_obs = np.max(self.range_observed_)
+        return self.maxval_obs
+
+    def getMinExp(self):
+        if not hasattr(self, 'minval_exp'):
+            self.minval_exp = np.min(self.range_expected_)
+        return self.minval_exp
+
+    def getMinObs(self):
+        if not hasattr(self, 'minval_obs'):
+            self.minval_obs = np.min(self.range_observed_)
+        return self.minval_obs
 
 
 class StatisticsEvaluator:
@@ -103,7 +137,6 @@ def eval(angle2meas):
         cntr += 1
 
         # print("%d %lf %lf" % (key, table_range[key][0], table_range[key][1]))
-    plot2d(angle2meas, -1, normalized=True)
 
 
 def lookup_table(table, x, y):
@@ -113,7 +146,135 @@ def lookup_table(table, x, y):
     return 1.0
 
 
-def plot3d(file_contents):
+def hist3d_thrun_dbg(angle2meas, binsize_xy):
+    fig = plt.figure()
+    idxs = np.array([], dtype=np.double)
+    max_exp_val = np.finfo(np.double).min
+    min_exp_val = np.finfo(np.double).max
+
+    for key, val in angle2meas.items():
+        max_exp_val = max(val.getMaxExp(), max_exp_val)
+        min_exp_val = min(val.getMinExp(), min_exp_val)
+
+    binrange_y = max_exp_val - min_exp_val
+
+    binshape_xy = (np.int(np.ceil(binrange_y / binsize_xy[0])), np.int(np.ceil(binrange_y / binsize_xy[1])))
+    grid = np.zeros(shape=binshape_xy, dtype=np.double)
+    X, Y = np.meshgrid(np.arange(0, binshape_xy[0], 1), np.arange(0, binshape_xy[1], 1))
+
+    print(max_exp_val)
+    print(min_exp_val)
+    print(binshape_xy)
+
+    for key, val in angle2meas.items():
+        y_exp_idx = ((val.range_expected_ - min_exp_val) / binsize_xy[1]).astype(np.int)
+        grid[y_exp_idx, y_exp_idx] += 1
+
+    ax = fig.add_subplot(111, projection='3d')
+
+    # Construct arrays for the anchor positions of the 16 bars.
+    # Note: np.meshgrid gives arrays in (ny, nx) so we use 'F' to flatten xpos,
+    # ypos in column-major order. For numpy >= 1.7, we could instead call meshgrid
+    # with indexing='ij'.
+
+    # Construct arrays with the dimensions for the 16 bars.
+    # ls = LightSource(270, 45)
+    # rgb = ls.shade(grid, cmap=cm.gist_earth, vert_exag=0.1, blend_mode='soft')
+    ax.plot_surface(X, Y, grid, rstride=1, cstride=1,  # facecolors=rgb,
+                    linewidth=0, antialiased=False, shade=False)
+    plt.show(block=True)
+
+
+def hist3d_thrun(angle2meas, binsize_xy, normalize=False,
+                 ):
+    fig = plt.figure()
+    idxs = np.array([], dtype=np.double)
+    max_obs_val = np.finfo(np.double).min
+    min_obs_val = np.finfo(np.double).max
+    max_exp_val = np.finfo(np.double).min
+    min_exp_val = np.finfo(np.double).max
+
+    for key, val in angle2meas.items():
+        max_obs_val = max(val.getMaxObs(), max_obs_val)
+        min_obs_val = min(val.getMinObs(), min_obs_val)
+        max_exp_val = max(val.getMaxExp(), max_exp_val)
+        min_exp_val = min(val.getMinExp(), min_exp_val)
+
+    binrange_x = max_obs_val - min_obs_val
+    binrange_y = max_exp_val - min_exp_val
+
+    binshape_xy = (np.int(np.ceil(binrange_x / binsize_xy[0])), np.int(np.ceil(binrange_y / binsize_xy[1])))
+    grid = np.zeros(shape=binshape_xy, dtype=np.double)
+    X, Y = np.meshgrid(np.arange(0, binshape_xy[0], 1), np.arange(0, binshape_xy[1], 1))
+    X = X * binsize_xy[0]
+    Y = Y * binsize_xy[1]
+
+    print(max_obs_val)
+    print(min_obs_val)
+    print(max_exp_val)
+    print(min_exp_val)
+    print(binshape_xy)
+
+    total_measurements = 0
+    for key, val in angle2meas.items():
+        x_obs_idx = ((val.range_observed_ - min_obs_val) / binsize_xy[0]).astype(np.int)
+        y_exp_idx = ((val.range_expected_ - min_exp_val) / binsize_xy[1]).astype(np.int)
+        grid[x_obs_idx, y_exp_idx] += 1
+        total_measurements += len(x_obs_idx)
+
+    if normalize:
+        grid = grid / total_measurements
+
+    ax = fig.add_subplot(111, projection='3d')
+
+    # Construct arrays for the anchor positions of the 16 bars.
+    # Note: np.meshgrid gives arrays in (ny, nx) so we use 'F' to flatten xpos,
+    # ypos in column-major order. For numpy >= 1.7, we could instead call meshgrid
+    # with indexing='ij'.
+
+    # Construct arrays with the dimensions for the 16 bars.
+    ls = LightSource(270, 45)
+    rgb = ls.shade(grid, cmap=cm.gist_earth, vert_exag=0.1, blend_mode='soft')
+    ax.plot_surface(X, Y, grid, rstride=1, cstride=1, facecolors=rgb,
+                    linewidth=0, antialiased=False, shade=True)
+    ax.set_xlabel('Observed')
+    ax.set_ylabel('Expected')
+    ax.set_zlabel('Probabilities')
+    plt.show(block=True)
+
+
+def hist3d_plot(angle2meas):
+    fig = plt.figure()
+    idxs = np.array([], dtype=np.double)
+    normalized_vals = np.array([], dtype=np.double)
+
+    for key, val in angle2meas.items():
+        idxs = np.concatenate(
+            [idxs, np.array([key for _ in range(len(val.normalized_observations_))], dtype=np.double)])
+        normalized_vals = np.concatenate([normalized_vals, val.normalized_observations_])
+
+    ax = fig.add_subplot(111, projection='3d')
+    hist, xedges, yedges = np.histogram2d(idxs, normalized_vals, bins=[180, 10])
+
+    # Construct arrays for the anchor positions of the 16 bars.
+    # Note: np.meshgrid gives arrays in (ny, nx) so we use 'F' to flatten xpos,
+    # ypos in column-major order. For numpy >= 1.7, we could instead call meshgrid
+    # with indexing='ij'.
+    xpos, ypos = np.meshgrid(xedges[:-1], yedges[:-1])
+    xpos = xpos.flatten('F')
+    ypos = ypos.flatten('F')
+    zpos = np.zeros_like(xpos)
+
+    # Construct arrays with the dimensions for the 16 bars.
+    dx = 0.5 * np.ones_like(zpos)
+    dy = dx.copy()
+    dz = hist.flatten()
+
+    ax.bar3d(xpos, ypos, zpos, dx, dy, dz, color='b', zsort='average')
+    plt.show(block=True)
+
+
+def plot3d_deprecated(file_contents):
     x_expected = np.array([np.double(x[P_EXP]) for x in file_contents])
     y_expected = np.array([np.double(y[P_EXP + 1]) for y in file_contents])
     expected_vals = np.array([np.double(v[R_EXP]) for v in file_contents])
@@ -181,16 +342,21 @@ def plot2d(angle2meas, idx=-1, normalized=False):
         plt.draw()
         plt.pause(50)
 
+
 plt.ion()
 tstart = time.time()
 print("tic > parse")
 file = open(os.path.abspath("../files/result.csv"), "r")
-lines = parse(file, 200000)
+lines = parse(file)
 file.close()
 print("parsed > agglomerate")
 angle2meas = agglomerate(lines)
 print("agglomerate > eval")
 eval(angle2meas)
+hist3d_thrun(angle2meas, (0.25, 0.25), normalize=True)
+# hist3d_thrun_dbg(angle2meas, (0.50, 0.50))
+# plot2d(angle2meas, -1, normalized=True)
+# hist3d_plot(angle2meas)
 print("toc ")
 print(time.time() - tstart)
 ## plot3d(lines)

@@ -89,6 +89,7 @@ int main( int argc, char **argv )
 
   ros::NodeHandle nh("~");
   SensorModelEvaluatorNode eval_node(nh);
+  ros::Rate r(10);
 
   while ( ros::ok())
   {
@@ -96,6 +97,8 @@ int main( int argc, char **argv )
     ros::spinOnce();
 
     eval_node.publish();
+
+    r.sleep();
 
   }
   return 0;
