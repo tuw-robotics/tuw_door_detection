@@ -350,6 +350,10 @@ void Contour::calculateBoundingBox( Eigen::Matrix4d tf, double z_laser,
   beams_ends.push_back( beams().front());
   beams_ends.push_back( beams().back());
   
+  bounding_box2laseridxs_.resize(2);
+  bounding_box2laseridxs_[0] = std::min(beams().front()->global_idx_, beams().back()->global_idx_);
+  bounding_box2laseridxs_[1] = std::max(beams().front()->global_idx_, beams().back()->global_idx_);
+  
   bb_.clear();
   bb_objspace_.clear();
   

@@ -4,14 +4,14 @@
 
   <arg name="laser_topic" default="r0/laser0"/>
   <arg name="fs_root" default="/media/felix/c8b268c7-3328-46f6-abfc-6cff02c5326c"/>
-  <arg name="filename" default="laser_and_cam_with_amcl.bag"/>
+  <arg name="filename" default="laser_cam_open_doors.bag"/>
   <arg name="bag_file" default="$(arg fs_root)/bag_data/$(arg filename)"/>
   <arg name="skip_bag_s" default="0"/>
   <arg name="out_filename" default="$(find sensor_model_evaluator)/files/result.csv"/>
 
   <param name="use_sim_time" value="True"/>
 
-  <node pkg="map_server" type="map_server" name="map_server" args="/home/felix/pCloudDrive/bag_files/map.yaml"
+  <node pkg="map_server" type="map_server" name="map_server" args="$(find sensor_model_evaluator)/cfg/map.yaml"
         output="screen"/>
 
   <node pkg="grid_map_visualization" type="grid_map_visualization" name="grid_map_visualization" output="screen"/>

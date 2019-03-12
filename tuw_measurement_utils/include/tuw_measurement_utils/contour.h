@@ -292,6 +292,10 @@ namespace tuw
                                double cx, double cy,
                                double tx, double ty );
     
+    std::vector<std::size_t> &getBB2BeamIdxs() {
+      return bounding_box2laseridxs_;
+    }
+    
     double length();
     
     bool optimizeLines( const unsigned int iterations );
@@ -318,6 +322,7 @@ namespace tuw
     std::vector<std::unique_ptr<CVDefect>> convexity_defects_;
     std::vector<Point2D> bb_;
     std::vector<Eigen::Vector3d> bb_objspace_;
+    std::vector<std::size_t> bounding_box2laseridxs_;
   };
 };
 

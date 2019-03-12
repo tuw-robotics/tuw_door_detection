@@ -26,6 +26,8 @@ namespace tuw
     
     void initFromScan( const sensor_msgs::LaserScan &_scan );
     
+    const sensor_msgs::LaserScan filterMessage( const std::vector<std::pair<std::size_t,std::size_t>> &ranges);
+    
     const sensor_msgs::LaserScan &getLaser() const;
     
     void push_back( const Beam &_beam );

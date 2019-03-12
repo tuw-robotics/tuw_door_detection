@@ -46,6 +46,7 @@ DoorDetectorNode::ParametersNode::ParametersNode() : node( "~" )
   node.param<std::string>( "camera_source_frame", camera_source_frame, std::string( "" ));
   node.param<std::string>( "laser_source_frame", laser_source_frame, std::string( "" ));
   node.param<std::string>( "world_frame", world_frame, std::string( "" ));
+  node.param<std::string>( "clean_laser_pub_topic", laser_pub, std::string("clean_laser"));
   node.param<bool>( "debug", debug, false );
   
   try
@@ -75,6 +76,7 @@ DoorDetectorNode::DoorDetectorNode() : nh_( "" ),
   img_processor_.reset( new image_processor::DoorDetectorImageProcessor());
   
   pub_detections_ = nh_.advertise<tuw_object_msgs::ObjectDetection>( "object_detections", 1000 );
+  pub_laser_ = nh_.advertise<sensor_msgs::LaserScan>(params_.laser_pub, 1000);
   //line_pub_ = nh_.advertise<tuw_geometry_msgs::LineSegments>("line_segments", 1000);
   //door_pub_ = nh_.advertise<tuw_object_msgs::ObjectDetection>("object_detection", 1000);
   //measurement_laser_ = std::make_shared<tuw::MeasurementLaser>();
@@ -204,8 +206,18 @@ void DoorDetectorNode::process()
     door_detector_->setLaserMeasurement( laser_measurement_ );
     
     door_detector_->merge( img_processor_, door_detector_laser_ );
-    
+  
     detection_result_.reset( new tuw_object_msgs::ObjectDetection( door_detector_->getResultAsMessage()));
+    
+    auto doors_in_laser = door_detector_->getDoorsLaser();
+    
+    std::vector<std::pair<std::size_t, std::size_t>> idxrange_;
+    for (auto dl : doors_in_laser)
+    {
+      idxrange_.push_back(std::make_pair(dl->getBB2BeamIdxs()[0], dl->getBB2BeamIdxs()[1]));
+    }
+    
+    laser_measurement_->filterMessage(idxrange_);
     
     door_detector_->display();
     

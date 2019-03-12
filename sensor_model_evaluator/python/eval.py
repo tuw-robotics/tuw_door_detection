@@ -28,16 +28,20 @@ class AngularRepresentation:
         self.position_observed_ = np.array([[position_observed[0]], [position_observed[1]]], dtype=np.double)
 
     def add(self, range_expected, range_observed, position_expected, position_observed):
-        if hasattr(self, 'cutoff_x'):
-            self.cutoff_x
+        # if hasattr(self, 'range_exp_cutoff'):
+        #    if range_expected > self.range_exp_cutoff:
+        #        return
+        # if hasattr(self, 'range_obs_cutoff'):
+        #    if range_observed > self.range_obs_cutoff:
+        #        return
         self.range_expected_ = np.concatenate([self.range_expected_, np.array([range_expected], dtype=np.double)])
-        self.range_observed_ = np.concatenate([self.range_observed_, np.array([range_observed], dtype=np.double)])
         self.position_expected_ = np.concatenate([self.position_expected_, position_expected.reshape(2, 1)], axis=0)
+        self.range_observed_ = np.concatenate([self.range_observed_, np.array([range_observed], dtype=np.double)])
         self.position_observed_ = np.concatenate([self.position_observed_, position_observed.reshape(2, 1)], axis=0)
 
-    def set_cutoff(self, x_cutoff=np.finfo(np.double).max, y_cutoff=np.finfo(np.double).max):
-        self.cutoff_x = x_cutoff
-        self.cutoff_y = y_cutoff
+    def set_cutoff(self, range_exp_cutoff=np.finfo(np.double).max, range_obs_cutoff=np.finfo(np.double).max):
+        self.range_exp_cutoff = min(range_exp_cutoff, range_obs_cutoff)
+        self.range_obs_cutoff = min(range_exp_cutoff, range_obs_cutoff)
 
     def normalize_observations(self):
         '''
@@ -185,8 +189,19 @@ def hist3d_thrun_dbg(angle2meas, binsize_xy):
     plt.show(block=True)
 
 
-def hist3d_thrun(angle2meas, binsize_xy, normalize=False,
-                 ):
+def scatter_plot(angle2meas):
+    fig = plt.figure()
+    scatter_xrange = np.array([], dtype=np.double)
+    scatter_yrange = np.array([], dtype=np.double)
+    for key, val in angle2meas.items():
+        scatter_xrange = np.concatenate([scatter_xrange, val.range_observed_])
+        scatter_yrange = np.concatenate([scatter_yrange, val.range_expected_])
+
+    axsc = fig.add_subplot(111)
+    axsc.scatter(scatter_xrange, scatter_yrange, marker='+')
+
+
+def hist3d_thrun(angle2meas, binsize_xy, normalize_total=False, normalize_rows=True, medianize=True):
     fig = plt.figure()
     idxs = np.array([], dtype=np.double)
     max_obs_val = np.finfo(np.double).min
@@ -204,10 +219,14 @@ def hist3d_thrun(angle2meas, binsize_xy, normalize=False,
     binrange_y = max_exp_val - min_exp_val
 
     binshape_xy = (np.int(np.ceil(binrange_x / binsize_xy[0])), np.int(np.ceil(binrange_y / binsize_xy[1])))
+    binshape_xy = (max(binshape_xy[0], binshape_xy[1]), max(binshape_xy[0], binshape_xy[1]))
     grid = np.zeros(shape=binshape_xy, dtype=np.double)
     X, Y = np.meshgrid(np.arange(0, binshape_xy[0], 1), np.arange(0, binshape_xy[1], 1))
     X = X * binsize_xy[0]
     Y = Y * binsize_xy[1]
+
+    print(binsize_xy)
+    print(grid.shape)
 
     print(max_obs_val)
     print(min_obs_val)
@@ -222,21 +241,34 @@ def hist3d_thrun(angle2meas, binsize_xy, normalize=False,
         grid[x_obs_idx, y_exp_idx] += 1
         total_measurements += len(x_obs_idx)
 
-    if normalize:
+    if normalize_total:
         grid = grid / total_measurements
+    elif normalize_rows:
+        rowsum = np.sum(grid, axis=0)
+        for c in range(grid.shape[1]):
+            grid[:, c] = grid[:, c] / rowsum[c]
+
+    if medianize:
+        for c in range(grid.shape[1]):
+            tmp_row = np.ndarray(shape=(grid.shape[0] - 2,), dtype=np.double)
+            for r in range(1, grid.shape[0] - 1):
+                tmp_row[r - 1] = np.median(grid[(r - 1):(r + 1), c])
+            grid[0, c] = np.median([grid[0, c], grid[1, c]])
+            grid[grid.shape[0] - 1, c] = np.median([grid[grid.shape[0] - 2, c], grid[grid.shape[0] - 1, c]])
+            grid[1:(grid.shape[0] - 1), c] = tmp_row
 
     ax = fig.add_subplot(111, projection='3d')
+    ## Construct arrays for the anchor positions of the 16 bars.
+    ## Note: np.meshgrid gives arrays in (ny, nx) so we use 'F' to flatten xpos,
+    ## ypos in column-major order. For numpy >= 1.7, we could instead call meshgrid
+    ## with indexing='ij'.
 
-    # Construct arrays for the anchor positions of the 16 bars.
-    # Note: np.meshgrid gives arrays in (ny, nx) so we use 'F' to flatten xpos,
-    # ypos in column-major order. For numpy >= 1.7, we could instead call meshgrid
-    # with indexing='ij'.
-
-    # Construct arrays with the dimensions for the 16 bars.
-    ls = LightSource(270, 45)
-    rgb = ls.shade(grid, cmap=cm.gist_earth, vert_exag=0.1, blend_mode='soft')
-    ax.plot_surface(X, Y, grid, rstride=1, cstride=1, facecolors=rgb,
-                    linewidth=0, antialiased=False, shade=True)
+    ## Construct arrays with the dimensions for the 16 bars.
+    # ls = LightSource(270, 45)
+    # rgb = ls.shade(grid, cmap=cm.gist_earth, vert_exag=0.1, blend_mode='soft')
+    # ax.plot_surface(X, Y, grid, rstride=1, cstride=1, facecolors=rgb,
+    #                linewidth=0, antialiased=False, shade=True)
+    ax.plot_surface(X, Y, grid, cmap=cm.coolwarm, antialiased=False)
     ax.set_xlabel('Observed')
     ax.set_ylabel('Expected')
     ax.set_zlabel('Probabilities')
@@ -346,14 +378,14 @@ def plot2d(angle2meas, idx=-1, normalized=False):
 plt.ion()
 tstart = time.time()
 print("tic > parse")
-file = open(os.path.abspath("../files/result.csv"), "r")
+file = open(os.path.abspath("../files/result_open_doors.csv"), "r")
 lines = parse(file)
 file.close()
 print("parsed > agglomerate")
 angle2meas = agglomerate(lines)
 print("agglomerate > eval")
 eval(angle2meas)
-hist3d_thrun(angle2meas, (0.25, 0.25), normalize=True)
+hist3d_thrun(angle2meas, (0.5, 0.5), normalize_total=False, normalize_rows=True, medianize=True)
 # hist3d_thrun_dbg(angle2meas, (0.50, 0.50))
 # plot2d(angle2meas, -1, normalized=True)
 # hist3d_plot(angle2meas)

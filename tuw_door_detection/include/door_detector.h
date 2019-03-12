@@ -32,6 +32,8 @@ namespace tuw
     
     void display();
     
+    std::vector<std::shared_ptr<Contour>> &getDoorsLaser() { return doors_; }
+    
     tuw_object_msgs::ObjectWithCovariance generateObjMessage( std::shared_ptr<Contour> &_contour, int32_t id);
     
     tuw_object_msgs::ObjectDetection getResultAsMessage();
@@ -43,6 +45,7 @@ namespace tuw
     std::shared_ptr<LaserMeasurement> laser_measurement_;
     image_processor::DoorDetectionPtr detection_image_;
     std::vector<std::shared_ptr<Contour>> detection_laser_;
+    std::vector<std::shared_ptr<Contour>> doors_;
     std::vector<std::shared_ptr<Contour>> door_candidates_;
     double door_height_ = 2.0;
     double door_width_ = 0.9;

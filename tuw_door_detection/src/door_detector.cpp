@@ -48,7 +48,6 @@ bool DoorDetector::merge( std::shared_ptr<image_processor::DoorDetectorImageProc
   
   //bottom left, top left, top right, bottom right
   std::vector<cv::Point2d> bb;
-  std::cout << " having " << detection_laser_.size() << " detections " << std::endl;
   
   std::for_each( detection_laser_.begin(), detection_laser_.end(),
                  [&cmodel, &T_CL, img_height, img_width, z_laser, this]
@@ -86,6 +85,7 @@ void DoorDetector::clear()
 {
   image_measurement_ = nullptr;
   laser_measurement_ = nullptr;
+  doors_.clear();
 }
 
 void DoorDetector::setImageMeasurement( std::shared_ptr<ImageMeasurement> &img_meas )
@@ -156,12 +156,14 @@ tuw_object_msgs::ObjectDetection DoorDetector::getResultAsMessage()
     std::shared_ptr<Contour> contour = *it_contour;
     if ( contour->is_door_candidate())
     {
+      doors_.push_back(contour);
       det_msg.objects.push_back( std::move( generateObjMessage( contour, id++ )));
     }
     for ( auto chld: contour->getChildren())
     {
       if ( chld->is_door_candidate())
       {
+        doors_.push_back(chld);
         det_msg.objects.push_back( std::move( generateObjMessage( chld, id++ )));
       }
     }

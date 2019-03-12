@@ -252,7 +252,7 @@ Point2DPtr SensorModelEvaluator::rayTrace( const double scale, const Beam &beam,
   Eigen::Vector2d end_vec_rs = ( end_point_ws - origin_eigen ) / ( end_point_ws - origin_eigen ).norm();
   Eigen::Vector2d end_extended = end_point_ws + ( end_vec_rs * scale );
   cv::Point2d w_range_max = cv::Point2d(end_extended.x(), end_extended.y());
-  cv::Point2d w_start_hit = cv::Point2d(end_point_ws.x(), end_point_ws.y());//beam.transform<cv::Point2d>( tf_ML );
+  cv::Point2d w_start_hit = cv::Point2d(origin_eigen.x(), origin_eigen.y());//beam.transform<cv::Point2d>( tf_ML );
 
   w_start_hit.x = map_->get_mx_from_wx(w_start_hit.x);
   w_start_hit.y = map_->get_my_from_wy(w_start_hit.y);

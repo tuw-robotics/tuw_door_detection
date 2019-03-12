@@ -81,6 +81,7 @@ namespace tuw
       std::string camera_source_frame;
       std::string laser_source_frame;
       std::string world_frame;
+      std::string laser_pub;
       bool debug;
     };
     
@@ -95,6 +96,7 @@ namespace tuw
   private:
     ros::NodeHandle nh_;
     ParametersNode params_;
+    ros::Publisher pub_laser_;
     ros::Publisher pub_detections_;
     ros::Subscriber sub_laser_;
     ros::Subscriber sub_image_;
