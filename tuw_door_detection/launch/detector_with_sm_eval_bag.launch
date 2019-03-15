@@ -1,5 +1,4 @@
 <launch>
-	<arg name="launch_rosbag" default="false"/>
 	<arg name="laser_scan" default="/r0/laser0/scan/raw"/>
 	<arg name="clean_laser_pub_topic" default="laser_clean"/>
 	<arg name="fs" default="felix/c8b268c7-3328-46f6-abfc-6cff02c5326c"/>
@@ -10,19 +9,15 @@
 	<arg name="world_frame" default="/r0/base_link"/>
 	<arg name="skip_rosbag" default="0"/>
 	<arg name="debug" default="false"/>
-	<arg name="bag_file" default="/media/$(arg fs)/bag_data/l2.bag"/>
+	<arg name="bag_file" default="/media/$(arg fs)/bag_data/standing_ifof_door.bag"/>
+	<arg name="out_filename" default="$(find sensor_model_evaluator)/files/result_ifof_doors_filtered.csv"/>
 	
+	<param name="use_sim_time" value="True"/>
 	<rosparam param="use_sim_time" subst_value="True"/>
 	<node pkg="rosbag" type="play" name="player" output="screen"
-		  args="--clock -d 1 -s $(arg skip_rosbag) $(arg bag_file)"/>
+		  args="--clock -d 4 -s $(arg skip_rosbag) $(arg bag_file)"/>
 	
 	<!-- if no bag file is played assume live settings with predefined calibration -->
-	<group unless="$(arg launch_rosbag)">
-		<include file="$(find tuw_realsense_d435)/launch/realsense_transform_node.launch">
-			<arg name="publisher_topic" value="$(arg camera)"/>
-		</include>
-	</group>
-	
 	<node name="door_detector_node" pkg="tuw_door_detection" type="door_detector_node" output="screen">
 		<param name="mode" value="depth"/>
 		<param name="publisher_topic" value="$(arg publisher_topic)"/>
@@ -37,5 +32,15 @@
 		<remap from="image_depth" to="$(arg camera)/depth/image_rect_raw"/>
 		<remap from="camera_info_rgb" to="$(arg camera)/color/camera_info"/>
 		<remap from="camera_info_depth" to="$(arg camera)/depth/camera_info"/>
+	</node>
+	
+	<node pkg="map_server" type="map_server" name="map_server" args="$(find sensor_model_evaluator)/cfg/map.yaml"
+		  output="screen"/>
+	<node pkg="rviz" type="rviz" name="rviz" args="-d /home/felix/intel.rviz" output="screen"/>
+	<node pkg="rqt_reconfigure" type="rqt_reconfigure" name="rqt_reconfigure" output="screen"/>
+	<node name="sensor_model_evaluator_node" pkg="sensor_model_evaluator" type="sensor_model_evaluator_node"
+		  output="screen">
+		<param name="laser_topic" value="$(arg clean_laser_pub_topic)"/>
+		<param name="out_filename" value="$(arg out_filename)"/>
 	</node>
 </launch>

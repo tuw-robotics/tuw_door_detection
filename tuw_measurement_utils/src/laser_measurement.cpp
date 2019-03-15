@@ -38,15 +38,18 @@ const sensor_msgs::LaserScan LaserMeasurement::filterMessage( const std::vector<
   scan_filtered.time_increment = this->laser.time_increment;
   
   scan_filtered.ranges.resize(this->laser.ranges.size());
+  scan_filtered.intensities.resize(this->laser.intensities.size());
   std::copy(this->laser.ranges.begin(), this->laser.ranges.end(), scan_filtered.ranges.begin());
+  std::copy(this->laser.intensities.begin(), this->laser.intensities.end(), scan_filtered.intensities.begin());
   
   //Copy the scan without doors
+  printf("filtering %ld/%ld\n", exclude.size(), scan_filtered.ranges.size());
   for (int i = 0; i < scan_filtered.ranges.size(); ++i)
   {
     if (exclude.count(i) != 0)
     {
-      scan_filtered.ranges[i] = std::nan("");
-      scan_filtered.intensities[i] = std::nan("");
+      scan_filtered.ranges[i] = std::nanf("");
+      scan_filtered.intensities[i] = std::nanf("");
     }
   }
   

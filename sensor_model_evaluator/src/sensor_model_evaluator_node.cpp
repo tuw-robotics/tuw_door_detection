@@ -5,15 +5,24 @@
 
 using namespace tuw;
 
-SensorModelEvaluatorNode::SensorModelEvaluatorNode( ros::NodeHandle &nh ) : evaluator_(nullptr),
-                                                                            tf_listener_(tf_buffer_)
+SensorModelEvaluatorNode::ParametersNode::ParametersNode( const ros::NodeHandle &nh)
 {
-  nh.param(std::string("out_filename"), filepath_, std::string(""));
+  this->nh = nh;
+  nh.param(std::string("out_filename"), filepath, std::string(""));
+  nh.param(std::string("laser_topic"), laser_topic, std::string("/r0/laser0/scan/raw"));
+  nh.param(std::string("map_topic"), map_topic, std::string("/map"));
+}
 
+SensorModelEvaluatorNode::SensorModelEvaluatorNode( ros::NodeHandle &nh ) : evaluator_(nullptr),
+                                                                            tf_listener_(tf_buffer_),
+                                                                            params_(ros::NodeHandle("~"))
+{
   nh_ = nh;
-  sub_laser_ = nh.subscribe("/r0/laser0/scan/raw", 1000, &SensorModelEvaluatorNode::callbackLaser, this);
-  sub_map_ = nh.subscribe("/map", 1, &SensorModelEvaluatorNode::callbackMap, this);
+  sub_laser_ = nh.subscribe(params_.laser_topic, 1000, &SensorModelEvaluatorNode::callbackLaser, this);
+  sub_map_ = nh.subscribe(params_.map_topic, 1, &SensorModelEvaluatorNode::callbackMap, this);
   pub_map_eth_ = nh.advertise<grid_map_msgs::GridMap>("/grid_map", 4);
+  
+  ROS_INFO("subscribed to %s\n%s\n", params_.laser_topic.c_str(), params_.map_topic.c_str());
   f_callback = boost::bind(&SensorModelEvaluatorNode::reconfigureCallback, this, _1, _2);
   server.setCallback(f_callback);
 }
@@ -47,7 +56,7 @@ void SensorModelEvaluatorNode::callbackLaser( const sensor_msgs::LaserScan &_las
     {
 
       geometry_msgs::TransformStamped stamped_tf = tf_buffer_.lookupTransform(
-          "map", "r0/laser0", ros::Time(0));
+          "map", _laser.header.frame_id, ros::Time(0));
 
       geometry_msgs::TransformStampedPtr tf = boost::make_shared<geometry_msgs::TransformStamped>(stamped_tf);
       laser_measurement_.reset(new LaserMeasurement(tf));
@@ -76,9 +85,14 @@ void SensorModelEvaluatorNode::publish()
     //{
     //  ROS_WARN( "publish called but no result available" );
     //}
-    if ( filepath_ != std::string("") && config_.serialize )
+    if ( config_.serialize )
     {
-      evaluator_->serializeResult(filepath_);
+      if ( params_.filepath != std::string("") )
+      {
+        evaluator_->serializeResult(params_.filepath);
+      } else {
+        ROS_WARN("SensorModelEvaluatorNode::publish(): serialize option selected but no filepath given!");
+      }
     }
   }
 }
@@ -87,7 +101,7 @@ int main( int argc, char **argv )
 {
   ros::init(argc, argv, "sensor_model_evaluator_node");
 
-  ros::NodeHandle nh("~");
+  ros::NodeHandle nh("");
   SensorModelEvaluatorNode eval_node(nh);
   ros::Rate r(10);
 

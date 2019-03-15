@@ -53,12 +53,15 @@ bool DoorDetector::merge( std::shared_ptr<image_processor::DoorDetectorImageProc
                  [&cmodel, &T_CL, img_height, img_width, z_laser, this]
                      ( std::shared_ptr<Contour> &contr )
                  {
-                   std::cout << "beams size " << contr->beams().size() << std::endl;
                    //TODO clean up this mess
                    contr->registerToImage( T_CL, z_laser,
                                            cmodel->fx(), cmodel->fy(),
                                            cmodel->cx(), cmodel->cy(),
                                            cmodel->Tx(), cmodel->Ty());
+                   //for (auto beam : contr->beams())
+                   //{
+                   //  std::cout << beam->img_coords << std::endl;
+                   //}
                    //contr->registerFloorImage(T_WL)
                    contr->visibilityCheck( false, img_width, img_height );
                  } );

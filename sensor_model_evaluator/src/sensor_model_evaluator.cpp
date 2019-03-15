@@ -328,7 +328,6 @@ void SensorModelEvaluator::serializeResult( const std::string &filepath )
     }
   } else if ( filesys_force_override_ )
   {
-    boost::filesystem::create_directories(p.root_name());
     boost::filesystem::ofstream of(p, std::ios::out);
     internalSerialize(of);
     //of << std::endl;

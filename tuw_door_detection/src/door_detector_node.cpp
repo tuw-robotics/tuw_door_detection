@@ -46,7 +46,7 @@ DoorDetectorNode::ParametersNode::ParametersNode() : node( "~" )
   node.param<std::string>( "camera_source_frame", camera_source_frame, std::string( "" ));
   node.param<std::string>( "laser_source_frame", laser_source_frame, std::string( "" ));
   node.param<std::string>( "world_frame", world_frame, std::string( "" ));
-  node.param<std::string>( "clean_laser_pub_topic", laser_pub, std::string("clean_laser"));
+  node.param<std::string>( "clean_laser_pub_topic", laser_pub, std::string( "clean_laser" ));
   node.param<bool>( "debug", debug, false );
   
   try
@@ -64,7 +64,8 @@ DoorDetectorNode::DoorDetectorNode() : nh_( "" ),
                                        modify_laser_scan_( true ),
                                        tf_buffer_( ros::Duration( 50, 0 )),
                                        tf_listener_( tf_buffer_ ),
-                                       detection_result_( nullptr )
+                                       detection_result_( nullptr ),
+                                       scan_filtered_( nullptr )
 {
   
   door_detector_ = std::make_unique<DoorDetector>();
@@ -76,7 +77,7 @@ DoorDetectorNode::DoorDetectorNode() : nh_( "" ),
   img_processor_.reset( new image_processor::DoorDetectorImageProcessor());
   
   pub_detections_ = nh_.advertise<tuw_object_msgs::ObjectDetection>( "object_detections", 1000 );
-  pub_laser_ = nh_.advertise<sensor_msgs::LaserScan>(params_.laser_pub, 1000);
+  pub_laser_ = nh_.advertise<sensor_msgs::LaserScan>( params_.laser_pub, 1000 );
   //line_pub_ = nh_.advertise<tuw_geometry_msgs::LineSegments>("line_segments", 1000);
   //door_pub_ = nh_.advertise<tuw_object_msgs::ObjectDetection>("object_detection", 1000);
   //measurement_laser_ = std::make_shared<tuw::MeasurementLaser>();
@@ -115,7 +116,7 @@ void DoorDetectorNode::callbackImage( const sensor_msgs::ImageConstPtr &_img )
   cv::cvtColor( image->image, image->image, CV_RGB2GRAY );
   
   geometry_msgs::TransformStampedPtr tf;
-  if ( getStaticTF( params_.world_frame, params_.camera_source_frame/* _img->header.frame_id */, tf, params_.debug ))
+  if ( getStaticTF( params_.world_frame, _img->header.frame_id, tf, params_.debug ))
   {
     
     //@ToDo: reset not mandatory
@@ -175,6 +176,11 @@ void DoorDetectorNode::publish()
     pub_detections_.publish( detection_result_ );
     detection_result_ = nullptr;
   }
+  if (scan_filtered_)
+  {
+    pub_laser_.publish( scan_filtered_ );
+  }
+  
 }
 
 void DoorDetectorNode::callbackLaser( const sensor_msgs::LaserScan &_laser )
@@ -206,18 +212,19 @@ void DoorDetectorNode::process()
     door_detector_->setLaserMeasurement( laser_measurement_ );
     
     door_detector_->merge( img_processor_, door_detector_laser_ );
-  
+    
     detection_result_.reset( new tuw_object_msgs::ObjectDetection( door_detector_->getResultAsMessage()));
     
     auto doors_in_laser = door_detector_->getDoorsLaser();
     
     std::vector<std::pair<std::size_t, std::size_t>> idxrange_;
-    for (auto dl : doors_in_laser)
+    for ( auto dl_it = doors_in_laser.begin(); dl_it != doors_in_laser.end(); ++dl_it )
     {
-      idxrange_.push_back(std::make_pair(dl->getBB2BeamIdxs()[0], dl->getBB2BeamIdxs()[1]));
+      auto deref = *dl_it;
+      idxrange_.push_back( std::make_pair( deref->getBB2BeamIdxs()[0], deref->getBB2BeamIdxs()[1] ));
     }
     
-    laser_measurement_->filterMessage(idxrange_);
+    scan_filtered_ = boost::make_shared<sensor_msgs::LaserScan>(laser_measurement_->filterMessage( idxrange_ ));
     
     door_detector_->display();
     
@@ -265,7 +272,6 @@ bool DoorDetectorNode::getStaticTF( const std::string &world_frame, const std::s
       
       ROS_INFO( "DoorDetectorNode::getStaticTF" );
       ROS_ERROR( "%s", ex.what());
-      ros::Duration( 1.0 ).sleep();
       return false;
       
     }
@@ -294,7 +300,7 @@ int main( int argc, char **argv )
   ros::init( argc, argv, "door_2d_detector_node" );
   
   DoorDetectorNode detector_node;
-  ros::Rate rate( 20 );
+  ros::Rate rate( 30 );
   
   while ( ros::ok())
   {

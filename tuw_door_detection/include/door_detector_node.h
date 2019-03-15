@@ -103,6 +103,7 @@ namespace tuw
     ros::Subscriber sub_camera_info_rgb_;
     ros::Subscriber sub_image_depth_;
     ros::Subscriber sub_camera_info_depth_;
+    sensor_msgs::LaserScanPtr scan_filtered_;
     std::shared_ptr<door_laser_proc::DoorDetectorBase> door_detector_laser_;
     std::unique_ptr<DoorDetector> door_detector_;
     

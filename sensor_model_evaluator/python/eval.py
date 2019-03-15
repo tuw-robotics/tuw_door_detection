@@ -385,19 +385,19 @@ def plot2d(angle2meas, idx=-1, normalized=False):
 
 
 plt.ion()
-x_binsize = 0.2
-y_binsize = 0.2
+x_binsize = 0.25
+y_binsize = 0.25
 max_clip_val = 0.25
 suppress_uninteresting = True
 heatmap_only = False
-# r_xf_meters = 0.75
-# r_xb_meters = 6
-# r_yf_meters = 0.75
-# r_yb_meters = 10
-r_xf_meters = 0.0
-r_xb_meters = 10
-r_yf_meters = 0.0
+r_xf_meters = 0.75
+r_xb_meters = 6
+r_yf_meters = 0.75
 r_yb_meters = 10
+#r_xf_meters = 0.0
+#r_xb_meters = 5
+#r_yf_meters = 0.0
+#r_yb_meters = 10
 
 r_xf = np.int(r_xf_meters / x_binsize)
 r_xb = np.int(r_xb_meters / x_binsize)
@@ -406,7 +406,7 @@ r_yb = np.int(r_yb_meters / y_binsize)
 
 tstart = time.time()
 print("tic > parse")
-file = open(os.path.abspath("../files/result_ifof_doors_filtered.csv"), "r")
+file = open(os.path.abspath("../files/result_doors_filtered.csv"), "r")
 lines = parse(file)
 file.close()
 print("parsed > agglomerate")
@@ -423,7 +423,7 @@ if suppress_uninteresting:
 
 angle2meas = None
 lines = None
-file = open(os.path.abspath("../files/result_ifof_doors_unfiltered.csv"), "r")
+file = open(os.path.abspath("../files/result_doors_unfiltered.csv"), "r")
 lines = parse(file)
 file.close()
 print("parsed > agglomerate")
@@ -439,41 +439,41 @@ if suppress_uninteresting:
 r_xb = np.clip(r_xb, 0, np.min([grid_doors_filtered.shape[0], grid_doors_unfiltered.shape[0]]))
 r_yb = np.clip(r_yb, 0, np.min([grid_doors_filtered.shape[1], grid_doors_unfiltered.shape[1]]))
 fig = plt.figure()
-ax = fig.add_subplot(131, projection='3d')
+ax = fig.add_subplot(121, projection='3d')
 if not heatmap_only:
     ax.plot_surface(Xu[r_xf:r_xb, r_yf:r_yb], Yu[r_xf:r_xb, r_yf:r_yb], grid_doors_unfiltered[r_xf:r_xb, r_yf:r_yb],
                     cmap=cm.coolwarm,
                     antialiased=False)
     ax.set_title('Unfiltered scan')
-    ax.set_xlabel('Observed')
-    ax.set_ylabel('Expected')
+    ax.set_xlabel('Expected')
+    ax.set_ylabel('Observed')
     ax.set_zlabel('Probabilities')
 else:
     ax.imshow(grid_doors_unfiltered[r_xf:r_xb, r_yf:r_yb], cmap=cm.hot, interpolation='nearest')
 
-ax = fig.add_subplot(132, projection='3d')
+ax = fig.add_subplot(122, projection='3d')
 if not heatmap_only:
     ax.plot_surface(Xf[r_xf:r_xb, r_yf:r_yb], Yf[r_xf:r_xb, r_yf:r_yb], grid_doors_filtered[r_xf:r_xb, r_yf:r_yb],
                     cmap=cm.coolwarm, antialiased=False)
     ax.set_title('Filtered scan')
-    ax.set_xlabel('Observed')
-    ax.set_ylabel('Expected')
+    ax.set_xlabel('Expected')
+    ax.set_ylabel('Observed')
     ax.set_zlabel('Probabilities')
 else:
     ax.imshow(grid_doors_filtered[r_xf:r_xb, r_yf:r_yb], cmap=cm.hot, interpolation='nearest')
 
-ax = fig.add_subplot(133, projection='3d')
-if not heatmap_only:
-    ax.plot_surface(Xu[r_xf:r_xb, r_yf:r_yb], Yu[r_xf:r_xb, r_yf:r_yb],
-                    grid_doors_unfiltered[r_xf:r_xb, r_yf:r_yb] - grid_doors_filtered[r_xf:r_xb, r_yf:r_yb],
-                    cmap=cm.coolwarm, antialiased=False)
-    ax.set_title('Difference')
-    ax.set_xlabel('Observed')
-    ax.set_ylabel('Expected')
-    ax.set_zlabel('Probabilities')
-else:
-    ax.imshow(grid_doors_unfiltered[r_xf:r_xb, r_yf:r_yb] - grid_doors_filtered[r_xf:r_xb, r_yf:r_yb], cmap=cm.hot,
-              interpolation='nearest')
+#ax = fig.add_subplot(133, projection='3d')
+#if not heatmap_only:
+#    ax.plot_surface(Xu[r_xf:r_xb, r_yf:r_yb], Yu[r_xf:r_xb, r_yf:r_yb],
+#                    grid_doors_unfiltered[r_xf:r_xb, r_yf:r_yb] - grid_doors_filtered[r_xf:r_xb, r_yf:r_yb],
+#                    cmap=cm.coolwarm, antialiased=False)
+#    ax.set_title('Difference')
+#    ax.set_xlabel('Observed')
+#    ax.set_ylabel('Expected')
+#    ax.set_zlabel('Probabilities')
+#else:
+#    ax.imshow(grid_doors_unfiltered[r_xf:r_xb, r_yf:r_yb] - grid_doors_filtered[r_xf:r_xb, r_yf:r_yb], cmap=cm.hot,
+#              interpolation='nearest')
 plt.show(block=True)
 # hist3d_thrun_dbg(angle2meas, (0.50, 0.50))
 # plot2d(angle2meas, -1, normalized=True)

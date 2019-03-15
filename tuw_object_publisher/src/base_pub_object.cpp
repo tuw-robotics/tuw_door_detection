@@ -28,7 +28,7 @@ bool tuw::BasePubObject::read()
   ifstream in(file_path_.c_str());
   if (!in.is_open())
   {
-    std::cout << "Object read: File path is wrong" << std::endl;
+    ROS_ERROR("Object read: File path is wrong");
     return false;
   }
 

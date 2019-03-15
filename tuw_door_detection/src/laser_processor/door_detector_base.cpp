@@ -86,7 +86,6 @@ DoorDetectorBase::getTF(const std::string &world_frame, const std::string &sourc
   catch (tf::TransformException ex) {
     ROS_INFO("getStaticTF");
     ROS_ERROR("%s", ex.what());
-    ros::Duration(1.0).sleep();
     return false;
   }
 

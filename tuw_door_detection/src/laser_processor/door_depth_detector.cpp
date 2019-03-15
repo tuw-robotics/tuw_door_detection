@@ -353,7 +353,7 @@ const bool DoorDepthDetector::isDoorCandidate( const std::shared_ptr<Contour> &c
   }
   
   auto lSegs = contour->getLineSegments();
-  std::cout << boost::lexical_cast<std::string>( contour->id()) << " has lsegs: " << lSegs.size() << std::endl;
+  //std::cout << boost::lexical_cast<std::string>( contour->id()) << " has lsegs: " << lSegs.size() << std::endl;
   for ( int ii = 0; ii < lSegs.size(); ii++ )
   {
     auto lSeg = lSegs[ii];

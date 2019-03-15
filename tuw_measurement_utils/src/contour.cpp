@@ -109,12 +109,12 @@ void Contour::cvConvexityDefects( WorldScopedMaps &_map )
   
   convexity_defects_.resize( defects.size());
   
-  std::cout << std::endl << std::endl;
-  for ( int i = 0; i < defects.size(); ++i )
-  {
-    std::cout << defects[i][2] << ", " << defects[i][3] << std::endl;
-    convexity_defects_[i].reset( new CVDefect( defects[i][0], defects[i][1], defects[i][2], defects[i][3] ));
-  }
+  //std::cout << std::endl << std::endl;
+  //for ( int i = 0; i < defects.size(); ++i )
+  //{
+  //  std::cout << defects[i][2] << ", " << defects[i][3] << std::endl;
+  //  convexity_defects_[i].reset( new CVDefect( defects[i][0], defects[i][1], defects[i][2], defects[i][3] ));
+  //}
 }
 
 void Contour::cvDetectCorners()
@@ -403,5 +403,5 @@ void Contour::visibilityCheck( bool shift_lines, int img_width, int img_height )
     if ( b->get_is_visible())
       cnt++;
   }
-  std::cout << "visible beams: " << cnt << std::endl;
+  //std::cout << "visible beams: " << cnt << std::endl;
 }

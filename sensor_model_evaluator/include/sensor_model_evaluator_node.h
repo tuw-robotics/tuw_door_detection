@@ -24,6 +24,18 @@ namespace tuw
   class SensorModelEvaluatorNode
   {
   public:
+    class ParametersNode
+    {
+    public:
+      ParametersNode( const ros::NodeHandle &nh );
+      ~ParametersNode() = default;
+      
+      ros::NodeHandle nh;
+      std::string filepath;
+      std::string laser_topic;
+      std::string map_topic;
+    };
+    
     SensorModelEvaluatorNode( ros::NodeHandle &nh );
 
     void callbackLaser( const sensor_msgs::LaserScan &laser );
@@ -53,8 +65,9 @@ namespace tuw
     LaserMeasurementPtr laser_measurement_;
     SensorModelEvaluatorPtr evaluator_;
 
-    std::string filepath_;
     bool continuous_stream_;
+    
+    ParametersNode params_;
 
   };
 
