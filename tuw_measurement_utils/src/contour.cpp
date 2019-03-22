@@ -400,7 +400,7 @@ void Contour::visibilityCheck( bool shift_lines, int img_width, int img_height )
     bool not_vis = b->img_coords.x() < 0 || b->img_coords.x() > img_height || b->img_coords.y() < 0 ||
                    b->img_coords.y() > img_width;
     b->set_is_visible( !not_vis );
-    if ( b->get_is_visible())
+    if ( !not_vis )
       cnt++;
   }
   //std::cout << "visible beams: " << cnt << std::endl;

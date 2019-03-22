@@ -162,6 +162,7 @@ include_directories(
 add_executable(${PROJECT_NAME}_node
         src/sensor_model_evaluator.cpp
         src/sensor_model_evaluator_node.cpp
+        src/sensor_model_parameter_estimator_em.cpp
         )
 
 ## Add cmake target dependencies of the executable

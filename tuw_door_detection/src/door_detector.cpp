@@ -48,7 +48,6 @@ bool DoorDetector::merge( std::shared_ptr<image_processor::DoorDetectorImageProc
   
   //bottom left, top left, top right, bottom right
   std::vector<cv::Point2d> bb;
-  
   std::for_each( detection_laser_.begin(), detection_laser_.end(),
                  [&cmodel, &T_CL, img_height, img_width, z_laser, this]
                      ( std::shared_ptr<Contour> &contr )
