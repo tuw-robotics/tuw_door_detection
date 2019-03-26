@@ -1,3 +1,4 @@
+
 //
 // Created by felix on 22.03.19.
 //
@@ -7,6 +8,8 @@
 
 #include <map>
 #include <vector>
+#include <cmath>
+#include <limits>
 
 namespace tuw
 {
@@ -26,22 +29,51 @@ namespace tuw
       double lambda_short;
     };
     
-    void add(double measured, double expected);
-  
+    void add( double measured, double expected );
+    
     ParametersEstimated &compute();
   
   private:
     ParametersEstimated params_;
     
-    double pHit( double z, double z_k_star, double sigma_hit );
+    inline double pHit( double z, double z_k_star, double sigma_hit )
+    {
+      if ( params_.z_max >= z && z >= 0 )
+      {
+        double sample = z - z_k_star;
+        double sigma_hit_squared = std::pow( params_.sigma_hit, 2 );
+        return 1.0 / sqrt( 2 * M_PI * sigma_hit_squared ) * exp( -0.5 * (std::pow( sample, 2 ) / sigma_hit_squared));
+      }
+      return 0;
+    }
     
-    double pZmax( double z, double z_max );
+    inline double pZmax( double z, double z_max )
+    {
+      if ((z - z_max) < std::numeric_limits<float>::epsilon())
+      {
+        return 1;
+      }
+      return 0;
+    }
     
-    double pShort( double z, double z_k_star, double lambda_short );
+    inline double pShort( double z, double z_k_star, double lambda_short )
+    {
+      if (0 <= z && z <= z_k_star )
+      {
+        return (1.0 / (1.0 - exp(-lambda_short*z_k_star))) * lambda_short * exp(- lambda_short * z);
+      }
+      return 0;
+    }
     
-    double pRand( double z, double z_max );
+    inline double pRand( double z, double z_max )
+    {
+      if (0 <= z && z <= z_max)
+      {
+        return 1.0 / z_max;
+      }
+    }
     
-    std::vector<std::pair<double,double>> z_m_e_;
+    std::vector<std::pair<double, double>> z_m_e_;
   };
   
 };
