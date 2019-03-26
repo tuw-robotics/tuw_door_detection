@@ -21,28 +21,51 @@ SensorModelParameterEstimatorEM::ParametersEstimated &SensorModelParameterEstima
     std::vector<double> e_short;
     std::vector<double> e_max;
     std::vector<double> e_rand;
+    double hit_normalized_total = 0;
+    double short_normalized_total = 0;
     
     for ( auto p_zme : z_m_e_ )
     {
       double z_kt = p_zme.first;
       double z_kt_star = p_zme.second;
       
-      double z_hit = pHit(z_kt, z_kt_star, params_.sigma_hit);
-      double z_short = pShort(z_kt, z_kt_star, params_.lambda_short);
-      double z_max = pZmax(z_kt, params_.z_max);
-      double z_rand = pRand(z_kt, params_.z_max);
+      double z_hit = pHit( z_kt, z_kt_star, params_.sigma_hit );
+      double z_short = pShort( z_kt, z_kt_star, params_.lambda_short );
+      double z_max = pZmax( z_kt, params_.z_max );
+      double z_rand = pRand( z_kt, params_.z_max );
       
       double nu = 1.0 / (z_hit + z_short + z_max + z_rand);
       
-      e_hit.push_back(nu * z_hit);
-      e_short.push_back(nu * z_short);
-      e_max.push_back(nu * z_max);
-      e_rand.push_back(nu * z_rand);
+      e_hit.push_back( nu * z_hit );
+      e_short.push_back( nu * z_short );
+      e_max.push_back( nu * z_max );
+      e_rand.push_back( nu * z_rand );
+      
+      hit_normalized_total += (nu * z_hit * pow(z_kt - z_kt_star, 2));
+      short_normalized_total += (nu * z_short * z_kt);
+    }
+  
+    //TODO: make
+    double hit_total = 0;
+    double short_total = 0;
+    double max_total = 0;
+    double rand_total = 0;
+    for ( int k = 0; k < e_hit.size(); ++k )
+    {
+      hit_total += e_hit[k];
+      short_total += e_short[k];
+      max_total += e_max[k];
+      rand_total += e_rand[k];
     }
     
-    //TODO: make
+    params_.z_hit = hit_total / e_hit.size();
+    params_.z_short = short_total / e_short.size();
+    params_.z_max = max_total / e_max.size();
+    params_.z_rand = rand_total / e_rand.size();
     
-  } while (do_estimate);
+    params_.sigma_hit = std::sqrt(1/hit_total);
+    
+  } while ( do_estimate );
   
   
   return params_;
