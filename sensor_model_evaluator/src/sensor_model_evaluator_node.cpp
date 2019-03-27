@@ -11,6 +11,7 @@ SensorModelEvaluatorNode::ParametersNode::ParametersNode( const ros::NodeHandle 
   nh.param(std::string("out_filename"), filepath, std::string(""));
   nh.param(std::string("laser_topic"), laser_topic, std::string("/r0/laser0/scan/raw"));
   nh.param(std::string("map_topic"), map_topic, std::string("/map"));
+  nh.param(std::string("estimate_model_parameters"), estimate_parameters, false);
 }
 
 SensorModelEvaluatorNode::SensorModelEvaluatorNode( ros::NodeHandle &nh ) : evaluator_(nullptr),
@@ -20,11 +21,17 @@ SensorModelEvaluatorNode::SensorModelEvaluatorNode( ros::NodeHandle &nh ) : eval
   nh_ = nh;
   sub_laser_ = nh.subscribe(params_.laser_topic, 1000, &SensorModelEvaluatorNode::callbackLaser, this);
   sub_map_ = nh.subscribe(params_.map_topic, 1, &SensorModelEvaluatorNode::callbackMap, this);
+  sub_dummy_ = nh.subscribe("dummy", 1, &SensorModelEvaluatorNode::callbackDummy, this);
   pub_map_eth_ = nh.advertise<grid_map_msgs::GridMap>("/grid_map", 4);
   
   ROS_INFO("subscribed to %s\n%s\n", params_.laser_topic.c_str(), params_.map_topic.c_str());
   f_callback = boost::bind(&SensorModelEvaluatorNode::reconfigureCallback, this, _1, _2);
   server.setCallback(f_callback);
+}
+
+void SensorModelEvaluatorNode::callbackDummy( const std_msgs::String &msg)
+{
+  estimationLoop();
 }
 
 void SensorModelEvaluatorNode::reconfigureCallback(
@@ -63,6 +70,12 @@ void SensorModelEvaluatorNode::callbackLaser( const sensor_msgs::LaserScan &_las
       laser_measurement_->initFromScan(_laser);
 
       evaluator_->evaluate(laser_measurement_);
+      
+      auto &ranges = evaluator_->getRangesExpObs();
+      for (const auto inside : ranges)
+      {
+        parameter_estimator_.add(inside.second.first, inside.second.second);
+      }
 
     } catch ( tf2::TransformException &ex )
     {
@@ -71,7 +84,7 @@ void SensorModelEvaluatorNode::callbackLaser( const sensor_msgs::LaserScan &_las
     }
 
   }
-
+  laser_message_tick_ = ros::Time::now();
 }
 
 void SensorModelEvaluatorNode::publish()
@@ -94,7 +107,13 @@ void SensorModelEvaluatorNode::publish()
         ROS_WARN("SensorModelEvaluatorNode::publish(): serialize option selected but no filepath given!");
       }
     }
+    
   }
+}
+
+void SensorModelEvaluatorNode::estimationLoop() {
+ printf("Starting EM\n");
+ parameter_estimator_.compute();
 }
 
 int main( int argc, char **argv )
@@ -109,7 +128,9 @@ int main( int argc, char **argv )
   {
 
     ros::spinOnce();
-
+    
+    eval_node.estimationLoop();
+    
     eval_node.publish();
 
     r.sleep();

@@ -27,9 +27,22 @@ namespace tuw
       double z_short;
       double sigma_hit;
       double lambda_short;
+      
+      inline double dotMinus(ParametersEstimated &other)
+      {
+        double x = other.z_hit - z_hit;
+        double y = other.z_max - z_max;
+        double z = other.z_rand - z_rand;
+        double w = other.z_short - z_short;
+        double u = other.sigma_hit - sigma_hit;
+        double v = other.lambda_short - lambda_short;
+        return std::sqrt(x*x - y*y - z*z - w*w - u*u - v*v);
+      }
     };
     
     void add( double measured, double expected );
+    
+    void clear();
     
     ParametersEstimated &compute();
   

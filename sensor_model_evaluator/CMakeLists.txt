@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
         roscpp
         rospy
         nav_msgs
+        std_msgs
         sensor_msgs
         grid_map_msgs
         grid_map_ros
@@ -117,6 +118,7 @@ catkin_package(
         CATKIN_DEPENDS
         roscpp
         rospy
+        std_msgs
         tuw_geometry
         tuw_geometry_msgs
         tf2_ros

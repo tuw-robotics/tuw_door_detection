@@ -1,0 +1,12 @@
+//
+// Created by felix on 27.03.19.
+//
+
+#ifndef TUW_SENSOR_MODEL_PARAMETER_ESTIMATOR_EM_NODE_H
+#define TUW_SENSOR_MODEL_PARAMETER_ESTIMATOR_EM_NODE_H
+
+class SensorModelParameterEstimatorEMNode {
+
+};
+
+#endif //PROJECT_SENSOR_MODEL_PARAMETER_ESTIMATOR_EM_NODE_H

@@ -6,6 +6,11 @@
 
 using namespace tuw;
 
+void SensorModelParameterEstimatorEM::clear()
+{
+  z_m_e_.clear();
+}
+
 void SensorModelParameterEstimatorEM::add( double measured, double expected )
 {
   z_m_e_.emplace_back( std::make_pair( measured, expected ));
@@ -15,8 +20,13 @@ SensorModelParameterEstimatorEM::ParametersEstimated &SensorModelParameterEstima
 {
   bool do_estimate = true;
   
+  printf("EM on %ld measurements\n", z_m_e_.size());
+  params_.sigma_hit = 1.5;
+  params_.lambda_short = 20;
+  
   do
   {
+    ParametersEstimated cached_ = ParametersEstimated(params_);
     std::vector<double> e_hit;
     std::vector<double> e_short;
     std::vector<double> e_max;
@@ -63,7 +73,13 @@ SensorModelParameterEstimatorEM::ParametersEstimated &SensorModelParameterEstima
     params_.z_max = max_total / e_max.size();
     params_.z_rand = rand_total / e_rand.size();
     
-    params_.sigma_hit = std::sqrt(1/hit_total);
+    params_.sigma_hit = std::sqrt(1.0/hit_total) * hit_normalized_total;
+    params_.lambda_short = short_total / short_normalized_total;
+    
+    double energy = cached_.dotMinus(params_);
+    printf("Energy: %lf\n", energy);
+    
+    do_estimate = energy > 0.2;
     
   } while ( do_estimate );
   

@@ -29,11 +29,12 @@ namespace tuw
   public:
     using measurement_table = std::map<double, Point2D>;
     using map_info_type = nav_msgs::OccupancyGrid_<std::allocator<void>>::_info_type;
+    using range_table = std::map<double, std::pair<double, double>>;
 
     SensorModelEvaluator( const nav_msgs::OccupancyGridConstPtr &map, bool render = true );
 
     void evaluate( LaserMeasurementPtr &scan );
-
+    
     void publish();
 
     template<typename M_DES>
@@ -52,6 +53,18 @@ namespace tuw
     }
 
     void serializeResult( const std::string &filepath );
+    
+    const measurement_table &getObservedMeasurements() {
+      return observed_meas_;
+    }
+    
+    const measurement_table &getExpectedMeasurements() {
+      return expected_meas_;
+    }
+    
+    const range_table &getRangesExpObs() {
+      return ranges_exp_obs_;
+    }
 
     void configure( const sensor_model_evaluator::SensorModelEvaluatorNodeConfig &cfg );
 
@@ -136,9 +149,12 @@ namespace tuw
     void internalSerialize( boost::filesystem::ofstream &of );
 
     void clear();
+    
+    void calcRangeTable();
 
     measurement_table expected_meas_;
     measurement_table observed_meas_;
+    range_table ranges_exp_obs_;
 
     std::shared_ptr<InternalMap> map_;
     std::shared_ptr<InternalMap> render_map_;
