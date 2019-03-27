@@ -6,27 +6,47 @@
 
 using namespace tuw;
 
+SensorModelParameterEstimatorEM::SensorModelParameterEstimatorEM() : params_(nullptr)
+{
+}
+
 void SensorModelParameterEstimatorEM::clear()
 {
   z_m_e_.clear();
 }
 
-void SensorModelParameterEstimatorEM::add( double measured, double expected )
+void SensorModelParameterEstimatorEM::setParams(ParametersEstimated &params)
 {
-  z_m_e_.emplace_back( std::make_pair( measured, expected ));
+  params_ = std::make_shared<ParametersEstimated>(params);
 }
 
-SensorModelParameterEstimatorEM::ParametersEstimated &SensorModelParameterEstimatorEM::compute()
+void SensorModelParameterEstimatorEM::add( double measured, double expected )
 {
-  bool do_estimate = true;
+  z_m_e_.push_back( std::make_pair( measured, expected ));
+}
+
+std::shared_ptr<SensorModelParameterEstimatorEM::ParametersEstimated> SensorModelParameterEstimatorEM::compute()
+{
+  if (!params_)
+  {
+    return nullptr;
+  }
   
   printf("EM on %ld measurements\n", z_m_e_.size());
-  params_.sigma_hit = 1.5;
-  params_.lambda_short = 20;
   
+  //dry run
+  for (auto p_zme : z_m_e_)
+  {
+    double z_kt = p_zme.first;
+    double z_kt_star = p_zme.second;
+    
+    //printf("(%lf, %lf)\n", z_kt, z_kt_star);
+  }
+  
+  bool do_estimate = true;
   do
   {
-    ParametersEstimated cached_ = ParametersEstimated(params_);
+    ParametersEstimated cached_ = ParametersEstimated(*params_);
     std::vector<double> e_hit;
     std::vector<double> e_short;
     std::vector<double> e_max;
@@ -39,10 +59,12 @@ SensorModelParameterEstimatorEM::ParametersEstimated &SensorModelParameterEstima
       double z_kt = p_zme.first;
       double z_kt_star = p_zme.second;
       
-      double z_hit = pHit( z_kt, z_kt_star, params_.sigma_hit );
-      double z_short = pShort( z_kt, z_kt_star, params_.lambda_short );
-      double z_max = pZmax( z_kt, params_.z_max );
-      double z_rand = pRand( z_kt, params_.z_max );
+      double z_hit = pHit( z_kt, z_kt_star, params_->sigma_hit );
+      double z_short = pShort( z_kt, z_kt_star, params_->lambda_short );
+      double z_max = pZmax( z_kt, params_->z_max );
+      double z_rand = pRand( z_kt, params_->z_max );
+      
+      printf("(%lf, %lf, %lf, %lf)\n", z_hit, z_short, z_max, z_rand);
       
       double nu = 1.0 / (z_hit + z_short + z_max + z_rand);
       
@@ -68,17 +90,21 @@ SensorModelParameterEstimatorEM::ParametersEstimated &SensorModelParameterEstima
       rand_total += e_rand[k];
     }
     
-    params_.z_hit = hit_total / e_hit.size();
-    params_.z_short = short_total / e_short.size();
-    params_.z_max = max_total / e_max.size();
-    params_.z_rand = rand_total / e_rand.size();
+    params_->z_hit = hit_total / e_hit.size();
+    params_->z_short = short_total / e_short.size();
+    params_->z_max = max_total / e_max.size();
+    params_->z_rand = rand_total / e_rand.size();
     
-    params_.sigma_hit = std::sqrt(1.0/hit_total) * hit_normalized_total;
-    params_.lambda_short = short_total / short_normalized_total;
+    params_->sigma_hit = std::sqrt(1.0/hit_total) * hit_normalized_total;
+    params_->lambda_short = short_total / short_normalized_total;
     
-    double energy = cached_.dotMinus(params_);
+    double energy = cached_.dotMinus(*params_);
     printf("Energy: %lf\n", energy);
-    
+    printf("zhit: %lf\n", params_->z_hit);
+    printf("zmax: %lf\n", params_->z_max);
+    printf("zshort: %lf\n", params_->z_short);
+    printf("zrand: %lf\n", params_->z_rand);
+  
     do_estimate = energy > 0.2;
     
   } while ( do_estimate );

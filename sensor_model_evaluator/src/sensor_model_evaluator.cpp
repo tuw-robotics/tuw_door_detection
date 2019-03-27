@@ -200,7 +200,6 @@ void SensorModelEvaluator::evaluate( LaserMeasurementPtr &scan )
       render_map_->get_my_from_wy( tf_ML( 1, 3 ))
   );
   
-  
   cv::circle( render_map_->cv_uc8, origin_px, 2.0, cv::Scalar( 0, 0, 255 ), 2.0 );
   
   for ( std::vector<Beam>::iterator beam_it = scan->begin();

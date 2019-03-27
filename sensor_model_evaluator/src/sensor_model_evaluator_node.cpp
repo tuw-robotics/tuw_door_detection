@@ -72,6 +72,8 @@ void SensorModelEvaluatorNode::callbackLaser( const sensor_msgs::LaserScan &_las
       evaluator_->evaluate(laser_measurement_);
       
       auto &ranges = evaluator_->getRangesExpObs();
+      SensorModelParameterEstimatorEM::ParametersEstimated estimation_params(0, _laser.range_max, 1.0 / _laser.range_max, 0.75* _laser.range_max, 1.5, 1.0);
+      parameter_estimator_.setParams(estimation_params);
       for (const auto inside : ranges)
       {
         parameter_estimator_.add(inside.second.first, inside.second.second);
