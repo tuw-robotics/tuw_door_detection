@@ -57,7 +57,7 @@ namespace tuw
         double w = other.z_short - z_short;
         double u = other.sigma_hit - sigma_hit;
         double v = other.lambda_short - lambda_short;
-        return std::sqrt(x*x - y*y - z*z - w*w - u*u - v*v);
+        return std::sqrt(x*x + y*y + z*z + w*w + u*u + v*v);
       }
     };
     
@@ -87,11 +87,11 @@ namespace tuw
     
     inline double pZmax( double z, double z_max )
     {
-      if ((z - z_max) < std::numeric_limits<float>::epsilon())
+      if (fabs(z - z_max) < std::numeric_limits<float>::epsilon())
       {
-        return 1;
+        return 1.0;
       }
-      return 0;
+      return 0.0;
     }
     
     inline double pShort( double z, double z_k_star, double lambda_short )
@@ -100,7 +100,7 @@ namespace tuw
       {
         return (1.0 / (1.0 - exp(-lambda_short*z_k_star))) * lambda_short * exp(- lambda_short * z);
       }
-      return 0;
+      return 0.0;
     }
     
     inline double pRand( double z, double z_max )
@@ -109,6 +109,7 @@ namespace tuw
       {
         return 1.0 / z_max;
       }
+      return 0.0;
     }
     
     std::vector<std::pair<double, double>> z_m_e_;

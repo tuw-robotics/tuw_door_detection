@@ -190,7 +190,7 @@ void ContourContainer::assertContourOrder()
                    [&constraint_left2right]( std::shared_ptr<Contour> c )
                    {
                      double idx = c->front()->global_idx_;
-                     assert( idx < constraint_right2left );
+                     assert( idx < constraint_left2right );
                      constraint_left2right = idx;
                    } );
   }
