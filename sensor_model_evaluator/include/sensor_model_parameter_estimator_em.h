@@ -22,11 +22,16 @@ namespace tuw
     class ParametersEstimated
     {
     public:
+      //TODO move z_ stuff to config class
       double z_hit;
       double z_max;
       double z_rand;
       double z_short;
       double sigma_hit;
+      double w_hit;
+      double w_max;
+      double w_rand;
+      double w_short;
       double lambda_short;
       
       ParametersEstimated(double _z_hit, double _z_max, double _z_rand, double _z_short, double _sigma_hit, double _lambda_short)
@@ -37,6 +42,10 @@ namespace tuw
         z_short = _z_short;
         sigma_hit = _sigma_hit;
         lambda_short = _lambda_short;
+        w_hit = 0;
+        w_max = 0;
+        w_rand = 0;
+        w_short = 0;
       }
       
       ParametersEstimated(const ParametersEstimated &other)
@@ -47,14 +56,18 @@ namespace tuw
         this->z_short = other.z_short;
         this->sigma_hit = other.sigma_hit;
         this->lambda_short = other.lambda_short;
+        this->w_hit = other.w_hit;
+        this->w_max = other.w_max;
+        this->w_rand = other.w_rand;
+        this->w_short = other.w_short;
       }
       
       inline double dotMinus(ParametersEstimated &other)
       {
-        double x = other.z_hit - z_hit;
-        double y = other.z_max - z_max;
-        double z = other.z_rand - z_rand;
-        double w = other.z_short - z_short;
+        double x = other.w_hit - w_hit;
+        double y = other.w_max - w_max;
+        double z = other.w_rand - w_rand;
+        double w = other.w_short - w_short;
         double u = other.sigma_hit - sigma_hit;
         double v = other.lambda_short - lambda_short;
         return std::sqrt(x*x + y*y + z*z + w*w + u*u + v*v);
