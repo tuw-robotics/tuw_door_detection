@@ -91,9 +91,11 @@ namespace tuw
     {
       if ( params_->z_max >= z && z >= 0 )
       {
-        double sample = z - z_k_star;
         double sigma_hit_squared = std::pow( params_->sigma_hit, 2 );
-        return 1.0 / sqrt( 2 * M_PI * sigma_hit_squared ) * exp( -0.5 * (std::pow( sample, 2 ) / sigma_hit_squared));
+        double normalzer = 1.0 / std::sqrt(sigma_hit_squared * 2  * M_PI) * params_->z_max * exp(-pow(z_k_star, 2.0) / (2.0 * sigma_hit_squared));
+        normalzer = 1.0 / normalzer;
+        double sample = z - z_k_star;
+        return normalzer * 1.0 / sqrt( 2 * M_PI * sigma_hit_squared ) * exp( -0.5 * (std::pow( sample, 2 ) / sigma_hit_squared));
       }
       return 0;
     }

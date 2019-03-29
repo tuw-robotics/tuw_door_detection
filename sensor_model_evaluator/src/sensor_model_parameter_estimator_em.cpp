@@ -62,10 +62,10 @@ std::shared_ptr<SensorModelParameterEstimatorEM::ParametersEstimated> SensorMode
       double z_kt = p_zme.first;
       double z_kt_star = p_zme.second;
       
-      double w_hit = pHit( z_kt, z_kt_star, params_->sigma_hit );
-      double w_short = pShort( z_kt, z_kt_star, params_->lambda_short );
-      double w_max = pZmax( z_kt, params_->z_max );
-      double w_rand = pRand( z_kt, params_->z_max );
+      double p_hit = pHit( z_kt, z_kt_star, params_->sigma_hit );
+      double p_short = pShort( z_kt, z_kt_star, params_->lambda_short );
+      double p_max = pZmax( z_kt, params_->z_max );
+      double p_rand = pRand( z_kt, params_->z_max );
       
       //printf( "(%lf, %lf)\n", z_kt, z_kt_star );
       //printf( "(%lf, %lf, %lf, %lf)\n", z_hit, z_short, z_max, z_rand );
@@ -78,15 +78,15 @@ std::shared_ptr<SensorModelParameterEstimatorEM::ParametersEstimated> SensorMode
       
       //boost::this_thread::sleep_for( boost::chrono::milliseconds( 500 ));
       
-      double nu = 1.0 / (w_hit + w_short + w_max + w_rand);
+      double nu = 1.0 / (p_hit + p_short + p_max + p_rand);
       
-      e_hit.push_back( nu * w_hit );
-      e_short.push_back( nu * w_short );
-      e_max.push_back( nu * w_max );
-      e_rand.push_back( nu * w_rand );
+      e_hit.push_back( nu * p_hit );
+      e_short.push_back( nu * p_short );
+      e_max.push_back( nu * p_max );
+      e_rand.push_back( nu * p_rand );
       
-      hit_normalized_total += (nu * w_hit * pow( z_kt - z_kt_star, 2 ));
-      short_normalized_total += (nu * w_short * z_kt);
+      hit_normalized_total += (nu * p_hit * pow( z_kt - z_kt_star, 2 ));
+      short_normalized_total += (nu * p_short * z_kt);
     }
     
     //TODO: make
@@ -107,14 +107,14 @@ std::shared_ptr<SensorModelParameterEstimatorEM::ParametersEstimated> SensorMode
     params_->w_max = max_total / e_max.size();
     params_->w_rand = rand_total / e_rand.size();
     
-    params_->sigma_hit = std::sqrt( 1.0 / hit_total ) * hit_normalized_total;
+    params_->sigma_hit = std::sqrt(( 1.0 / hit_total ) * hit_normalized_total);
     params_->lambda_short = short_total / short_normalized_total;
     
     double energy = cached_.dotMinus( *params_ );
     printf( "Iteration: %d, ", iter_n++ );
     printf( "Energy: %lf\n", energy );
     
-    do_estimate = energy > 0.2;
+    do_estimate = energy > 0.001;
   } while ( do_estimate );
   
   //printf( "hit_total: %lf\n", hit_total );

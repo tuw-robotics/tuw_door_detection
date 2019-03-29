@@ -21,7 +21,7 @@ SensorModelEvaluatorNode::SensorModelEvaluatorNode( ros::NodeHandle &nh ) : eval
   nh_ = nh;
   sub_laser_ = nh.subscribe( params_.laser_topic, 1000, &SensorModelEvaluatorNode::callbackLaser, this );
   sub_map_ = nh.subscribe( params_.map_topic, 1, &SensorModelEvaluatorNode::callbackMap, this );
-  sub_dummy_ = nh.subscribe( "dummy", 1, &SensorModelEvaluatorNode::callbackDummy, this );
+  sub_dummy_ = nh.subscribe( "dummy_msg", 1, &SensorModelEvaluatorNode::callbackDummy, this );
   pub_map_eth_ = nh.advertise<grid_map_msgs::GridMap>( "/grid_map", 4 );
   
   ROS_INFO( "subscribed to %s\n%s\n", params_.laser_topic.c_str(), params_.map_topic.c_str());
@@ -135,7 +135,7 @@ int main( int argc, char **argv )
     
     ros::spinOnce();
     
-    eval_node.estimationLoop();
+    //eval_node.estimationLoop();
     
     eval_node.publish();
     
