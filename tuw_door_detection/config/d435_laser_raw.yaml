@@ -1,0 +1,1 @@
+robot_topics: ["r0/laser0/scan/raw", "r0/realsense/color/image_raw", "r0/realsense/depth/image_rect_raw", "r0/realsense/color/camera_info", "r0/realsense/depth/camera_info"]

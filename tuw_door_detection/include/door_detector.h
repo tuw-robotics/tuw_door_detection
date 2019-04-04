@@ -28,6 +28,12 @@ namespace tuw
     
     void setLaserMeasurement( std::shared_ptr<LaserMeasurement> &laser_meas );
     
+    /**
+     * setting the transform from world into baselink coordinates
+     * it is used for a more reliable redetection of doors
+     * */
+    void setRobotPosition( Eigen::Matrix4d &tf_baselink_world);
+    
     void clear();
     
     void display();
@@ -41,6 +47,7 @@ namespace tuw
     void draw_roi( std::shared_ptr<Contour> &contour, cv::Mat &img_display );
   
   private:
+    std::shared_ptr<Eigen::Matrix4d> tf_baselink_world;
     std::shared_ptr<ImageMeasurement> image_measurement_;
     std::shared_ptr<LaserMeasurement> laser_measurement_;
     image_processor::DoorDetectionPtr detection_image_;

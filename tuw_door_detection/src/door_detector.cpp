@@ -143,6 +143,11 @@ tuw_object_msgs::ObjectWithCovariance DoorDetector::generateObjMessage( std::sha
   return std::move( obj );
 }
 
+void DoorDetector::setRobotPosition(Eigen::Matrix4d &tf_baselink_world)
+{
+  this->tf_baselink_world = std::make_shared<Eigen::Matrix4d>(tf_baselink_world);
+}
+
 tuw_object_msgs::ObjectDetection DoorDetector::getResultAsMessage()
 {
   tuw_object_msgs::ObjectDetection det_msg;
