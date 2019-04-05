@@ -22,6 +22,8 @@ find_package(catkin REQUIRED COMPONENTS
         image_geometry
         )
 
+find_package(PCL 1.3 REQUIRED COMPONENTS common io)
+
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
 
@@ -148,7 +150,9 @@ include_directories(
         ${Boost_INCLUDE_DIRS}
         ${EIGEN3_INCLUDE_DIRS}
 )
-
+include_directories(${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 ## Declare a C++ library
 # add_library(tuw_linedetection
 #   src/${PROJECT_NAME}/linesegment2d_detector_node.cpp
@@ -183,6 +187,7 @@ target_link_libraries(door_detector_node
         ${OpenCV_LIBRARIES}
         ${Boost_LIBRARIES}
         ${EIGEN_LIBRARIES}
+        ${PCL_LIBRARIES}
         )
 
 #############

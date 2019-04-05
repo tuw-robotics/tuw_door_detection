@@ -9,6 +9,8 @@
 #include <laserproc/door_depth_detector.h>
 #include <tuw_object_msgs/ObjectDetection.h>
 #include <tuw_measurement_utils/laser_measurement.h>
+#include <pcl/point_cloud.h>
+#include <pcl/octree/octree_search.h>
 
 namespace tuw
 {
@@ -34,6 +36,11 @@ namespace tuw
      * */
     void setRobotPosition( Eigen::Matrix4d &tf_baselink_world);
     
+    /**
+     * Uses a kd tree for lookup of poses.
+     */
+    void lookupHistory( const Eigen::Vector3d &pose_ws);
+    
     void clear();
     
     void display();
@@ -47,6 +54,9 @@ namespace tuw
     void draw_roi( std::shared_ptr<Contour> &contour, cv::Mat &img_display );
   
   private:
+    pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_doors_;
+    pcl::octree::OctreePointCloudSearch<pcl::PointXYZ>::Ptr pcl_octree_;
+    
     std::shared_ptr<Eigen::Matrix4d> tf_baselink_world;
     std::shared_ptr<ImageMeasurement> image_measurement_;
     std::shared_ptr<LaserMeasurement> laser_measurement_;

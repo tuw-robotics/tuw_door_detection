@@ -68,7 +68,7 @@ DoorDetectorNode::DoorDetectorNode() : nh_( "" ),
                                        scan_filtered_( nullptr )
 {
   
-  door_detector_ = std::make_unique<DoorDetector>();
+  door_detector_.reset(new DoorDetector());
   sub_laser_ = nh_.subscribe( "scan", 1000, &DoorDetectorNode::callbackLaser, this );
   sub_image_ = nh_.subscribe( "image_rgb", 1000, &DoorDetectorNode::callbackImage, this );
   sub_camera_info_rgb_ = nh_.subscribe( "camera_info_rgb", 1000, &DoorDetectorNode::callbackCameraInfoRGB, this );
@@ -210,6 +210,8 @@ void DoorDetectorNode::process()
     door_detector_->setImageMeasurement( image_rgb_ );
     
     door_detector_->setLaserMeasurement( laser_measurement_ );
+    
+    door_detector_->setRobotPosition()
     
     door_detector_->merge( img_processor_, door_detector_laser_ );
     

@@ -9,7 +9,7 @@
     <arg name="world_frame" default="/r0/base_link"/>
     <arg name="skip_rosbag" default="0"/>
     <arg name="debug" default="true"/>
-    <arg name="bag_file" default="/media/$(arg fs)/bag_data/l1.bag"/>
+    <arg name="bag_file" default="/media/$(arg fs)/bag_data/robot_standing_ifof_door.bag"/>
 
     <group if="$(arg launch_rosbag)">
         <rosparam param="use_sim_time" subst_value="True"/>

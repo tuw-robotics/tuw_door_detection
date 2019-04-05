@@ -8,14 +8,39 @@
 
 using namespace tuw;
 
-DoorDetector::DoorDetector()
+DoorDetector::DoorDetector() : pcl_doors_( new pcl::PointCloud<pcl::PointXYZ>()),
+                               pcl_octree_(new pcl::octree::OctreePointCloudSearch<pcl::PointXYZ>(0.5f))
 {
-
+  pcl_octree_->setInputCloud(pcl_doors_);
+  pcl_octree_->addPointsFromInputCloud();
 }
 
 DoorDetector::~DoorDetector()
 {
 
+}
+
+void DoorDetector::lookupHistory( const Eigen::Vector3d &pose_ws )
+{
+  
+  std::vector<int> pointIdxRadiusSearch;
+  std::vector<float> pointRadiusSquaredDistance;
+  float radius = 0.5;
+  
+  pcl::PointXYZ searchPoint( pose_ws.x(), pose_ws.y(), pose_ws.z());
+  if ( pcl_octree_->radiusSearch( searchPoint, radius, pointIdxRadiusSearch, pointRadiusSquaredDistance ) > 0 )
+  {
+    for ( size_t i = 0; i < pointIdxRadiusSearch.size(); ++i )
+      std::cout << "    " << pcl_doors_->points[pointIdxRadiusSearch[i]].x
+                << " " << pcl_doors_->points[pointIdxRadiusSearch[i]].y
+                << " " << pcl_doors_->points[pointIdxRadiusSearch[i]].z
+                << " (squared distance: " << pointRadiusSquaredDistance[i] << ")" << std::endl;
+  } else
+  {
+    //octree.addPointToCloud(pose_ws, pcl_doors_);
+    std::cout << "adding point to pointcloud" << std::endl;
+    pcl_octree_->addPointToCloud( searchPoint, pcl_doors_ );
+  }
 }
 
 bool DoorDetector::merge( std::shared_ptr<image_processor::DoorDetectorImageProcessor> &img_processor,
@@ -79,6 +104,25 @@ bool DoorDetector::merge( std::shared_ptr<image_processor::DoorDetectorImageProc
   //    }
   //  }
   //}
+  if ( tf_baselink_world )
+  {
+    Eigen::Matrix4d tf_world_obj = tf_baselink_world->inverse() * T_WL;
+    for ( std::shared_ptr<Contour> contr : detection_laser_ )
+    {
+      Eigen::Vector3d door_bot0 = contr->getBoundingBoxObjSpace().back();
+      Eigen::Vector3d door_bot1 = contr->getBoundingBoxObjSpace().front();
+      Eigen::Vector3d dir = door_bot1 - door_bot0;
+      double length = dir.norm();
+      dir.normalize();
+      Eigen::Vector3d door_center_bot = (dir * (length / 2.0)) + door_bot0;
+      Eigen::Vector4d dcb_ws = Eigen::Vector4d( door_center_bot.x(), door_center_bot.y(), door_center_bot.z(), 1 );
+      dcb_ws = tf_world_obj * dcb_ws;
+      dcb_ws = dcb_ws / dcb_ws[3];
+      lookupHistory( dcb_ws.head<3>() );
+    }
+    //reset for the next method invocation (prevent multiple uses of same location at different times)
+    tf_baselink_world = nullptr;
+  }
   
   return true;
 }
@@ -143,9 +187,9 @@ tuw_object_msgs::ObjectWithCovariance DoorDetector::generateObjMessage( std::sha
   return std::move( obj );
 }
 
-void DoorDetector::setRobotPosition(Eigen::Matrix4d &tf_baselink_world)
+void DoorDetector::setRobotPosition( Eigen::Matrix4d &tf_baselink_world )
 {
-  this->tf_baselink_world = std::make_shared<Eigen::Matrix4d>(tf_baselink_world);
+  this->tf_baselink_world = std::make_shared<Eigen::Matrix4d>( tf_baselink_world );
 }
 
 tuw_object_msgs::ObjectDetection DoorDetector::getResultAsMessage()
@@ -163,14 +207,14 @@ tuw_object_msgs::ObjectDetection DoorDetector::getResultAsMessage()
     std::shared_ptr<Contour> contour = *it_contour;
     if ( contour->is_door_candidate())
     {
-      doors_.push_back(contour);
+      doors_.push_back( contour );
       det_msg.objects.push_back( std::move( generateObjMessage( contour, id++ )));
     }
     for ( auto chld: contour->getChildren())
     {
       if ( chld->is_door_candidate())
       {
-        doors_.push_back(chld);
+        doors_.push_back( chld );
         det_msg.objects.push_back( std::move( generateObjMessage( chld, id++ )));
       }
     }
