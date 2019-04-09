@@ -5,6 +5,7 @@
 #include <Eigen/Geometry>
 #include <opencv2/core.hpp>
 #include <geometry_msgs/TransformStamped.h>
+#include <boost/shared_ptr.hpp>
 
 namespace tuw
 {
@@ -29,10 +30,10 @@ namespace tuw
 
     const geometry_msgs::TransformStampedPtr getStampedTf() const;
 
-    void transformStamped2Eigen( const geometry_msgs::TransformStampedPtr, Eigen::Matrix<double, 4, 4> & );
-
     void cv2Eigen( const cv::Matx44d &, Eigen::Matrix<double, 4, 4> & );
-
+  
+    static void transformStamped2Eigen( const geometry_msgs::TransformStampedPtr &, Eigen::Matrix<double, 4, 4> & );
+    
   protected:
     Eigen::Matrix<double, 4, 4> tfWorldSensor;
     geometry_msgs::TransformStampedPtr stamped_tf_;

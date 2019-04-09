@@ -92,7 +92,9 @@ namespace tuw
     void process();
     
     void publish();
-  
+    
+    bool tryPoseFetch(Eigen::Matrix4d &tf_w_base);
+    
   private:
     ros::NodeHandle nh_;
     ParametersNode params_;

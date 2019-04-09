@@ -68,7 +68,7 @@ DoorDetectorNode::DoorDetectorNode() : nh_( "" ),
                                        scan_filtered_( nullptr )
 {
   
-  door_detector_.reset(new DoorDetector());
+  door_detector_.reset( new DoorDetector());
   sub_laser_ = nh_.subscribe( "scan", 1000, &DoorDetectorNode::callbackLaser, this );
   sub_image_ = nh_.subscribe( "image_rgb", 1000, &DoorDetectorNode::callbackImage, this );
   sub_camera_info_rgb_ = nh_.subscribe( "camera_info_rgb", 1000, &DoorDetectorNode::callbackCameraInfoRGB, this );
@@ -176,7 +176,7 @@ void DoorDetectorNode::publish()
     pub_detections_.publish( detection_result_ );
     detection_result_ = nullptr;
   }
-  if (scan_filtered_)
+  if ( scan_filtered_ )
   {
     pub_laser_.publish( scan_filtered_ );
   }
@@ -197,6 +197,33 @@ void DoorDetectorNode::callbackLaser( const sensor_msgs::LaserScan &_laser )
   
 }
 
+bool DoorDetectorNode::tryPoseFetch( Eigen::Matrix4d &tf_w_base )
+{
+  try
+  {
+    std::string world_frame = "map";
+    std::string target_frame = "r0/base_link";
+    
+    geometry_msgs::TransformStamped stamped_tf = tf_buffer_.lookupTransform(
+        world_frame, target_frame, ros::Time( 0 ));
+    
+    geometry_msgs::TransformStampedPtr stampedPtr;
+    stampedPtr.reset( new geometry_msgs::TransformStamped( stamped_tf ));
+    
+    Measurement::transformStamped2Eigen(stampedPtr, tf_w_base);
+    
+  } catch (tf2::TransformException &ex)
+  {
+    
+    ROS_INFO( "DoorDetectorNode::getStaticTF" );
+    ROS_ERROR( "%s", ex.what());
+    return false;
+    
+  }
+  
+  return true;
+}
+
 void DoorDetectorNode::process()
 {
   if ( laser_measurement_ && image_depth_ && image_rgb_ )
@@ -211,7 +238,11 @@ void DoorDetectorNode::process()
     
     door_detector_->setLaserMeasurement( laser_measurement_ );
     
-    door_detector_->setRobotPosition()
+    Eigen::Matrix4d tf_w_base;
+    if (tryPoseFetch(tf_w_base))
+    {
+      door_detector_->setRobotPosition(tf_w_base);
+    }
     
     door_detector_->merge( img_processor_, door_detector_laser_ );
     
@@ -226,7 +257,7 @@ void DoorDetectorNode::process()
       idxrange_.push_back( std::make_pair( deref->getBB2BeamIdxs()[0], deref->getBB2BeamIdxs()[1] ));
     }
     
-    scan_filtered_ = boost::make_shared<sensor_msgs::LaserScan>(laser_measurement_->filterMessage( idxrange_ ));
+    scan_filtered_ = boost::make_shared<sensor_msgs::LaserScan>( laser_measurement_->filterMessage( idxrange_ ));
     
     door_detector_->display();
     
