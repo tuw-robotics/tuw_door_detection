@@ -5,17 +5,14 @@
 #include <door_detector.h>
 #include <memory>
 #include <opencv2/highgui.hpp>
-#include <pcl/visualization/cloud_viewer.h>
-#include <pcl/io/io.h>
-#include <pcl/io/pcd_io.h>
 
 using namespace tuw;
 
-DoorDetector::DoorDetector() : pcl_doors_( new pcl::PointCloud<pcl::PointXYZ>()),
-                               pcl_octree_( new pcl::octree::OctreePointCloudSearch<pcl::PointXYZ>( 0.5f ))
+DoorDetector::DoorDetector()
 {
-  pcl_octree_->setInputCloud( pcl_doors_ );
-  pcl_octree_->addPointsFromInputCloud();
+  //TODO: parameternode if finished
+  double resolution = 0.5f;
+  octo_object_map_ = std::make_shared<OctoObjectMap>( resolution );
 }
 
 DoorDetector::~DoorDetector()
@@ -37,38 +34,15 @@ bool DoorDetector::lookupHistory( const std::shared_ptr<Contour> &contr, Eigen::
   
   std::vector<int> pointIdxRadiusSearch;
   std::vector<float> pointRadiusSquaredDistance;
-  float radius = 0.5;
   
-  pcl::PointXYZ searchPoint( dcb_ws.x(), dcb_ws.y(), dcb_ws.z());
-  if ( pcl_octree_->radiusSearch( searchPoint, radius, pointIdxRadiusSearch, pointRadiusSquaredDistance ) > 0 )
+  pcl::PointXYZ search_point( dcb_ws.x(), dcb_ws.y(), dcb_ws.z());
+  Eigen::Vector3d found_point;
+  if ( octo_object_map_->searchBest( search_point, 0.5, found_point ))
   {
-    for ( size_t i = 0; i < pointIdxRadiusSearch.size(); ++i )
-    {
-      
-      std::cout << "    " << pcl_doors_->points[pointIdxRadiusSearch[i]].x
-                << " " << pcl_doors_->points[pointIdxRadiusSearch[i]].y
-                << " " << pcl_doors_->points[pointIdxRadiusSearch[i]].z
-                << " (squared distance: " << pointRadiusSquaredDistance[i] << ")" << std::endl;
-      
-      auto it_d = door2seen_counter_.find( pointIdxRadiusSearch[i] );
-      if ( it_d != door2seen_counter_.end())
-      {
-        it_d->second.seen()++;
-        it_d->second.last_seen() = ros::Time::now();
-      }
-    }
-    
-    if ( pointIdxRadiusSearch.size() > 0 )
-    {
-      return true;
-    }
+    return true;
   } else if ( addifnotfound )
   {
-    //octree.addPointToCloud(pose_ws, pcl_doors_);
-    std::cout << "adding point to pointcloud" << std::endl;
-    pcl_octree_->addPointToCloud( searchPoint, pcl_doors_ );
-    auto oct_node = OctreeNodeInfo( pcl_doors_->size() - 1 );
-    door2seen_counter_.insert( std::make_pair( pcl_doors_->size() - 1, oct_node ));
+    octo_object_map_->insert( search_point );
   }
   return false;
 }
@@ -238,31 +212,79 @@ void DoorDetector::addOctNode( std::shared_ptr<Contour> &contr, Eigen::Matrix4d 
   dcb_ws = dcb_ws / dcb_ws[3];
   
   pcl::PointXYZ pcl_pnt( dcb_ws.x(), dcb_ws.y(), dcb_ws.z());
-  pcl_octree_->addPointToCloud( pcl_pnt, pcl_doors_ );
-  auto oct_node = OctreeNodeInfo( pcl_doors_->size() - 1 );
-  door2seen_counter_.insert( std::make_pair( pcl_doors_->size() - 1, oct_node ));
+  octo_object_map_->insert( pcl_pnt );
+  
 }
 
-void DoorDetector::update( Eigen::Matrix4d &tf )
+//void DoorDetector::update( Eigen::Matrix4d &tf )
+//{
+//  //@Todo: move resultasmessage stuff here
+//  for ( std::vector<std::shared_ptr<Contour>>::iterator it_contour = detection_laser_.begin();
+//        it_contour < detection_laser_.end();
+//        ++it_contour )
+//  {
+//    std::shared_ptr<Contour> contour = *it_contour;
+//    if ( contour->is_door_candidate())
+//    {
+//      addOctNode( contour, tf );
+//    }
+//    for ( auto chld: contour->getChildren())
+//    {
+//      if ( chld->is_door_candidate())
+//      {
+//        addOctNode( contour, tf );
+//      }
+//    }
+//  }
+//}
+
+tuw_object_msgs::ObjectDetection DoorDetector::getMappedDoorsAsMessage()
 {
-  //@Todo: move resultasmessage stuff here
-  for ( std::vector<std::shared_ptr<Contour>>::iterator it_contour = detection_laser_.begin();
-        it_contour < detection_laser_.end();
-        ++it_contour )
+  using tuw_object_msgs::ObjectWithCovariance;
+  using tuw_object_msgs::Object;
+  
+  tuw_object_msgs::ObjectDetection det_msg;
+  det_msg.header.stamp = ros::Time::now();
+  det_msg.header.frame_id = "/map";
+  det_msg.type = tuw_object_msgs::ObjectDetection::OBJECT_TYPE_DOOR;
+  
+  for (auto m_it = octo_object_map_->nodes_begin(); m_it != octo_object_map_->nodes_end(); ++m_it)
   {
-    std::shared_ptr<Contour> contour = *it_contour;
-    if ( contour->is_door_candidate())
-    {
-      addOctNode( contour, tf );
-    }
-    for ( auto chld: contour->getChildren())
-    {
-      if ( chld->is_door_candidate())
-      {
-        addOctNode( contour, tf );
-      }
-    }
+    auto node = m_it->second;
+    int32_t id = node.idx();
+    float confidence = static_cast<float>(node.seen());
+    tuw_object_msgs::ObjectWithCovariance obj;
+    obj.object.ids = {id};
+    obj.object.ids_confidence = {confidence};
+    
+    //@ToDo: which orientation how did i define it?
+    //@ToDo: refine opening angle and bounding box
+    
+    obj.object.pose.position.x = node.pose().x();
+    obj.object.pose.position.y = node.pose().y();
+    obj.object.pose.position.z = node.pose().z();
+    
+    obj.object.pose.orientation.x = 0;
+    obj.object.pose.orientation.y = 0;
+    obj.object.pose.orientation.z = 0;
+    obj.object.pose.orientation.w = 1;
+    
+    obj.object.shape = Object::SHAPE_DOOR;
+    
+    //@TODO magic values
+    obj.object.shape_variables = {
+        0.9,
+        2.0,
+        0,
+        0,
+        1,
+        0
+    };
+    
+    det_msg.objects.push_back( std::move( obj ));
   }
+  
+  return std::move( det_msg );
 }
 
 tuw_object_msgs::ObjectDetection DoorDetector::getResultAsMessage()
@@ -367,45 +389,12 @@ void DoorDetector::display()
     
   }
   
-  for ( const auto c : detection_laser_ )
-  {
-    //auto corners = c->getCorners();
-    //std::cout << "c " << corners.size() << std::endl;
-    //for ( const std::unique_ptr<Contour::Corner> &cn : corners )
-    //{
-    //}
-  }
+  
 }
 
 void DoorDetector::printOctree()
 {
-  std::cout << "pcl doors in map: " << pcl_doors_->size() << std::endl;
-  for ( int i = 0; i < pcl_doors_->size(); ++i )
-  {
-    auto fm_it = door2seen_counter_.find( i );
-    if ( fm_it != door2seen_counter_.end())
-    {
-      std::cout << fm_it->first << ":\t " << "seen: " << fm_it->second.seen() << "\t timestamp "
-                << fm_it->second.toc().sec << "s" << std::endl;
-    }
-  }
-  
-  pcl::visualization::PCLVisualizer viewer( std::string("Cloud Viewer") );
-  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr pcl_vis;
-  pcl_vis.reset(new pcl::PointCloud<pcl::PointXYZRGBA>());
-  for ( int ii = 0; ii < pcl_doors_->size(); ++ii )
-  {
-    pcl::PointXYZRGBA vPnt;
-    vPnt.x = pcl_doors_->operator[]( ii ).x;
-    vPnt.y = pcl_doors_->operator[]( ii ).y;
-    vPnt.z = pcl_doors_->operator[]( ii ).z;
-    uint32_t rgb = ((uint32_t) 0 << 16 | (uint32_t) 255 << 8 | (uint32_t) 0);
-    vPnt.rgb = *reinterpret_cast<float *> (&rgb);
-    vPnt.a = (uint8_t) 255;
-    pcl_vis->push_back( vPnt );
-  }
-  const pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr const_pcl_vis = pcl_vis;
-  viewer.addPointCloud( const_pcl_vis );
+  octo_object_map_->print();
 }
 
 void

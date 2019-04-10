@@ -47,6 +47,7 @@ DoorDetectorNode::ParametersNode::ParametersNode() : node( "~" )
   node.param<std::string>( "laser_source_frame", laser_source_frame, std::string( "" ));
   node.param<std::string>( "world_frame", world_frame, std::string( "" ));
   node.param<std::string>( "clean_laser_pub_topic", laser_pub, std::string( "clean_laser" ));
+  node.param<std::string>( "mapped_doors_pub_topic", mapped_doors_topic, std::string(""));
   node.param<bool>( "debug", debug, false );
   
   try
@@ -76,6 +77,11 @@ DoorDetectorNode::DoorDetectorNode() : nh_( "" ),
   sub_image_depth_ = nh_.subscribe( "image_depth", 1000, &DoorDetectorNode::callbackDepthImage, this );
   img_processor_.reset( new image_processor::DoorDetectorImageProcessor());
   
+  if (params_.mapped_doors_topic != std::string(""))
+  {
+    pub_mapped_doors_ = nh_.advertise<tuw_object_msgs::ObjectDetection>( params_.mapped_doors_topic ,1000);
+  }
+  
   pub_detections_ = nh_.advertise<tuw_object_msgs::ObjectDetection>( "object_detections", 1000 );
   pub_laser_ = nh_.advertise<sensor_msgs::LaserScan>( params_.laser_pub, 1000 );
   //line_pub_ = nh_.advertise<tuw_geometry_msgs::LineSegments>("line_segments", 1000);
@@ -91,15 +97,6 @@ DoorDetectorNode::DoorDetectorNode() : nh_( "" ),
     door_detector_laser_.reset( new door_laser_proc::DoorLineDetector( nh_ ));
   }
   
-  printf(
-      "msg:         %i x %i @ %4.3fm/p, %4.3f, %4.3f, %4.3f, %4.3f\n",
-      resp_map_.map.info.width, resp_map_.map.info.height,
-      resp_map_.map.info.resolution, resp_map_.map.info.origin.position.x,
-      resp_map_.map.info.origin.position.y,
-      resp_map_.map.info.width * resp_map_.map.info.resolution +
-      resp_map_.map.info.origin.position.x,
-      resp_map_.map.info.height * resp_map_.map.info.resolution +
-      resp_map_.map.info.origin.position.y );
 }
 
 DoorDetectorNode::~DoorDetectorNode() = default;
@@ -180,6 +177,11 @@ void DoorDetectorNode::publish()
   {
     pub_laser_.publish( scan_filtered_ );
   }
+  if (mapped_door_objs_)
+  {
+    pub_mapped_doors_.publish ( mapped_door_objs_);
+    mapped_door_objs_ = nullptr;
+  }
   
 }
 
@@ -247,6 +249,8 @@ void DoorDetectorNode::process()
     door_detector_->merge( img_processor_, door_detector_laser_ );
     
     detection_result_.reset( new tuw_object_msgs::ObjectDetection( door_detector_->getResultAsMessage()));
+    
+    mapped_door_objs_.reset( new tuw_object_msgs::ObjectDetection( door_detector_->getMappedDoorsAsMessage()));
     
     auto doors_in_laser = door_detector_->getDoorsLaser();
     

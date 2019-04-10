@@ -22,7 +22,7 @@ find_package(catkin REQUIRED COMPONENTS
         image_geometry
         )
 
-find_package(PCL 1.3 REQUIRED COMPONENTS common io visualization)
+find_package(PCL 1.3 REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
@@ -173,6 +173,7 @@ add_executable(door_detector_node
         src/laser_processor/door_detection.cpp
         src/image_processor/door_detector_imgproc.cpp
         src/datastructures/contour_container.cpp
+        src/datastructures/octo_object_map.cpp
         src/door_detector.cpp
         )
 

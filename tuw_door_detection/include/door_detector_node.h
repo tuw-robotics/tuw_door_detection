@@ -82,6 +82,7 @@ namespace tuw
       std::string laser_source_frame;
       std::string world_frame;
       std::string laser_pub;
+      std::string mapped_doors_topic;
       bool debug;
     };
     
@@ -100,6 +101,7 @@ namespace tuw
     ParametersNode params_;
     ros::Publisher pub_laser_;
     ros::Publisher pub_detections_;
+    ros::Publisher pub_mapped_doors_;
     ros::Subscriber sub_laser_;
     ros::Subscriber sub_image_;
     ros::Subscriber sub_camera_info_rgb_;
@@ -121,6 +123,7 @@ namespace tuw
     sensor_msgs::CameraInfoPtr camera_info_depth_;
     sensor_msgs::CameraInfoPtr camera_info_rgb_;
     tuw_object_msgs::ObjectDetectionPtr detection_result_;
+    tuw_object_msgs::ObjectDetectionPtr mapped_door_objs_;
     //std::unique_ptr<DoorDepthDetector> depth_detector_;
     
     bool display_window_;
