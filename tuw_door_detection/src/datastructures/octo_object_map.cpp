@@ -44,7 +44,6 @@ ros::Duration OctoMapNode::toc()
 }
 
 
-
 //OctoObjectMap::OctoObjectMap() : pcl_objcloud( new pcl::PointCloud<pcl::PointXYZ>()),
 //                                 pcl_octree_( new pcl::octree::OctreePointCloudSearch<pcl::PointXYZ>( 0.5f ))
 //{

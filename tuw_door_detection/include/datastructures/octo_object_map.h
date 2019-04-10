@@ -78,6 +78,7 @@ namespace tuw
           if ( obj_stored != obj_nodes_.end())
           {
             obj_stored->second.seen()++;
+            obj_stored->second.last_seen() = ros::Time::now();
           }
         }
         
