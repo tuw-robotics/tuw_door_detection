@@ -37,7 +37,7 @@ bool DoorDetector::lookupHistory( const std::shared_ptr<Contour> &contr, Eigen::
   
   pcl::PointXYZ search_point( dcb_ws.x(), dcb_ws.y(), dcb_ws.z());
   Eigen::Vector3d found_point;
-  if ( octo_object_map_->searchBest( search_point, 0.5, found_point ))
+  if ( octo_object_map_->searchBestPCL( search_point, 0.5, found_point ))
   {
     return true;
   } else if ( addifnotfound )
@@ -198,7 +198,6 @@ void DoorDetector::setRobotPosition( Eigen::Matrix4d &tf_world_baselink )
 
 void DoorDetector::addOctNode( std::shared_ptr<Contour> &contr, Eigen::Matrix4d &tf )
 {
-  
   Eigen::Vector3d door_bot0 = contr->getBoundingBoxObjSpace().back();
   Eigen::Vector3d door_bot1 = contr->getBoundingBoxObjSpace().front();
   Eigen::Vector3d dir = door_bot1 - door_bot0;
@@ -213,7 +212,6 @@ void DoorDetector::addOctNode( std::shared_ptr<Contour> &contr, Eigen::Matrix4d 
   
   pcl::PointXYZ pcl_pnt( dcb_ws.x(), dcb_ws.y(), dcb_ws.z());
   octo_object_map_->insert( pcl_pnt );
-  
 }
 
 //void DoorDetector::update( Eigen::Matrix4d &tf )

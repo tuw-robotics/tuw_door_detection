@@ -170,6 +170,7 @@ include_directories(${PCL_INCLUDE_DIRS})
 # add_executable(tuw_linedetection_node src/tuw_linedetection_node.cpp)
 add_executable(${PROJECT_NAME}_node
         src/laser_sensor_model_evaluator.cpp
+        src/object_sensor_model_evaluator.cpp
         src/sensor_model_evaluator_node.cpp
         src/sensor_model_parameter_estimator_em.cpp
         )

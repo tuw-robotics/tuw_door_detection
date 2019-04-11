@@ -43,7 +43,9 @@ namespace tuw
     };
     
     SensorModelEvaluatorNode( ros::NodeHandle &nh );
-
+    
+    void callbackObjectDetection( const tuw_object_msgs::ObjectDetectionConstPtr &);
+    
     void callbackLaser( const sensor_msgs::LaserScan &laser );
   
     void callbackDummy(const std_msgs::String &msg);
@@ -57,7 +59,9 @@ namespace tuw
     void publish();
 
   private:
-
+  
+    bool tryPoseFetch( Eigen::Matrix4d &tf_w_base, const std::string &world_frame, const std::string &target_frame );
+    
     dynamic_reconfigure::Server<sensor_model_evaluator::SensorModelEvaluatorNodeConfig> server;
     dynamic_reconfigure::Server<sensor_model_evaluator::SensorModelEvaluatorNodeConfig>::CallbackType f_callback;
     sensor_model_evaluator::SensorModelEvaluatorNodeConfig config_;
@@ -81,7 +85,7 @@ namespace tuw
     bool continuous_stream_;
     
     ParametersNode params_;
-
+  
   };
 
 };

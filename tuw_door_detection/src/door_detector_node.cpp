@@ -201,6 +201,7 @@ void DoorDetectorNode::callbackLaser( const sensor_msgs::LaserScan &_laser )
 
 bool DoorDetectorNode::tryPoseFetch( Eigen::Matrix4d &tf_w_base )
 {
+  //TODO: parameters
   try
   {
     std::string world_frame = "map";

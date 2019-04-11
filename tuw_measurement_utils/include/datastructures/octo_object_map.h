@@ -52,7 +52,7 @@ namespace tuw
     pcl::octree::OctreePointCloudSearch<pcl::PointXYZ> &getOctree();
     
     template <typename T>
-    bool searchBest( pcl::PointXYZ &search_point, float radius, T &outPoint, bool auto_increment = true )
+    bool searchBestPCL( pcl::PointXYZ &search_point, float radius, T &outPoint, bool auto_increment = true )
     {
       std::vector<int> pointIdxRadiusSearch;
       std::vector<float> pointRadiusSquaredDistance;

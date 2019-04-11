@@ -29,6 +29,42 @@ SensorModelEvaluatorNode::SensorModelEvaluatorNode( ros::NodeHandle &nh ) : eval
   server.setCallback( f_callback );
 }
 
+void SensorModelEvaluatorNode::callbackObjectDetection( const tuw_object_msgs::ObjectDetectionConstPtr &obj )
+{
+  Eigen::Matrix4d tf;
+  if ( tryPoseFetch( tf, "map", obj->header.frame_id ))
+  {
+    //
+  }
+}
+
+bool SensorModelEvaluatorNode::tryPoseFetch( Eigen::Matrix4d &tf_w_base, const std::string &world_frame,
+                                             const std::string &target_frame )
+{
+  //TODO: parameters
+  try
+  {
+    
+    geometry_msgs::TransformStamped stamped_tf = tf_buffer_.lookupTransform(
+        world_frame, target_frame, ros::Time( 0 ));
+    
+    geometry_msgs::TransformStampedPtr stampedPtr;
+    stampedPtr.reset( new geometry_msgs::TransformStamped( stamped_tf ));
+    
+    Measurement::transformStamped2Eigen( stampedPtr, tf_w_base );
+    
+  } catch (tf2::TransformException &ex)
+  {
+    
+    ROS_INFO( "DoorDetectorNode::getStaticTF" );
+    ROS_ERROR( "%s", ex.what());
+    return false;
+    
+  }
+  
+  return true;
+}
+
 void SensorModelEvaluatorNode::callbackDummy( const std_msgs::String &msg )
 {
   estimationLoop();
