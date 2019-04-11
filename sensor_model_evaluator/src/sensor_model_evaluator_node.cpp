@@ -48,7 +48,7 @@ void SensorModelEvaluatorNode::callbackMap( const nav_msgs::OccupancyGridConstPt
 {
   if ( !evaluator_ )
   {
-    evaluator_.reset( new SensorModelEvaluator( map ));
+    evaluator_.reset( new LaserSensorModelEvaluator( map ));
     evaluator_->configure( config_ );
   }
 }

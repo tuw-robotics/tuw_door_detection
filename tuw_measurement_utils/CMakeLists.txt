@@ -20,6 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
         )
 
 ## System dependencies are found with CMake's conventions
+find_package(PCL 1.3 REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system)
 
 find_package(Eigen3 REQUIRED)
@@ -135,7 +136,9 @@ include_directories(
         ${Boost_INCLUDE_DIRS}
         ${EIGEN3_INCLUDE_DIRS}
 )
-
+include_directories(${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 ## Declare a C++ library
 # add_library(tuw_linedetection
 #   src/${PROJECT_NAME}/linesegment2d_detector_node.cpp
@@ -148,12 +151,14 @@ include_directories(
 
 ## Declare a C++ executable
 # add_executable(tuw_linedetection_node src/tuw_linedetection_node.cpp)
-add_library(tuw_measurement_utils
+add_library(tuw_measurement_utils STATIC
         src/measurement.cpp
         src/laser_measurement.cpp
         src/image_measurement.cpp
         src/contour.cpp
-        src/beam.cpp)
+        src/beam.cpp
+        src/datastructures/contour_container.cpp
+        src/datastructures/octo_object_map.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -166,6 +171,7 @@ target_link_libraries(tuw_measurement_utils
         ${OpenCV_LIBRARIES}
         ${Boost_LIBRARIES}
         ${EIGEN_LIBRARIES}
+        ${PCL_LIBRARIES}
         )
 
 #############
@@ -183,8 +189,8 @@ target_link_libraries(tuw_measurement_utils
 # )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS tuw_measurement_utils tuw_measurement_utils
-        #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+install(TARGETS tuw_measurement_utils
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
         )

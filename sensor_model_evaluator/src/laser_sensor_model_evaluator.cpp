@@ -2,14 +2,14 @@
 // Created by felix on 28.02.19.
 //
 
-#include <sensor_model_evaluator.h>
+#include <laser_sensor_model_evaluator.h>
 #include <opencv2/highgui.hpp>
 #include <grid_map_ros/GridMapRosConverter.hpp>
 #include <tuw_measurement_utils/transforms.h>
 
 using namespace tuw;
 
-SensorModelEvaluator::SensorModelEvaluator( const nav_msgs::OccupancyGridConstPtr &map, bool render ) : has_result_(
+LaserSensorModelEvaluator::LaserSensorModelEvaluator( const nav_msgs::OccupancyGridConstPtr &map, bool render ) : has_result_(
     false ), filesys_force_override_( true ), continuous_outstream_( false )
 {
   map_msg_ = nav_msgs::OccupancyGrid( *map );
@@ -33,26 +33,26 @@ SensorModelEvaluator::SensorModelEvaluator( const nav_msgs::OccupancyGridConstPt
   }
 }
 
-void SensorModelEvaluator::configure( const sensor_model_evaluator::SensorModelEvaluatorNodeConfig &cfg )
+void LaserSensorModelEvaluator::configure( const sensor_model_evaluator::SensorModelEvaluatorNodeConfig &cfg )
 {
   continuous_outstream_ = cfg.continuous_outstream;
 }
 
-void SensorModelEvaluator::updateObservedMeasurementTable( double angle_idx, const tuw::Point2D &obs )
+void LaserSensorModelEvaluator::updateObservedMeasurementTable( double angle_idx, const tuw::Point2D &obs )
 {
   assert( observed_meas_.find( angle_idx ) != std::end( observed_meas_ ));
   observed_meas_.insert( std::make_pair( angle_idx, obs ));
 }
 
-void SensorModelEvaluator::updateExpectedMeasurementTable( double angle_idx, const tuw::Point2D &expect )
+void LaserSensorModelEvaluator::updateExpectedMeasurementTable( double angle_idx, const tuw::Point2D &expect )
 {
   assert( expected_meas_.find( angle_idx ) != std::end( expected_meas_ ));
   expected_meas_.insert( std::make_pair( angle_idx, expect ));
 }
 
-bool SensorModelEvaluator::convert( const nav_msgs::OccupancyGridConstPtr &src, std::shared_ptr<InternalMap> &des )
+bool LaserSensorModelEvaluator::convert( const nav_msgs::OccupancyGridConstPtr &src, std::shared_ptr<InternalMap> &des )
 {
-  des = std::make_unique<InternalMap>();
+  des = std::unique_ptr<InternalMap>(new InternalMap());
   ROS_INFO( "map dim %d, %d\norigin: (x=%lf,y=%lf,z=%lf)",
             (int) src->info.width, (int) src->info.height,
             src->info.origin.position.x,
@@ -64,7 +64,7 @@ bool SensorModelEvaluator::convert( const nav_msgs::OccupancyGridConstPtr &src, 
       (src->info.origin.orientation.z != 0) ||
       (src->info.origin.orientation.w != 1))
   {
-    ROS_WARN( "UNSUPPORTED CONVERSION: Rotated map given in SensorModelEvaluator::convert()" );
+    ROS_WARN( "UNSUPPORTED CONVERSION: Rotated map given in LaserSensorModelEvaluator::convert()" );
     ROS_WARN( "(x,y,z,w) = (%lf,%lf,%lf,%lf)", src->info.origin.orientation.x,
               src->info.origin.orientation.y,
               src->info.origin.orientation.z,
@@ -86,13 +86,13 @@ bool SensorModelEvaluator::convert( const nav_msgs::OccupancyGridConstPtr &src, 
   return true;
 }
 
-bool SensorModelEvaluator::convert( const std::shared_ptr<InternalMap> &src, cv::Mat &des )
+bool LaserSensorModelEvaluator::convert( const std::shared_ptr<InternalMap> &src, cv::Mat &des )
 {
   src->cv_uc8.copyTo( des );
   return true;
 }
 
-bool SensorModelEvaluator::convert( const std::shared_ptr<InternalMap> &src, nav_msgs::OccupancyGrid &des )
+bool LaserSensorModelEvaluator::convert( const std::shared_ptr<InternalMap> &src, nav_msgs::OccupancyGrid &des )
 {
   des.info.resolution = src->scale;
   des.info.width = src->size_x;
@@ -107,7 +107,7 @@ bool SensorModelEvaluator::convert( const std::shared_ptr<InternalMap> &src, nav
   return true;
 }
 
-bool SensorModelEvaluator::convert( const std::shared_ptr<tuw::SensorModelEvaluator::InternalMap> &src,
+bool LaserSensorModelEvaluator::convert( const std::shared_ptr<tuw::LaserSensorModelEvaluator::InternalMap> &src,
                                     grid_map_msgs::GridMap &des )
 {
   nav_msgs::OccupancyGrid gm_ros;
@@ -125,15 +125,15 @@ bool SensorModelEvaluator::convert( const std::shared_ptr<tuw::SensorModelEvalua
   return true;
 }
 
-void SensorModelEvaluator::clear()
+void LaserSensorModelEvaluator::clear()
 {
   expected_meas_.clear();
   observed_meas_.clear();
   render_map_->clear();
 }
 
-std::shared_ptr<SensorModelEvaluator::InternalMap>
-SensorModelEvaluator::constructDownscaled( const std::shared_ptr<InternalMap> &map, const double scale_factor )
+std::shared_ptr<LaserSensorModelEvaluator::InternalMap>
+LaserSensorModelEvaluator::constructDownscaled( const std::shared_ptr<InternalMap> &map, const double scale_factor )
 {
   std::shared_ptr<InternalMap> downscaled = std::make_shared<InternalMap>();
   map->cv_uc8.copyTo( downscaled->cv_uc8 );
@@ -154,7 +154,7 @@ SensorModelEvaluator::constructDownscaled( const std::shared_ptr<InternalMap> &m
   return downscaled;
 }
 
-void SensorModelEvaluator::downscaleImshow( LaserMeasurementPtr meas )
+void LaserSensorModelEvaluator::downscaleImshow( LaserMeasurementPtr meas )
 {
   
   cv::Point2d origin_img( render_map_->get_mx_from_wx( render_map_->origin_x ),
@@ -184,7 +184,7 @@ void SensorModelEvaluator::downscaleImshow( LaserMeasurementPtr meas )
   cv::waitKey( 5 );
 }
 
-void SensorModelEvaluator::evaluate( LaserMeasurementPtr &scan )
+void LaserSensorModelEvaluator::evaluate( LaserMeasurementPtr &scan )
 {
   clear();
   
@@ -239,7 +239,7 @@ void SensorModelEvaluator::evaluate( LaserMeasurementPtr &scan )
   has_result_ = true;
 }
 
-void SensorModelEvaluator::calcRangeTable()
+void LaserSensorModelEvaluator::calcRangeTable()
 {
   cv::Point2d origin_laser = cv::Point2d( laser_meas_->getTfWorldSensor()( 0, 3 ),
                                           laser_meas_->getTfWorldSensor()( 1, 3 ));
@@ -259,7 +259,7 @@ void SensorModelEvaluator::calcRangeTable()
   }
 }
 
-Point2DPtr SensorModelEvaluator::rayTrace( const double scale, const Beam &beam, const Eigen::Matrix4d &tf_ML )
+Point2DPtr LaserSensorModelEvaluator::rayTrace( const double scale, const Beam &beam, const Eigen::Matrix4d &tf_ML )
 {
   Eigen::Vector2d origin_eigen( tf_ML( 0, 3 ), tf_ML( 1, 3 ));
   Eigen::Vector4d vbeamend( beam.end_point.x(), beam.end_point.y(), 0, 1 );
@@ -295,13 +295,13 @@ Point2DPtr SensorModelEvaluator::rayTrace( const double scale, const Beam &beam,
       }
     } else if ( map_->cv_uc8.channels() == 3 )
     {
-      ROS_ERROR( "SensorModelEvaluator::rayTrace  -- multichannel map not supported --" );
+      ROS_ERROR( "LaserSensorModelEvaluator::rayTrace  -- multichannel map not supported --" );
     }
   }
   return nullptr;
 }
 
-void SensorModelEvaluator::internalSerialize( boost::filesystem::ofstream &of )
+void LaserSensorModelEvaluator::internalSerialize( boost::filesystem::ofstream &of )
 {
   if ( !laser_meas_ )
   {
@@ -329,7 +329,7 @@ void SensorModelEvaluator::internalSerialize( boost::filesystem::ofstream &of )
   }
 }
 
-void SensorModelEvaluator::serializeResult( const std::string &filepath )
+void LaserSensorModelEvaluator::serializeResult( const std::string &filepath )
 {
   using boost::filesystem::path;
   path p( filepath );

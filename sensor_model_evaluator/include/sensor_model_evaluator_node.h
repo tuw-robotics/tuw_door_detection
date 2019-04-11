@@ -13,12 +13,15 @@
 
 #include <sensor_msgs/LaserScan.h>
 #include <tuw_measurement_utils/laser_measurement.h>
-#include <sensor_model_evaluator.h>
+#include <laser_sensor_model_evaluator.h>
 #include <std_msgs/String.h>
 
 #include <dynamic_reconfigure/server.h>
 #include <sensor_model_evaluator/SensorModelEvaluatorNodeConfig.h>
 #include <sensor_model_parameter_estimator_em.h>
+
+#include <tuw_object_msgs/ObjectDetection.h>
+#include <datastructures/octo_object_map.h>
 
 namespace tuw
 {

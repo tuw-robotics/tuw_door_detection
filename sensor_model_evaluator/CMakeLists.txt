@@ -17,6 +17,8 @@ find_package(catkin REQUIRED COMPONENTS
         grid_map_ros
         tuw_geometry
         tuw_geometry_msgs
+        tuw_object_msgs
+        tuw_door_detection
         tuw_measurement_utils
         dynamic_reconfigure
         )
@@ -121,6 +123,8 @@ catkin_package(
         std_msgs
         tuw_geometry
         tuw_geometry_msgs
+        tuw_object_msgs
+        tuw_door_detection
         tf2_ros
         cv_bridge
         tuw_measurement_utils
@@ -134,6 +138,8 @@ catkin_package(
         OpenCV
         Eigen3
 )
+
+find_package(PCL 1.3 REQUIRED)
 
 ###########
 ## Build ##
@@ -149,6 +155,7 @@ include_directories(
         ${EIGEN3_INCLUDE_DIRS}
 )
 
+include_directories(${PCL_INCLUDE_DIRS})
 ## Declare a C++ library
 # add_library(tuw_linedetection
 #   src/${PROJECT_NAME}/linesegment2d_detector_node.cpp
@@ -162,7 +169,7 @@ include_directories(
 ## Declare a C++ executable
 # add_executable(tuw_linedetection_node src/tuw_linedetection_node.cpp)
 add_executable(${PROJECT_NAME}_node
-        src/sensor_model_evaluator.cpp
+        src/laser_sensor_model_evaluator.cpp
         src/sensor_model_evaluator_node.cpp
         src/sensor_model_parameter_estimator_em.cpp
         )

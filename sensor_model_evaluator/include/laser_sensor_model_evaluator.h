@@ -24,14 +24,14 @@
 namespace tuw
 {
 
-  class SensorModelEvaluator
+  class LaserSensorModelEvaluator
   {
   public:
     using measurement_table = std::map<double, Point2D>;
     using map_info_type = nav_msgs::OccupancyGrid_<std::allocator<void>>::_info_type;
     using range_table = std::map<double, std::pair<double, double>>;
 
-    SensorModelEvaluator( const nav_msgs::OccupancyGridConstPtr &map, bool render = true );
+    LaserSensorModelEvaluator( const nav_msgs::OccupancyGridConstPtr &map, bool render = true );
 
     void evaluate( LaserMeasurementPtr &scan );
     
@@ -169,7 +169,7 @@ namespace tuw
     geometry_msgs::Pose laser_pose_;
   };
 
-  using SensorModelEvaluatorPtr = std::shared_ptr<SensorModelEvaluator>;
+  using SensorModelEvaluatorPtr = std::shared_ptr<LaserSensorModelEvaluator>;
 
 }
 
