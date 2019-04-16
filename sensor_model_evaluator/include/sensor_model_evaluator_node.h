@@ -23,70 +23,87 @@
 #include <tuw_object_msgs/ObjectDetection.h>
 #include <datastructures/octo_object_map.h>
 
+#include <object_sensor_model_evaluator.h>
+
 namespace tuw
 {
-
+  
   class SensorModelEvaluatorNode
   {
   public:
     class ParametersNode
     {
     public:
+      enum class ModelType
+      {
+        OBJECTS,
+        LASER_SCAN
+      };
+      
       ParametersNode( const ros::NodeHandle &nh );
+      
       ~ParametersNode() = default;
       
       ros::NodeHandle nh;
       std::string filepath;
       std::string laser_topic;
       std::string map_topic;
+      std::string objects_topic;
       bool estimate_parameters;
+      ModelType model_type;
+      
+      std::map<std::string, ModelType> enum_resolver{
+          {std::string( "objects" ), ModelType::OBJECTS},
+          {std::string( "laser" ),   ModelType::LASER_SCAN}
+      };
     };
     
     SensorModelEvaluatorNode( ros::NodeHandle &nh );
     
-    void callbackObjectDetection( const tuw_object_msgs::ObjectDetectionConstPtr &);
+    void callbackObjectDetection( const tuw_object_msgs::ObjectDetectionConstPtr & );
     
     void callbackLaser( const sensor_msgs::LaserScan &laser );
-  
-    void callbackDummy(const std_msgs::String &msg);
+    
+    void callbackDummy( const std_msgs::String &msg );
     
     void callbackMap( const nav_msgs::OccupancyGridConstPtr &map );
-
+    
     void reconfigureCallback( const sensor_model_evaluator::SensorModelEvaluatorNodeConfig &callback, uint32_t level );
     
     void estimationLoop();
     
     void publish();
-
-  private:
   
+  private:
+    
     bool tryPoseFetch( Eigen::Matrix4d &tf_w_base, const std::string &world_frame, const std::string &target_frame );
     
     dynamic_reconfigure::Server<sensor_model_evaluator::SensorModelEvaluatorNodeConfig> server;
     dynamic_reconfigure::Server<sensor_model_evaluator::SensorModelEvaluatorNodeConfig>::CallbackType f_callback;
     sensor_model_evaluator::SensorModelEvaluatorNodeConfig config_;
     SensorModelParameterEstimatorEM parameter_estimator_;
-
+    
     ros::Subscriber sub_laser_;
     ros::Subscriber sub_map_;
     ros::Subscriber sub_dummy_;
     ros::Publisher pub_map_eth_;
     ros::NodeHandle nh_;
-
+    
     tf2_ros::Buffer tf_buffer_;
     tf2_ros::TransformListener tf_listener_;
     ros::Time laser_message_tick_;
-
+    
     nav_msgs::OccupancyGridConstPtr map_;
-
+    
     LaserMeasurementPtr laser_measurement_;
     SensorModelEvaluatorPtr evaluator_;
-
+    ObjectSensorModel::Ptr object_model_evaluator_;
+    
     bool continuous_stream_;
     
     ParametersNode params_;
-  
+    
   };
-
+  
 };
 #endif //PROJECT_SENSORMODELEVALUATORNODE_H

@@ -12,6 +12,19 @@ SensorModelEvaluatorNode::ParametersNode::ParametersNode( const ros::NodeHandle 
   nh.param( std::string( "laser_topic" ), laser_topic, std::string( "/r0/laser0/scan/raw" ));
   nh.param( std::string( "map_topic" ), map_topic, std::string( "/map" ));
   nh.param( std::string( "estimate_model_parameters" ), estimate_parameters, false );
+  std::string model_type_str;
+  nh.param( std::string( "model_type" ), model_type_str, std::string( "objects" ));
+  nh.param( std::string( "objects_topic" ), objects_topic, std::string( "objects_topic" ));
+  
+  try
+  {
+    model_type = enum_resolver.at( model_type_str );
+  }
+  catch (std::exception &e)
+  {
+    ROS_ERROR( "ERROR: %s is not a valid evaluator mode.", model_type_str.c_str());
+  }
+  
 }
 
 SensorModelEvaluatorNode::SensorModelEvaluatorNode( ros::NodeHandle &nh ) : evaluator_( nullptr ),
@@ -19,7 +32,14 @@ SensorModelEvaluatorNode::SensorModelEvaluatorNode( ros::NodeHandle &nh ) : eval
                                                                             params_( ros::NodeHandle( "~" ))
 {
   nh_ = nh;
-  sub_laser_ = nh.subscribe( params_.laser_topic, 1000, &SensorModelEvaluatorNode::callbackLaser, this );
+  if ( params_.model_type == ParametersNode::ModelType::LASER_SCAN )
+  {
+    sub_laser_ = nh.subscribe( params_.laser_topic, 1000, &SensorModelEvaluatorNode::callbackLaser, this );
+  } else if ( params_.model_type == ParametersNode::ModelType::OBJECTS )
+  {
+    sub_laser_ = nh.subscribe( params_.objects_topic, 1000, &SensorModelEvaluatorNode::callbackObjectDetection, this );
+  }
+  
   sub_map_ = nh.subscribe( params_.map_topic, 1, &SensorModelEvaluatorNode::callbackMap, this );
   sub_dummy_ = nh.subscribe( "dummy_msg", 1, &SensorModelEvaluatorNode::callbackDummy, this );
   pub_map_eth_ = nh.advertise<grid_map_msgs::GridMap>( "/grid_map", 4 );
@@ -31,10 +51,25 @@ SensorModelEvaluatorNode::SensorModelEvaluatorNode( ros::NodeHandle &nh ) : eval
 
 void SensorModelEvaluatorNode::callbackObjectDetection( const tuw_object_msgs::ObjectDetectionConstPtr &obj )
 {
+  using tuw_object_msgs::ObjectDetection;
+  using tuw_object_msgs::ObjectWithCovariance;
+  
   Eigen::Matrix4d tf;
   if ( tryPoseFetch( tf, "map", obj->header.frame_id ))
   {
     //
+    if ( !object_model_evaluator_ )
+    {
+      object_model_evaluator_ = std::make_shared<ObjectSensorModel>();
+    }
+    
+    for ( const ObjectWithCovariance obj_msg : obj->objects )
+    {
+      object_model_evaluator_->process( obj_msg, tf );
+    }
+  } else
+  {
+    ROS_WARN( "could not obtain pose from %s<-%s", "map", obj->header.frame_id.c_str());
   }
 }
 

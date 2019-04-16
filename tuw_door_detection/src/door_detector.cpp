@@ -37,7 +37,8 @@ bool DoorDetector::lookupHistory( const std::shared_ptr<Contour> &contr, Eigen::
   
   pcl::PointXYZ search_point( dcb_ws.x(), dcb_ws.y(), dcb_ws.z());
   Eigen::Vector3d found_point;
-  if ( octo_object_map_->searchBestPCL( search_point, 0.5, found_point ))
+  float distance_squared;
+  if ( octo_object_map_->searchBestPCL( search_point, 0.5, found_point, distance_squared))
   {
     return true;
   } else if ( addifnotfound )
@@ -94,39 +95,39 @@ bool DoorDetector::merge( std::shared_ptr<image_processor::DoorDetectorImageProc
                    contr->visibilityCheck( false, img_width, img_height );
                  } );
   
-  if ( tf_world_baselink_ )
-  {
-    Eigen::Matrix4d tf_world_obj = *tf_world_baselink_ * T_WL;
-    for ( std::shared_ptr<Contour> contr : detection_laser_ )
-    {
-      if ( !lookupHistory( contr, tf_world_obj ))
-      {
-        if ( contr->is_door_candidate())
-        {
-          addOctNode( contr, tf_world_obj );
-        }
-      }
-      //TODO: else statistics
-      for ( std::shared_ptr<Contour> ch : contr->getChildren())
-      {
-        if ( !lookupHistory( ch, tf_world_obj ))
-        {
-          if ( ch->is_door_candidate())
-          {
-            addOctNode( ch, tf_world_obj );
-          }
-        }
-        //TODO: else statistics
-      }
-      //do stats
-    }
-    
-    //update( tf_world_obj );
-    printOctree();
-    
-    //reset for the next method invocation (prevent multiple uses of same location at different times)
-    tf_world_baselink_ = nullptr;
-  }
+  //if ( tf_world_baselink_ )
+  //{
+  //  Eigen::Matrix4d tf_world_obj = *tf_world_baselink_ * T_WL;
+  //  for ( std::shared_ptr<Contour> contr : detection_laser_ )
+  //  {
+  //    if ( !lookupHistory( contr, tf_world_obj ))
+  //    {
+  //      if ( contr->is_door_candidate())
+  //      {
+  //        addOctNode( contr, tf_world_obj );
+  //      }
+  //    }
+  //    //TODO: else statistics
+  //    for ( std::shared_ptr<Contour> ch : contr->getChildren())
+  //    {
+  //      if ( !lookupHistory( ch, tf_world_obj ))
+  //      {
+  //        if ( ch->is_door_candidate())
+  //        {
+  //          addOctNode( ch, tf_world_obj );
+  //        }
+  //      }
+  //      //TODO: else statistics
+  //    }
+  //    //do stats
+  //  }
+  //
+  //  //update( tf_world_obj );
+  //  printOctree();
+  //
+  //  //reset for the next method invocation (prevent multiple uses of same location at different times)
+  //  tf_world_baselink_ = nullptr;
+  //}
   
   return true;
 }
@@ -213,28 +214,6 @@ void DoorDetector::addOctNode( std::shared_ptr<Contour> &contr, Eigen::Matrix4d 
   pcl::PointXYZ pcl_pnt( dcb_ws.x(), dcb_ws.y(), dcb_ws.z());
   octo_object_map_->insert( pcl_pnt );
 }
-
-//void DoorDetector::update( Eigen::Matrix4d &tf )
-//{
-//  //@Todo: move resultasmessage stuff here
-//  for ( std::vector<std::shared_ptr<Contour>>::iterator it_contour = detection_laser_.begin();
-//        it_contour < detection_laser_.end();
-//        ++it_contour )
-//  {
-//    std::shared_ptr<Contour> contour = *it_contour;
-//    if ( contour->is_door_candidate())
-//    {
-//      addOctNode( contour, tf );
-//    }
-//    for ( auto chld: contour->getChildren())
-//    {
-//      if ( chld->is_door_candidate())
-//      {
-//        addOctNode( contour, tf );
-//      }
-//    }
-//  }
-//}
 
 tuw_object_msgs::ObjectDetection DoorDetector::getMappedDoorsAsMessage()
 {
