@@ -12,6 +12,8 @@
 	<arg name="bag_file" default="/media/$(arg fs)/bag_data/standing_ifof_door.bag"/>
 	<arg name="out_filename" default="$(find sensor_model_evaluator)/files/object_model_eval.csv"/>
 	<arg name="evaluator_mode_type" default="objects"/>
+	<arg name="objects_map_topic" default="/map_doors"/>
+	<arg name="objects_topic" default="$(arg publisher_topic)"/>
 	
 	<param name="use_sim_time" value="True"/>
 	<rosparam param="use_sim_time" subst_value="True"/>
@@ -35,7 +37,15 @@
 		<remap from="camera_info_depth" to="$(arg camera)/depth/camera_info"/>
 	</node>
 	
-	<node pkg="map_server" type="map_server" name="map_server" args="$(find tuw_door_detection)/config/maps/roblab_old/map.yaml"
+	<param name="robot_perspective" type="bool" value="false"/>
+	<param name="package_dir" type="str" value="$(find tuw_object_publisher)"/>
+	<param name="debug" type="bool" value="false"/>
+	<rosparam command="load" file="$(find tuw_object_publisher)/launch/config.yaml"/>
+	<node name="object_publisher_node" pkg="tuw_object_publisher" type="object_publisher_node" output="screen">
+	</node>
+	
+	<node pkg="map_server" type="map_server" name="map_server"
+		  args="$(find tuw_door_detection)/config/maps/roblab_old/map.yaml"
 		  output="screen"/>
 	<node pkg="rviz" type="rviz" name="rviz" args="-d /home/felix/intel.rviz" output="screen"/>
 	<node pkg="rqt_reconfigure" type="rqt_reconfigure" name="rqt_reconfigure" output="screen"/>

@@ -71,6 +71,11 @@ void OctoObjectMap::insert( pcl::PointXYZ &pcl_pnt )
   obj_nodes_.insert( std::make_pair( idx, node ));
 }
 
+std::size_t OctoObjectMap::size()
+{
+  return obj_nodes_.size();
+}
+
 std::map<unsigned int, OctoMapNode>::iterator OctoObjectMap::nodes_begin()
 {
   return obj_nodes_.begin();

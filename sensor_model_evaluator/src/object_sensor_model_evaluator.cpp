@@ -3,7 +3,6 @@
 //
 
 #include <object_sensor_model_evaluator.h>
-#include <boost/filesystem.hpp>
 
 using namespace tuw;
 
@@ -38,6 +37,17 @@ void ObjectSensorModel::evaluate()
     res.obs = observation;
     results_.push_back( std::move( res ));
   }
+  std::cout << "hit/miss ratio: " << (observation_counter_ - missed_counter_) << "/" << missed_counter_ << std::endl;
+  std::cout << "total: " << observation_counter_ << std::endl;
+}
+
+void ObjectSensorModel::clear()
+{
+  results_.clear();
+  measurements_table_.clear();
+  laser_pose_worldspace_.clear();
+  missed_counter_ = 0;
+  observation_counter_ = 0;
 }
 
 void ObjectSensorModel::process( const tuw_object_msgs::ObjectWithCovariance &obj, const Eigen::Matrix4d &tf )
@@ -85,14 +95,32 @@ void ObjectSensorModel::process( const tuw_object_msgs::ObjectWithCovariance &ob
   }
 }
 
-//write only once
-void ObjectSensorModel::serializeResult( const std::string &filepath )
+void ObjectSensorModel::internal_serializeResult( boost::filesystem::ofstream &of )
+{
+  for ( Result &res : results_ )
+  {
+    of << res.dist << ", " << res.angular_dist << "\n";
+  }
+  //of << std::endl;
+  of.flush();
+  of.close();
+}
+
+void ObjectSensorModel::serializeResult( const std::string &filepath, const bool continuous )
 {
   using boost::filesystem::path;
   path p( filepath );
-  bool filesys_force_override = true;
   if ( boost::filesystem::exists( p ))
   {
+    if ( continuous )
+    {
+      boost::filesystem::ofstream of( p, std::ios::app | std::ios::ate );
+      internal_serializeResult( of );
+    } else
+    {
+      boost::filesystem::ofstream of( p, std::ios::out );
+      internal_serializeResult( of );
+    }
     //if ( continuous_outstream_ )
     //{
     //  boost::filesystem::ofstream of( p, std::ios::app | std::ios::ate );
@@ -105,18 +133,9 @@ void ObjectSensorModel::serializeResult( const std::string &filepath )
     //  internalSerialize( of );
     //  of.close();
     //}
-  } else if ( filesys_force_override )
-  {
-    boost::filesystem::ofstream of( p, std::ios::out );
-    for (Result &res : results_)
-    {
-      of << res.dist << ", " << res.angular_dist << "\n";
-    }
-    //of << std::endl;
-    of.flush();
-    of.close();
   } else
   {
-    ROS_ERROR( "serializeResult(): not possible with given path" );
+    boost::filesystem::ofstream of( p, std::ios::out );
+    internal_serializeResult(of);
   }
 }

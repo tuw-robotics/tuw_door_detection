@@ -49,6 +49,7 @@ namespace tuw
       std::string laser_topic;
       std::string map_topic;
       std::string objects_topic;
+      std::string objects_map_topic;
       bool estimate_parameters;
       ModelType model_type;
       
@@ -84,6 +85,7 @@ namespace tuw
     SensorModelParameterEstimatorEM parameter_estimator_;
     
     ros::Subscriber sub_laser_;
+    ros::Subscriber sub_object_map_;
     ros::Subscriber sub_map_;
     ros::Subscriber sub_dummy_;
     ros::Publisher pub_map_eth_;
@@ -100,6 +102,7 @@ namespace tuw
     ObjectSensorModel::Ptr object_model_evaluator_;
     
     bool continuous_stream_;
+    bool first_time_serialize_;
     
     ParametersNode params_;
     

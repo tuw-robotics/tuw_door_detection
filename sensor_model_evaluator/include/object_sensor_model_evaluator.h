@@ -10,6 +10,7 @@
 #include <Eigen/Core>
 #include <map>
 #include <memory>
+#include <boost/filesystem.hpp>
 
 namespace tuw
 {
@@ -44,7 +45,9 @@ namespace tuw
      */
     void evaluate();
     
-    void serializeResult(const std::string &filename);
+    void serializeResult(const std::string &filename, const bool continuous);
+    
+    void clear();
   
   private:
     std::shared_ptr<OctoObjectMap> octo_object_map_;
@@ -67,6 +70,8 @@ namespace tuw
     
     unsigned int missed_counter_;
     unsigned int observation_counter_;
+    
+    void internal_serializeResult(boost::filesystem::ofstream &of);
   };
   
   using ObjectSensorModelPtr = std::shared_ptr<ObjectSensorModel>;

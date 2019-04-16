@@ -14,29 +14,36 @@ SensorModelEvaluatorNode::ParametersNode::ParametersNode( const ros::NodeHandle 
   nh.param( std::string( "estimate_model_parameters" ), estimate_parameters, false );
   std::string model_type_str;
   nh.param( std::string( "model_type" ), model_type_str, std::string( "objects" ));
-  nh.param( std::string( "objects_topic" ), objects_topic, std::string( "objects_topic" ));
+  nh.param( std::string( "objects_map_topic" ), objects_map_topic, std::string( "" ));
+  nh.param( std::string( "objects_topic" ), objects_topic, std::string( "" ));
   
-  try
+  //throws if not found which is good
+  model_type = enum_resolver.at( model_type_str );
+  
+  if (model_type == ModelType::OBJECTS)
   {
-    model_type = enum_resolver.at( model_type_str );
-  }
-  catch (std::exception &e)
-  {
-    ROS_ERROR( "ERROR: %s is not a valid evaluator mode.", model_type_str.c_str());
+    if (objects_map_topic == std::string("") || objects_topic == std::string(""))
+    {
+      throw std::runtime_error("objects_map_topic and objects_topic not set");
+    }
   }
   
 }
 
 SensorModelEvaluatorNode::SensorModelEvaluatorNode( ros::NodeHandle &nh ) : evaluator_( nullptr ),
+                                                                            object_model_evaluator_( nullptr ),
                                                                             tf_listener_( tf_buffer_ ),
                                                                             params_( ros::NodeHandle( "~" ))
 {
   nh_ = nh;
+  first_time_serialize_ = true;
+  
   if ( params_.model_type == ParametersNode::ModelType::LASER_SCAN )
   {
     sub_laser_ = nh.subscribe( params_.laser_topic, 1000, &SensorModelEvaluatorNode::callbackLaser, this );
   } else if ( params_.model_type == ParametersNode::ModelType::OBJECTS )
   {
+    sub_object_map_ = nh.subscribe(params_.objects_map_topic, 1000, &SensorModelEvaluatorNode::callbackObjectDetection, this);
     sub_laser_ = nh.subscribe( params_.objects_topic, 1000, &SensorModelEvaluatorNode::callbackObjectDetection, this );
   }
   
@@ -67,6 +74,8 @@ void SensorModelEvaluatorNode::callbackObjectDetection( const tuw_object_msgs::O
     {
       object_model_evaluator_->process( obj_msg, tf );
     }
+    object_model_evaluator_->evaluate();
+    
   } else
   {
     ROS_WARN( "could not obtain pose from %s<-%s", "map", obj->header.frame_id.c_str());
@@ -164,26 +173,24 @@ void SensorModelEvaluatorNode::callbackLaser( const sensor_msgs::LaserScan &_las
 
 void SensorModelEvaluatorNode::publish()
 {
-  if ( evaluator_ )
+  if ( config_.serialize )
   {
-    //if ( evaluator_->getMap( pub_map ))
-    //{
-    //  pub_map_eth_.publish( pub_map );
-    //} else
-    //{
-    //  ROS_WARN( "publish called but no result available" );
-    //}
-    if ( config_.serialize )
+    if ( params_.filepath != std::string( "" ))
     {
-      if ( params_.filepath != std::string( "" ))
+      if ( evaluator_ )
       {
         evaluator_->serializeResult( params_.filepath );
-      } else
+      } else if ( object_model_evaluator_ )
       {
-        ROS_WARN( "SensorModelEvaluatorNode::publish(): serialize option selected but no filepath given!" );
+        bool cont_stream = !first_time_serialize_;
+        object_model_evaluator_->serializeResult( params_.filepath, cont_stream );
+        first_time_serialize_ = false;
+        object_model_evaluator_->clear();
       }
+    } else
+    {
+      ROS_WARN( "SensorModelEvaluatorNode::publish(): serialize option selected but no filepath given!" );
     }
-    
   }
 }
 

@@ -54,6 +54,12 @@ namespace tuw
     template <typename T>
     bool searchBestPCL( pcl::PointXYZ &search_point, float radius, T &outPoint, float &distance_squared, bool auto_increment = true )
     {
+      //"no objects inserted, search not possible"
+      if (size() == 0)
+      {
+        return false;
+      }
+      
       std::vector<int> pointIdxRadiusSearch;
       std::vector<float> pointRadiusSquaredDistance;
       
@@ -90,6 +96,8 @@ namespace tuw
       }
       return false;
     }
+    
+    size_t size();
     
     void insert( pcl::PointXYZ &pcl_pnt );
     
