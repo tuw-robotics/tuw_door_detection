@@ -54,5 +54,7 @@
 		<param name="laser_topic" value="$(arg clean_laser_pub_topic)"/>
 		<param name="out_filename" value="$(arg out_filename)"/>
 		<param name="model_type" value="$(arg evaluator_mode_type)"/>
+		<param name="objects_map_topic" value="$(arg objects_map_topic)"/>
+		<param name="objects_topic" value="$(arg objects_topic)"/>
 	</node>
 </launch>

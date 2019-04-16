@@ -20,11 +20,12 @@ SensorModelEvaluatorNode::ParametersNode::ParametersNode( const ros::NodeHandle 
   //throws if not found which is good
   model_type = enum_resolver.at( model_type_str );
   
-  if (model_type == ModelType::OBJECTS)
+  if ( model_type == ModelType::OBJECTS )
   {
-    if (objects_map_topic == std::string("") || objects_topic == std::string(""))
+    if ((0 == objects_map_topic.compare( std::string( "" )))
+        || (0 == objects_topic.compare( std::string( "" ))))
     {
-      throw std::runtime_error("objects_map_topic and objects_topic not set");
+      throw std::runtime_error( "objects_map_topic or objects_topic not set" );
     }
   }
   
@@ -43,7 +44,8 @@ SensorModelEvaluatorNode::SensorModelEvaluatorNode( ros::NodeHandle &nh ) : eval
     sub_laser_ = nh.subscribe( params_.laser_topic, 1000, &SensorModelEvaluatorNode::callbackLaser, this );
   } else if ( params_.model_type == ParametersNode::ModelType::OBJECTS )
   {
-    sub_object_map_ = nh.subscribe(params_.objects_map_topic, 1000, &SensorModelEvaluatorNode::callbackObjectDetection, this);
+    sub_object_map_ = nh.subscribe( params_.objects_map_topic, 1000, &SensorModelEvaluatorNode::callbackObjectDetection,
+                                    this );
     sub_laser_ = nh.subscribe( params_.objects_topic, 1000, &SensorModelEvaluatorNode::callbackObjectDetection, this );
   }
   
