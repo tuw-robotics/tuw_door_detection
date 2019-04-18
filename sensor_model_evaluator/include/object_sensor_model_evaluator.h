@@ -19,12 +19,49 @@ namespace tuw
   public:
     
     using Ptr = std::shared_ptr<ObjectSensorModel>;
+  
+    struct ObsExp
+    {
+    private:
+      std::shared_ptr<Eigen::Vector3d> obs_pos;
+      std::shared_ptr<Eigen::Vector3d> exp_pos;
+  
+    public:
+      Eigen::Matrix4d tf_world_robot;
+    
+      void obs( Eigen::Vector3d &obs )
+      {
+        obs_pos = std::make_shared<Eigen::Vector3d>( obs );
+      }
+    
+      void exp( Eigen::Vector3d &exp )
+      {
+        exp_pos = std::make_shared<Eigen::Vector3d>( exp );
+      }
+    
+      std::shared_ptr<Eigen::Vector3d> &obs()
+      {
+        return obs_pos;
+      }
+    
+      std::shared_ptr<Eigen::Vector3d> &exp()
+      {
+        return exp_pos;
+      }
+    };
     
     struct Result {
-      Eigen::Vector3d exp;
-      Eigen::Vector3d obs;
+      ObsExp obs_exp_data;
       float dist;
       float angular_dist;
+    };
+  
+    struct Results
+    {
+      std::vector<Result> data;
+      uint64_t false_positives;
+      uint64_t true_positives;
+      uint64_t total_observations;
     };
     
     ObjectSensorModel();
