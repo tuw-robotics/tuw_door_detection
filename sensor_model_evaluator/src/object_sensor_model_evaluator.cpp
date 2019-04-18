@@ -9,49 +9,55 @@ using namespace tuw;
 ObjectSensorModel::ObjectSensorModel()
 {
   octo_object_map_ = std::make_shared<OctoObjectMap>( 0.5f );
-  observation_counter_ = 0;
-  missed_counter_ = 0;
+  data_is_written_ = false;
 }
 
 void ObjectSensorModel::evaluate()
 {
   size_t idx = 0;
-  for ( auto obs_exp : measurements_table_ )
+  results_ = std::shared_ptr<Results>();
+  results_->total_observations = obs_exp_table_.size();
+  
+  for ( std::shared_ptr<ObsExp> &obs_exp : obs_exp_table_ )
   {
-    auto &observation = obs_exp.first;
-    auto &expectation = obs_exp.second;
-    auto tf_world_laser = laser_pose_worldspace_[idx++];
-    Eigen::Vector3d pnt_world_laser = tf_world_laser.topRightCorner<3, 1>();
-    float dist_sqrt = (observation - expectation).norm();
+    Eigen::Vector3d &observation = *obs_exp->obs();
+    Eigen::Matrix4d tf_world_laser = obs_exp->tf();
+    Result result;
+    result.obs_exp_data = obs_exp;
     
-    Eigen::Vector3d viewing_dir_obs = observation - pnt_world_laser;
-    Eigen::Vector3d viewing_dir_exp = expectation - pnt_world_laser;
-    viewing_dir_exp.normalize();
-    viewing_dir_obs.normalize();
-    float dist_angle = acos( viewing_dir_obs.dot( viewing_dir_exp ));
-    
-    Result res;
-    res.dist = dist_sqrt;
-    res.angular_dist = dist_angle;
-    res.exp = expectation;
-    res.obs = observation;
-    results_.push_back( std::move( res ));
+    if ( obs_exp->obsOnly())
+    {
+      results_->false_positives++;
+    } else
+    {
+      results_->true_positives++;
+      Eigen::Vector3d &expectation = *obs_exp->exp();
+      Eigen::Vector3d pnt_world_laser = tf_world_laser.topRightCorner<3, 1>();
+      float dist_sqrt = (observation - expectation).norm();
+      
+      Eigen::Vector3d viewing_dir_obs = observation - pnt_world_laser;
+      Eigen::Vector3d viewing_dir_exp = expectation - pnt_world_laser;
+      viewing_dir_exp.normalize();
+      viewing_dir_obs.normalize();
+      float dist_angle = acos( viewing_dir_obs.dot( viewing_dir_exp ));
+      
+      result.angular_dist = dist_angle;
+      result.dist = dist_sqrt;
+    }
+    results_->data.push_back( std::move( result ));
   }
-  std::cout << "hit/miss ratio: " << (observation_counter_ - missed_counter_) << "/" << missed_counter_ << std::endl;
-  std::cout << "total: " << observation_counter_ << std::endl;
 }
 
-void ObjectSensorModel::clear()
+bool ObjectSensorModel::clear()
 {
-  results_.clear();
-  measurements_table_.clear();
-  laser_pose_worldspace_.clear();
-  missed_counter_ = 0;
-  observation_counter_ = 0;
+  results_ = nullptr;
+  obs_exp_table_.clear();
+  return data_is_written_;
 }
 
 void ObjectSensorModel::process( const tuw_object_msgs::ObjectWithCovariance &obj, const Eigen::Matrix4d &tf )
 {
+  
   using tuw_object_msgs::ObjectDetection;
   using tuw_object_msgs::Object;
   
@@ -82,28 +88,29 @@ void ObjectSensorModel::process( const tuw_object_msgs::ObjectWithCovariance &ob
     }
   } else if ( obj.object.shape == Object::SHAPE_DOOR ) //Crosscheck with map
   {
-    observation_counter_++;
+    obs_exp_table_.push_back( std::unique_ptr<ObsExp>( new ObsExp( tf )));
+    obs_exp_table_.back()->obs( tworld );
+  
+    data_is_written_ = false;
     float dist_squared = -1;
     if ( !octo_object_map_->searchBestPCL( search_pnt, 0.5, out_pnt, dist_squared, true ))
     {
-      missed_counter_++;
+      //missed
     } else
     {
-      laser_pose_worldspace_.push_back( tf );
-      measurements_table_.push_back( std::move( std::make_pair( tworld, out_pnt )));
+      //hit
+      obs_exp_table_.back()->exp( out_pnt );
     }
   }
 }
 
 void ObjectSensorModel::internal_serializeResult( boost::filesystem::ofstream &of )
 {
-  for ( Result &res : results_ )
-  {
-    of << res.dist << ", " << res.angular_dist << "\n";
-  }
+  of << results_->asCsv();
   //of << std::endl;
   of.flush();
   of.close();
+  data_is_written_ = true;
 }
 
 void ObjectSensorModel::serializeResult( const std::string &filepath, const bool continuous )
@@ -136,6 +143,6 @@ void ObjectSensorModel::serializeResult( const std::string &filepath, const bool
   } else
   {
     boost::filesystem::ofstream of( p, std::ios::out );
-    internal_serializeResult(of);
+    internal_serializeResult( of );
   }
 }
