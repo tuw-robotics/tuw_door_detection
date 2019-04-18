@@ -75,7 +75,7 @@ void ObjectSensorModel::process( const tuw_object_msgs::ObjectWithCovariance &ob
   if ( obj.object.shape == Object::SHAPE_MAP_DOOR ) //Door is in map -> store it
   {
     float dist_squared = -1;
-    if ( !octo_object_map_->searchBestPCL( search_pnt, 0.5, out_pnt, dist_squared, true ))
+    if ( !octo_object_map_->searchBestPCL( search_pnt, 0.5, out_pnt, dist_squared, false ))
     {
       pcl::PointXYZ pcl_pnt( tworld.x(), tworld.y(), tworld.z());
       octo_object_map_->insert( pcl_pnt );
