@@ -9,7 +9,8 @@
 
 using namespace tuw;
 
-LaserSensorModelEvaluator::LaserSensorModelEvaluator( const nav_msgs::OccupancyGridConstPtr &map, bool render ) : has_result_(
+LaserSensorModelEvaluator::LaserSensorModelEvaluator( const nav_msgs::OccupancyGridConstPtr &map, bool render )
+    : has_result_(
     false ), filesys_force_override_( true ), continuous_outstream_( false )
 {
   map_msg_ = nav_msgs::OccupancyGrid( *map );
@@ -29,13 +30,18 @@ LaserSensorModelEvaluator::LaserSensorModelEvaluator( const nav_msgs::OccupancyG
     auto tmp = constructDownscaled( map_, 4.0 );
     tmp->parent = std::move( map_ );
     map_ = std::move( tmp );
-    cv::cvtColor( map_->cv_uc8, map_->cv_uc8, CV_BGR2GRAY );
+    cv::cvtColor( map_->cv_uc8, map_->cv_uc8, CV_BGRA2GRAY );
   }
 }
 
 void LaserSensorModelEvaluator::configure( const sensor_model_evaluator::SensorModelEvaluatorNodeConfig &cfg )
 {
   continuous_outstream_ = cfg.continuous_outstream;
+  render_laser_opaque_ = cfg.render_laser_opaque;
+  if ( render_laser_opaque_ )
+  {
+    opaqueness_ = cfg.opaqueness;
+  }
 }
 
 void LaserSensorModelEvaluator::updateObservedMeasurementTable( double angle_idx, const tuw::Point2D &obs )
@@ -52,7 +58,7 @@ void LaserSensorModelEvaluator::updateExpectedMeasurementTable( double angle_idx
 
 bool LaserSensorModelEvaluator::convert( const nav_msgs::OccupancyGridConstPtr &src, std::shared_ptr<InternalMap> &des )
 {
-  des = std::unique_ptr<InternalMap>(new InternalMap());
+  des = std::unique_ptr<InternalMap>( new InternalMap());
   ROS_INFO( "map dim %d, %d\norigin: (x=%lf,y=%lf,z=%lf)",
             (int) src->info.width, (int) src->info.height,
             src->info.origin.position.x,
@@ -108,7 +114,7 @@ bool LaserSensorModelEvaluator::convert( const std::shared_ptr<InternalMap> &src
 }
 
 bool LaserSensorModelEvaluator::convert( const std::shared_ptr<tuw::LaserSensorModelEvaluator::InternalMap> &src,
-                                    grid_map_msgs::GridMap &des )
+                                         grid_map_msgs::GridMap &des )
 {
   nav_msgs::OccupancyGrid gm_ros;
   grid_map::GridMap gm_eth;
@@ -148,7 +154,12 @@ LaserSensorModelEvaluator::constructDownscaled( const std::shared_ptr<InternalMa
   cv::resize( downscaled->cv_uc8, downscaled->cv_uc8, cv::Size( downscaled->size_x, downscaled->size_y ));
   if ( downscaled->cv_uc8.channels() == 1 )
   {
-    cv::cvtColor( downscaled->cv_uc8, downscaled->cv_uc8, CV_GRAY2BGR );
+    cv::cvtColor( downscaled->cv_uc8, downscaled->cv_uc8, CV_GRAY2BGRA );
+    std::cout << "converting image from gray->bgra\n";
+  } else if ( downscaled->cv_uc8.channels() == 3 )
+  {
+    cv::cvtColor( downscaled->cv_uc8, downscaled->cv_uc8, CV_BGR2BGRA );
+    std::cout << "converting image from bgr->bgra\n";
   }
   
   return downscaled;
@@ -176,7 +187,7 @@ void LaserSensorModelEvaluator::downscaleImshow( LaserMeasurementPtr meas )
       cv::Point2d i_p_b( render_map_->get_mx_from_wx( ws_p_b( 0 )),
                          render_map_->get_my_from_wy( ws_p_b( 1 )));
       
-      cv::circle( render_map_->cv_uc8, i_p_b, 1, cv::Scalar( 255, 0, 0 ), 1 );
+      cv::circle( render_map_->cv_uc8, i_p_b, 1, cv::Scalar( 255, 0, 0, 255 ), 1 );
     }
   }
   
@@ -200,7 +211,13 @@ void LaserSensorModelEvaluator::evaluate( LaserMeasurementPtr &scan )
       render_map_->get_my_from_wy( tf_ML( 1, 3 ))
   );
   
-  cv::circle( render_map_->cv_uc8, origin_px, 2.0, cv::Scalar( 0, 0, 255 ), 2.0 );
+  cv::circle( render_map_->cv_uc8, origin_px, 2.0, cv::Scalar( 0, 0, 255, 255 ), 2.0 );
+  cv::Mat laser_image;
+  if (render_laser_opaque_)
+  {
+    laser_image = cv::Mat(render_map_->cv_uc8.rows, render_map_->cv_uc8.cols, CV_8UC4, cv::Scalar(255,255,255,255));
+    std::cout << "laser image channels " << laser_image.channels() << "   " << std::endl;
+  }
   
   for ( std::vector<Beam>::iterator beam_it = scan->begin();
         beam_it != scan->end();
@@ -214,12 +231,12 @@ void LaserSensorModelEvaluator::evaluate( LaserMeasurementPtr &scan )
     
     updateObservedMeasurementTable( beam_it->angle, Point2D( end_point_w.x(), end_point_w.y()));
     
-    Point2DPtr intersection = rayTrace( scan->getLaser().range_max, beam, tf_ML );
+    Point2DPtr intersection = rayTrace( scan->getLaser().range_max, beam, tf_ML, laser_image );
     
     if ( intersection )
     {
       
-      cv::circle( render_map_->cv_uc8, intersection->cv(), 1.5, cv::Scalar( 0, 255, 0 ), 1.5 );
+      cv::circle( render_map_->cv_uc8, intersection->cv(), 1.5, cv::Scalar( 0, 255, 0, 255 ), 1.5 );
       Point2D w_intersection(
           map_->get_wx_from_mx( intersection->x()),
           map_->get_wy_from_my( intersection->y())
@@ -230,6 +247,14 @@ void LaserSensorModelEvaluator::evaluate( LaserMeasurementPtr &scan )
     {
       intersect++;
     }
+  }
+  
+  if (render_laser_opaque_)
+  {
+    std::cout << "adding weighted images" << std::endl;
+    std::cout << "rendermap channels " << render_map_->cv_uc8.channels() << std::endl;
+    std::cout << "laser image channels " << laser_image.channels() << std::endl;
+    cv::addWeighted(render_map_->cv_uc8, (1.0 - opaqueness_), laser_image, opaqueness_, 0, render_map_->cv_uc8);
   }
   
   downscaleImshow( scan );
@@ -259,7 +284,10 @@ void LaserSensorModelEvaluator::calcRangeTable()
   }
 }
 
-Point2DPtr LaserSensorModelEvaluator::rayTrace( const double scale, const Beam &beam, const Eigen::Matrix4d &tf_ML )
+Point2DPtr LaserSensorModelEvaluator::rayTrace( const double scale,
+                                                const Beam &beam,
+                                                const Eigen::Matrix4d &tf_ML,
+                                                cv::Mat &laser_img )
 {
   Eigen::Vector2d origin_eigen( tf_ML( 0, 3 ), tf_ML( 1, 3 ));
   Eigen::Vector4d vbeamend( beam.end_point.x(), beam.end_point.y(), 0, 1 );
@@ -280,8 +308,15 @@ Point2DPtr LaserSensorModelEvaluator::rayTrace( const double scale, const Beam &
   w_range_max.x = map_->get_mx_from_wx( w_range_max.x );
   w_range_max.y = map_->get_my_from_wy( w_range_max.y );
   
-  cv::line( render_map_->cv_uc8, w_start_hit, w_range_max, cv::Scalar( 0, 0, 255 ));
-  cv::circle( render_map_->cv_uc8, w_range_max, 2, cv::Scalar( 255, 0, 255 ), 2 );
+  if ( render_laser_opaque_ )
+  {
+    cv::line( laser_img, w_start_hit, w_range_max, cv::Scalar( 0, 0, 255, 255 ));
+  } else
+  {
+    cv::line( render_map_->cv_uc8, w_start_hit, w_range_max, cv::Scalar( 0, 0, 255 ));
+  }
+  
+  cv::circle( render_map_->cv_uc8, w_range_max, 2, cv::Scalar( 255, 0, 255, 255 ), 2 );
   
   cv::LineIterator ray_tracer( map_->cv_uc8, w_start_hit, w_range_max, 8 );
   for ( int i = 0; i < ray_tracer.count; ++i, ++ray_tracer )

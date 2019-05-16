@@ -17,7 +17,7 @@ SensorModelEvaluatorNode::ParametersNode::ParametersNode( const ros::NodeHandle 
   nh.param( std::string( "objects_map_topic" ), objects_map_topic, std::string( "" ));
   nh.param( std::string( "objects_topic" ), objects_topic, std::string( "" ));
   
-  //throws if not found which is good
+  //throws if not found which is intended
   model_type = enum_resolver.at( model_type_str );
   
   if ( model_type == ModelType::OBJECTS )

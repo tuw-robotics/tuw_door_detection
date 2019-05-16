@@ -11,7 +11,7 @@
 	<arg name="world_frame" default="/r0/base_link"/>
 	<arg name="skip_rosbag" default="0"/>
 	<arg name="debug" default="false"/>
-	<arg name="bag_file" default="/media/$(arg fs)/bag_data/standing_ifof_door.bag"/>
+	<arg name="bag_file" default="/media/$(arg fs)/bag_data/laser_cam_open_doors.bag"/>
 	
 	<group if="$(arg launch_rosbag)">
 		<rosparam param="use_sim_time" subst_value="True"/>

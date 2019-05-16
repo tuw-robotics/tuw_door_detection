@@ -135,7 +135,8 @@ namespace tuw
 
     bool convert( const std::shared_ptr<InternalMap> &src, cv::Mat &mat );
 
-    Point2DPtr rayTrace( const double scale, const Beam &b, const Eigen::Matrix4d &tf_ML );
+    Point2DPtr rayTrace( const double scale, const Beam &beam, const Eigen::Matrix4d &tf_ML,
+                         cv::Mat &laser_img );
 
     void updateExpectedMeasurementTable( double idx, const Point2D &expect );
 
@@ -165,6 +166,8 @@ namespace tuw
     bool has_result_;
     bool filesys_force_override_;
     bool continuous_outstream_;
+    bool render_laser_opaque_;
+    double opaqueness_;
 
     geometry_msgs::Pose laser_pose_;
   };
