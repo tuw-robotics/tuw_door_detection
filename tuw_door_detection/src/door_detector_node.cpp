@@ -157,10 +157,8 @@ void DoorDetectorNode::callbackDepthImage( const sensor_msgs::ImageConstPtr &_im
   geometry_msgs::TransformStampedPtr tf;
   if ( getStaticTF( params_.world_frame, _img->header.frame_id, tf, params_.debug ))
   {
-    
     //@ToDo: reset not mandatory only image has changed
     image_depth_.reset( new ImageMeasurement( image, tf, *camera_info_depth_ ));
-    
   }
   
 }

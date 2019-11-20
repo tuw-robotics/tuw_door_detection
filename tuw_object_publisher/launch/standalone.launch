@@ -1,0 +1,29 @@
+<launch>
+	
+	<arg name="bag_file" default="/home/felix/pCloudDrive/bag_files/robot_moving_01.bag"/>
+	<arg name="map_file" default="/home/felix/pCloudDrive/bag_files/map.yaml"/>
+	
+	<arg name="use_robot_perspective" default="false"/>
+	<arg name="skip" default="0"/>
+	<arg name="robot_name" default="r0"/>
+	
+	<!-- publisher topic name for CObservationObjects, rawlog record listens to these objects and creates a rawlog file -->
+	<arg name="bearing_topic_name" default="/bearing_gt"/>
+	<!-- tuw_msgs::ObjectDetection gets converted to mrpt_msgs::CObservationObject -->
+	<arg name="object_detections_topic_name" default="/map_doors"/>
+	<!-- used for door simulation in a test scenario -->
+	<arg name="contour_filtering" default="false"/>
+	<!-- threshold for door simulation filtering based on the laser range contour -->
+	<arg name="contour_offset" default="0.5"/>
+	<!-- prints more information on the screen, slow don't use in a live setting -->
+	<arg name="debug_mode" default="false"/>
+	
+	<param name="robot_perspective" type="bool" value="$(arg use_robot_perspective)"/>
+	<param name="package_dir" type="str" value="$(find tuw_object_publisher)"/>
+	<param name="debug" type="bool" value="$(arg debug_mode)"/>
+	
+	<rosparam command="load" file="$(find tuw_object_publisher)/launch/config.yaml"/>
+	<node name="object_publisher_node" pkg="tuw_object_publisher" type="object_publisher_node" output="screen">
+	</node>
+
+</launch>
