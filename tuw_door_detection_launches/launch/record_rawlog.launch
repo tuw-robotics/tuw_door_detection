@@ -2,13 +2,15 @@
 	
 	<!-- used for simplemap construction, once the map is constructed it can be reused as long as it does not change -->
 	<arg name="launch_map_service" default="true"/>
+	<arg name="from_rosbag" default="true"/>
+	<arg name="launch_door_detector" default="true"/>
 	<arg name="record_rawlog" default="false"/>
 	<arg name="launch_object_publisher" default="false"/>
 	
 	<!-- publisher topic name for CObservationObjects, rawlog record listens to these objects and creates a rawlog file -->
 	<arg name="bearing_topic_name" default="/bearing_gt"/>
 	<!-- used by rosbag play -->
-	<arg name="bag_file" default="$(find tuw_door_detection)/config/maps/roblab_all_rooms/refined/robot_moving_01.bag"/>
+	<arg name="bag_file" default="$(find tuw_door_detection)/bags/lnov3.bag"/>
 	<arg name="map_file"
 		 default="$(find tuw_door_detection)/config/maps/roblab_all_rooms/refined/mapped_roblab_rooms.yaml"/>
 	<arg name="use_robot_perspective" default="false"/>
@@ -38,6 +40,10 @@
 	<group if="$(arg use_robot_perspective)">
 		<node pkg="rosbag" type="play" name="player" output="screen"
 			  args="--clock -d 4 -s $(arg skip) $(arg bag_file)"/>
+	</group>
+	
+	<group if="$(arg launch_door_detector)">
+	
 	</group>
 	
 	<!-- converts tuw_object_detection msgs to mrpt objects -->
