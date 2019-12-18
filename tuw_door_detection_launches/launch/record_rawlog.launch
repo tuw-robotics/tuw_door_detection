@@ -1,12 +1,16 @@
 <launch>
 	
 	<!-- used for simplemap construction, once the map is constructed it can be reused as long as it does not change -->
-	<arg name="launch_map_service" default="true"/>
-	<arg name="from_rosbag" default="true"/>
+	<arg name="launch_ros_map_server" default="true"/>
+	<arg name="launch_mrpt_map_server" default="true"/>
+	<arg name="launch_rosbag" default="true"/>
 	<arg name="launch_door_detector" default="true"/>
 	<arg name="record_rawlog" default="false"/>
 	<arg name="launch_object_publisher" default="false"/>
+	<arg name="laser_scan" default="/r0/laser0/scan/raw"/>
 	
+	<arg name="world_frame" default="r0/base_link"/>
+	<arg name="camera_frame" default="r0/realsense"/>
 	<!-- publisher topic name for CObservationObjects, rawlog record listens to these objects and creates a rawlog file -->
 	<arg name="bearing_topic_name" default="/bearing_gt"/>
 	<!-- used by rosbag play -->
@@ -17,7 +21,7 @@
 	<arg name="robot_name" default="r0"/>
 	<arg name="skip" default="0"/>
 	<!-- tuw_msgs::ObjectDetection gets converted to mrpt_msgs::CObservationObject -->
-	<arg name="object_detections_topic_name" default="/map_doors"/>
+	<arg name="object_detections_topic_name" default="/doors_detector"/>
 	<!-- prints more information on the screen, slow don't use in a live setting -->
 	<arg name="debug_mode" default="false"/>
 	<!-- used for door simulation in a test scenario -->
@@ -35,15 +39,41 @@
 		</node>
 	</group>
 	
-	<node pkg="map_server" type="map_server" name="map_server" output="screen" args="$(arg map_file)"/>
-	
 	<group if="$(arg use_robot_perspective)">
 		<node pkg="rosbag" type="play" name="player" output="screen"
-			  args="--clock -d 4 -s $(arg skip) $(arg bag_file)"/>
+			  args="--clock -d 4 $(arg bag_file)"/>
 	</group>
 	
 	<group if="$(arg launch_door_detector)">
-	
+		<group if="$(arg launch_rosbag)">
+			<rosparam param="use_sim_time" subst_value="True"/>
+			<node pkg="rosbag" type="play" name="player" output="screen"
+				  args="--clock -d 4 $(arg bag_file)"/>
+			
+			<node pkg="rviz" type="rviz" name="rviz" output="screen" args="-d $(find tuw_door_detection)/config/rviz/r0_with_localization.rviz"/>
+		</group>
+		
+		<group if="$(arg launch_ros_map_server)">
+			<node pkg="map_server" type="map_server" name="map_server" output="screen"
+				  args="$(arg map_file)" />
+		</group>
+		
+		<!-- if no bag file is played assume live settings with predefined calibration -->
+		<node name="door_detector_node" pkg="tuw_door_detection" type="door_detector_node" output="screen">
+			<param name="mode" value="depth"/>
+			<param name="publisher_topic" value="$(arg object_detections_topic_name)"/>
+			<param name="debug" value="$(arg debug_mode)"/>
+			<param name="internal_mode" value="contour"/>
+			<param name="camera_source_frame" value="$(arg camera_frame)"/>
+			<param name="laser_source_frame" value="r0/laser0"/>
+			<param name="world_frame" value="$(arg world_frame)"/>
+			<param name="mapped_doors_pub_topic" value="/doors_mapped"/>
+			<remap from="scan" to="$(arg laser_scan)"/>
+			<remap from="image_rgb" to="$(arg camera_frame)/color/image_raw"/>
+			<remap from="image_depth" to="$(arg camera_frame)/depth/image_rect_raw"/>
+			<remap from="camera_info_rgb" to="$(arg camera_frame)/color/camera_info"/>
+			<remap from="camera_info_depth" to="$(arg camera_frame)/depth/camera_info"/>
+		</node>
 	</group>
 	
 	<!-- converts tuw_object_detection msgs to mrpt objects -->
@@ -63,7 +93,7 @@
 	
 	</node>
 	
-	<group if="$(arg launch_map_service)">
+	<group if="$(arg launch_mrpt_map_server)">
 		
 		<node pkg="mrpt_map" type="mrpt_map_creator_node" name="mrpt_map_creator_node" output="screen">
 			<param name="frame_id" value="map"/>
