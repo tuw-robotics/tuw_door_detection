@@ -21,7 +21,7 @@
 	<arg name="robot_name" default="r0"/>
 	<arg name="skip" default="0"/>
 	<!-- tuw_msgs::ObjectDetection gets converted to mrpt_msgs::CObservationObject -->
-	<arg name="object_detections_topic_name" default="/doors_detector"/>
+	<arg name="object_detections_topic_name" default="/object_detections"/>
 	<!-- prints more information on the screen, slow don't use in a live setting -->
 	<arg name="debug_mode" default="false"/>
 	<!-- used for door simulation in a test scenario -->
@@ -45,7 +45,13 @@
 	</group>
 	
 	<group if="$(arg launch_door_detector)">
-		
+		<group if="$(arg launch_rosbag)">
+			<rosparam param="use_sim_time" subst_value="True"/>
+			<node pkg="rosbag" type="play" name="player" output="screen"
+				  args="--clock -d 4 $(arg bag_file)"/>
+			
+			<node pkg="rviz" type="rviz" name="rviz" output="screen" args="-d $(find tuw_door_detection)/config/rviz/r0_with_localization.rviz"/>
+		</group>
 		
 		<group if="$(arg launch_ros_map_server)">
 			<node pkg="map_server" type="map_server" name="map_server" output="screen"
@@ -82,8 +88,8 @@
 		<param name="contour_filtering" value="$(arg contour_filtering)"/>
 		<param name="contour_offset" value="$(arg contour_offset)"/>
 		<param name="world_frame" value="map"/>
-		<param name="source_frame" value="$(arg robot_name)/laser0"/>
-		<remap from="scan" to="$(arg robot_name)/laser0/scan"/>
+		<param name="target_frame" value="$(arg robot_name)/laser0"/>
+		<remap from="scan" to="$(arg robot_name)/laser0/scan/raw"/>
 	
 	</node>
 	
@@ -124,15 +130,6 @@
 			<param name="ignore_timestamp_difference" value="true"/>
 		</node>
 	
-	</group>
-	
-	<!-- play bag at the end to give nodes a head start -->
-	<group if="$(arg launch_rosbag)">
-		<rosparam param="use_sim_time" subst_value="True"/>
-		<node pkg="rosbag" type="play" name="player" output="screen"
-			  args="--clock -d 4 $(arg bag_file)"/>
-		
-		<node pkg="rviz" type="rviz" name="rviz" output="screen" args="-d $(find tuw_door_detection)/config/rviz/r0_with_localization.rviz"/>
 	</group>
 
 </launch>
