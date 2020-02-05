@@ -56,7 +56,7 @@ bool DoorObject::createMsg()
                 [this,&count](std::vector<double> &pose)
   {
     tuw_object_msgs::ObjectWithCovariance obj;
-    obj.object.shape = tuw_object_msgs::Object::SHAPE_DOOR;
+    obj.object.shape = tuw_object_msgs::Object::SHAPE_MAP_DOOR;
     obj.object.pose.position.x = pose[static_cast<std::size_t>(DoorObjectConstants::Position_x)];
     obj.object.pose.position.y = pose[static_cast<std::size_t>(DoorObjectConstants::Position_y)];
     obj.object.pose.position.z = pose[static_cast<std::size_t>(DoorObjectConstants::Position_z)];

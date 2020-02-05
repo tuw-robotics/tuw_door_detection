@@ -129,6 +129,8 @@ namespace tuw
      * Evaluates the processed messages i.e. distance euclidean and angular computation
      */
     void evaluate();
+
+    void printHitMissRatio();
   
     void serializeResult( const std::string &filename, const bool continuous );
   
@@ -140,6 +142,10 @@ namespace tuw
   
   private:
     std::shared_ptr<OctoObjectMap> octo_object_map_;
+    uint64_t hit_counter_;
+    uint64_t miss_counter_;
+    double distance_threshold_ = 1.1;
+
     bool data_is_written_;
     
     /**

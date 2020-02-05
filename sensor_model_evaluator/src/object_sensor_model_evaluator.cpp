@@ -9,7 +9,10 @@ using namespace tuw;
 ObjectSensorModel::ObjectSensorModel()
 {
   octo_object_map_ = std::make_shared<OctoObjectMap>( 0.5f );
+  obs_exp_table_.resize(0);
   data_is_written_ = false;
+  hit_counter_ = 0;
+  miss_counter_ = 0;
 }
 
 void ObjectSensorModel::evaluate()
@@ -17,6 +20,11 @@ void ObjectSensorModel::evaluate()
   size_t idx = 0;
   results_ = std::shared_ptr<Results>();
   results_->total_observations = obs_exp_table_.size();
+
+  if (obs_exp_table_.empty())
+  {
+      return;
+  }
   
   for ( std::shared_ptr<ObsExp> &obs_exp : obs_exp_table_ )
   {
@@ -52,12 +60,21 @@ bool ObjectSensorModel::clear()
 {
   results_ = nullptr;
   obs_exp_table_.clear();
+  hit_counter_ = 0;
+  miss_counter_ = 0;
   return data_is_written_;
+}
+
+void ObjectSensorModel::printHitMissRatio()
+{
+    std::cout << "Hits (true positives): " << hit_counter_ << std::endl;
+    std::cout << "Misses (false positives): " << miss_counter_ << std::endl;
 }
 
 void ObjectSensorModel::process( const tuw_object_msgs::ObjectWithCovariance &obj, const Eigen::Matrix4d &tf )
 {
-  
+    std::cout << "ObjectSensorModel is processing" << std::endl;
+    std::cout << "Object shape is " << obj.object.shape << std::endl;
   using tuw_object_msgs::ObjectDetection;
   using tuw_object_msgs::Object;
   
@@ -85,6 +102,7 @@ void ObjectSensorModel::process( const tuw_object_msgs::ObjectWithCovariance &ob
     {
       pcl::PointXYZ pcl_pnt( tworld.x(), tworld.y(), tworld.z());
       octo_object_map_->insert( pcl_pnt );
+      std::cout << "Inserted door #" << octo_object_map_->size() << " into map" << std::endl;
     }
   } else if ( obj.object.shape == Object::SHAPE_DOOR ) //Crosscheck with map
   {
@@ -93,13 +111,15 @@ void ObjectSensorModel::process( const tuw_object_msgs::ObjectWithCovariance &ob
   
     data_is_written_ = false;
     float dist_squared = -1;
-    if ( !octo_object_map_->searchBestPCL( search_pnt, 0.5, out_pnt, dist_squared, true ))
+    if ( !octo_object_map_->searchBestPCL( search_pnt, distance_threshold_, out_pnt, dist_squared, true ))
     {
       //missed
+      miss_counter_++;
     } else
     {
       //hit
       obs_exp_table_.back()->exp( out_pnt );
+      hit_counter_++;
     }
   }
 }

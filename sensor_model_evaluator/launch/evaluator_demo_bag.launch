@@ -9,7 +9,10 @@
   <arg name="skip_bag_s" default="0"/>
   <arg name="out_filename" default="$(find sensor_model_evaluator)/files/eval_dummy.csv"/>
   <arg name="evaluator_mode_type" default="laser"/>
+  <arg name="object_detections_topic_name" default="/object_detections"/>
+  <arg name="launch_object_publisher" default="false"/>
 
+  <!--
   <param name="use_sim_time" value="True"/>
 
   <node pkg="map_server" type="map_server" name="map_server" args="$(find tuw_door_detection)/config/maps/roblab_old/map.yaml"
@@ -19,8 +22,9 @@
 
   <node pkg="rviz" type="rviz" name="rviz" args="-d /home/felix/intel.rviz" output="screen"/>
 
-  <node pkg="rosbag" type="play" name="player" output="screen"
-        args="--clock -d 4 $(arg bag_file)"/>
+  <node pkg="rosbag" type="play" name="player" output="screen" args="clock -d 4 $(arg bag_file)"/>
+
+  -->
 
   <node pkg="rqt_reconfigure" type="rqt_reconfigure" name="rqt_reconfigure" output="screen"/>
 
@@ -29,6 +33,8 @@
     <param name="laser_topic" value="$(arg laser_topic)"/>
     <param name="out_filename" value="$(arg out_filename)"/>
     <param name="model_type" value="$(arg evaluator_mode_type)"/>
+    <param name="objects_map_topic" value="/map_doors"/>
+    <param name="objects_topic" value="$(arg object_detections_topic_name)"/>
   </node>
 
 </launch>

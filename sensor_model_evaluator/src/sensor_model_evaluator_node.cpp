@@ -62,6 +62,7 @@ void SensorModelEvaluatorNode::callbackObjectDetection( const tuw_object_msgs::O
 {
   using tuw_object_msgs::ObjectDetection;
   using tuw_object_msgs::ObjectWithCovariance;
+  std::cout << "object detection cb" << std::endl;
   
   Eigen::Matrix4d tf;
   if ( tryPoseFetch( tf, "map", obj->header.frame_id ))
@@ -76,7 +77,10 @@ void SensorModelEvaluatorNode::callbackObjectDetection( const tuw_object_msgs::O
     {
       object_model_evaluator_->process( obj_msg, tf );
     }
-    object_model_evaluator_->evaluate();
+    std::cout << "Do eval" << std::endl;
+    //object_model_evaluator_->evaluate();
+      std::cout << "Eval end" << std::endl;
+    object_model_evaluator_->printHitMissRatio();
     
   } else
   {
