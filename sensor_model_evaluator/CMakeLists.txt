@@ -169,6 +169,7 @@ include_directories(${PCL_INCLUDE_DIRS})
 ## Declare a C++ executable
 # add_executable(tuw_linedetection_node src/tuw_linedetection_node.cpp)
 add_executable(${PROJECT_NAME}_node
+        src/laser_scan_contour.cpp
         src/laser_sensor_model_evaluator.cpp
         src/object_sensor_model_evaluator.cpp
         src/sensor_model_evaluator_node.cpp

@@ -11,6 +11,7 @@
 #include <map>
 #include <memory>
 #include <boost/filesystem.hpp>
+#include <laser_scan_contour.h>
 
 namespace tuw
 {
@@ -115,6 +116,11 @@ namespace tuw
     ObjectSensorModel();
     
     ~ObjectSensorModel() = default;
+
+    void setLaserScanContour(LaserScanContour::Ptr contour)
+    {
+      laser_contour_ = contour;
+    }
     
     /**
      * If msg type is SHAPE_MAP_DOOR then the doors location is stored in a pcl octree.
@@ -133,6 +139,11 @@ namespace tuw
     void printHitMissRatio();
   
     void serializeResult( const std::string &filename, const bool continuous );
+
+    /**
+     * iteration_count_ is incremented, this should happen when a new laser scan has arrived, triggering new potential object detection messages
+     */
+    void incrementIteration();
   
     /**
      * clears internal datastructures and returns true if data has been written and false if not
@@ -142,6 +153,9 @@ namespace tuw
   
   private:
     std::shared_ptr<OctoObjectMap> octo_object_map_;
+    //This is used for finding unseen doors that could be detected in the laser (False negatives)
+    LaserScanContour::Ptr laser_contour_;
+
     uint64_t hit_counter_;
     uint64_t miss_counter_;
     double distance_threshold_ = 1.1;

@@ -24,6 +24,7 @@
 #include <datastructures/octo_object_map.h>
 
 #include <object_sensor_model_evaluator.h>
+#include <laser_scan_contour.h>
 
 namespace tuw
 {
@@ -86,6 +87,7 @@ namespace tuw
     
     ros::Subscriber sub_laser_;
     ros::Subscriber sub_object_map_;
+    ros::Subscriber sub_objects_;
     ros::Subscriber sub_map_;
     ros::Subscriber sub_dummy_;
     ros::Publisher pub_map_eth_;
@@ -100,6 +102,8 @@ namespace tuw
     LaserMeasurementPtr laser_measurement_;
     SensorModelEvaluatorPtr evaluator_;
     ObjectSensorModel::Ptr object_model_evaluator_;
+
+    LaserScanContour::Ptr laser_contour_;
     
     bool continuous_stream_;
     bool first_time_serialize_;
