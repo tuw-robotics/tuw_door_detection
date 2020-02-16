@@ -2,6 +2,7 @@
 // Created by felix on 01.03.19.
 //
 #include <sensor_model_evaluator_node.h>
+#include <opencv2/highgui.hpp>
 
 using namespace tuw;
 
@@ -32,7 +33,7 @@ SensorModelEvaluatorNode::ParametersNode::ParametersNode(const ros::NodeHandle &
 }
 
 SensorModelEvaluatorNode::SensorModelEvaluatorNode(ros::NodeHandle &nh) : evaluator_(nullptr),
-                                                                          object_model_evaluator_(nullptr),
+                                                                          object_model_evaluator_(new ObjectSensorModel()),
                                                                           tf_listener_(tf_buffer_),
                                                                           params_(ros::NodeHandle("~"))
 {
@@ -61,6 +62,7 @@ SensorModelEvaluatorNode::SensorModelEvaluatorNode(ros::NodeHandle &nh) : evalua
 
 void SensorModelEvaluatorNode::callbackObjectDetection(const tuw_object_msgs::ObjectDetectionConstPtr &obj)
 {
+  ROS_INFO("Object detection cb");
   using tuw_object_msgs::ObjectDetection;
   using tuw_object_msgs::ObjectWithCovariance;
   std::cout << "object detection cb" << std::endl;
@@ -71,8 +73,6 @@ void SensorModelEvaluatorNode::callbackObjectDetection(const tuw_object_msgs::Ob
     return;
   }
 
-  object_model_evaluator_->setLaserScanContour(laser_contour_);
-
   Eigen::Matrix4d tf;
   if (tryPoseFetch(tf, "map", obj->header.frame_id))
   {
@@ -82,10 +82,12 @@ void SensorModelEvaluatorNode::callbackObjectDetection(const tuw_object_msgs::Ob
       object_model_evaluator_ = std::make_shared<ObjectSensorModel>();
     }
 
+    object_model_evaluator_->beginIteration();
     for (const ObjectWithCovariance obj_msg : obj->objects)
     {
       object_model_evaluator_->process(obj_msg, tf);
     }
+    object_model_evaluator_->endIteration();
     //object_model_evaluator_->evaluate();
     object_model_evaluator_->printHitMissRatio();
 
@@ -101,7 +103,6 @@ bool SensorModelEvaluatorNode::tryPoseFetch(Eigen::Matrix4d &tf_w_base, const st
   //TODO: parameters
   try
   {
-
     geometry_msgs::TransformStamped stamped_tf = tf_buffer_.lookupTransform(
       world_frame, target_frame, ros::Time(0));
 
@@ -112,9 +113,8 @@ bool SensorModelEvaluatorNode::tryPoseFetch(Eigen::Matrix4d &tf_w_base, const st
 
   } catch (tf2::TransformException &ex)
   {
-
-    ROS_INFO("DoorDetectorNode::getStaticTF");
-    ROS_ERROR("%s", ex.what());
+    ROS_WARN("DoorDetectorNode::getStaticTF");
+    ROS_WARN("%s", ex.what());
     return false;
 
   }
@@ -148,10 +148,9 @@ void SensorModelEvaluatorNode::callbackMap(const nav_msgs::OccupancyGridConstPtr
 
 void SensorModelEvaluatorNode::callbackLaser(const sensor_msgs::LaserScan &_laser)
 {
-
+  ROS_INFO("Laser CB");
   if (evaluator_)
   {
-
     try
     {
       geometry_msgs::TransformStamped stamped_tf = tf_buffer_.lookupTransform(
@@ -178,16 +177,23 @@ void SensorModelEvaluatorNode::callbackLaser(const sensor_msgs::LaserScan &_lase
 
       if (params_.model_type == ParametersNode::ModelType::OBJECTS)
       {
+        std::cout << "evaluator in objects" << std::endl;
         laser_contour_.reset(new LaserScanContour(_laser, 100, 500));
+        std::cout << "object model evaluator call" << std::endl;
+        object_model_evaluator_->processLaser(laser_contour_);
+        auto img = laser_contour_->showAsImage();
+        cv::imshow("laser_contour", img);
+        cv::waitKey(1);
+        laser_contour_->print();
       }
     } catch (tf2::TransformException &ex)
     {
       ROS_WARN("transform lookup failed SensorModelEvaluatorNode::callbackLaser\n");
       ROS_WARN("what(): %s\n", ex.what());
     }
-
   }
   laser_message_tick_ = ros::Time::now();
+  std::cout << "END LASER TF CALL" << std::endl;
 }
 
 void SensorModelEvaluatorNode::publish()

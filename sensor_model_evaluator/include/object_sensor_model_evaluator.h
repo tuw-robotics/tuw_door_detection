@@ -117,11 +117,8 @@ namespace tuw
     
     ~ObjectSensorModel() = default;
 
-    void setLaserScanContour(LaserScanContour::Ptr contour)
-    {
-      laser_contour_ = contour;
-    }
-    
+    void processLaser(LaserScanContour::Ptr contour);
+
     /**
      * If msg type is SHAPE_MAP_DOOR then the doors location is stored in a pcl octree.
      * If msg type is SHAPE_DOOR the the msg is treated as an actual observation and its nearest neighbor in the door map is searched
@@ -130,6 +127,17 @@ namespace tuw
      * @param tf The tf from laser space into world space
      */
     void process( const tuw_object_msgs::ObjectWithCovariance &msg, const Eigen::Matrix4d &tf );
+
+    /**
+     * An iteration is defined as the processing of single ObjectDetection msg, that contains all seen objects
+     * This method must be called before the process method for each individual object.
+     */
+    void beginIteration();
+
+    /**
+     * Concludes the iteration, must be called after processing ALL objects with process()
+     */
+    void endIteration();
     
     /**
      * Evaluates the processed messages i.e. distance euclidean and angular computation
@@ -141,20 +149,45 @@ namespace tuw
     void serializeResult( const std::string &filename, const bool continuous );
 
     /**
-     * iteration_count_ is incremented, this should happen when a new laser scan has arrived, triggering new potential object detection messages
-     */
-    void incrementIteration();
-  
-    /**
      * clears internal datastructures and returns true if data has been written and false if not
      * @return
      */
     bool clear();
   
   private:
+    class IterationData
+    {
+    public:
+      IterationData()
+      {
+        tp = 0;
+        fp = 0;
+        tn = 0;
+        fn = 0;
+        predicted_condition_positive = 0;
+      }
+
+      int tp;
+      int fp;
+      int tn;
+      int fn;
+      int predicted_condition_positive;
+    };
     std::shared_ptr<OctoObjectMap> octo_object_map_;
+
+    //Mirror of octo object map for contour map determination TODO: performance optimization
+    std::vector<Eigen::Vector3d> mirror_object_map_os_;
+    std::vector<Eigen::Vector3d> mirror_object_map_ws_;
+
     //This is used for finding unseen doors that could be detected in the laser (False negatives)
-    LaserScanContour::Ptr laser_contour_;
+    std::vector<Eigen::Vector3d> doors_in_view_;
+    std::vector<IterationData> iteration_data_;
+    LaserScanContour::Ptr current_laser_contour_for_vis_;
+
+    //Stores the current number of received laser scan measurements (triggers for object detections)
+    std::vector<IterationData> iterations_;
+    bool iteration_invalid_;
+    IterationData tp_fp_total_;
 
     uint64_t hit_counter_;
     uint64_t miss_counter_;

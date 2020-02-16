@@ -8,7 +8,7 @@
   <arg name="bag_file" default="$(arg fs_root)/bag_data/$(arg filename)"/>
   <arg name="skip_bag_s" default="0"/>
   <arg name="out_filename" default="$(find sensor_model_evaluator)/files/eval_dummy.csv"/>
-  <arg name="evaluator_mode_type" default="laser"/>
+  <arg name="evaluator_mode_type" default="objects"/>
   <arg name="object_detections_topic_name" default="/object_detections"/>
   <arg name="launch_object_publisher" default="false"/>
 

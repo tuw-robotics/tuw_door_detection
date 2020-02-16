@@ -77,7 +77,6 @@ bool LaserSensorModelEvaluator::convert( const nav_msgs::OccupancyGridConstPtr &
               src->info.origin.orientation.w );
     return false;
   }
-  
   des->cv_uc8 = cv::Mat::zeros( cv::Size( src->info.width, src->info.height ), CV_8U );
   des->size_x = src->info.width;
   des->size_y = src->info.height;
@@ -88,7 +87,7 @@ bool LaserSensorModelEvaluator::convert( const nav_msgs::OccupancyGridConstPtr &
   
   // Convert to player format
   memcpy( des->cv_uc8.data, src->data.data(), static_cast<std::size_t>(des->size_x * des->size_y));
-  
+
   return true;
 }
 

@@ -6,7 +6,7 @@
 	<arg name="launch_rosbag" default="true"/>
 	<arg name="launch_door_detector" default="true"/>
 	<arg name="record_rawlog" default="true"/>
-	<arg name="launch_object_publisher" default="false"/>
+	<arg name="launch_object_publisher" default="true"/>
 	<arg name="laser_scan" default="/r0/laser0/scan/raw"/>
 	
 	<arg name="world_frame" default="r0/base_link"/>
@@ -28,6 +28,7 @@
 	<arg name="contour_filtering" default="false"/>
 	<!-- threshold for door simulation filtering based on the laser range contour -->
 	<arg name="contour_offset" default="0.5"/>
+	<arg name="bag_delay" default="4"/>
 	
 	<group if="$(arg launch_object_publisher)">
 		<param name="robot_perspective" type="bool" value="$(arg use_robot_perspective)"/>
@@ -41,14 +42,14 @@
 	
 	<group if="$(arg use_robot_perspective)">
 		<node pkg="rosbag" type="play" name="player" output="screen"
-			  args="--clock -d 4 $(arg bag_file)"/>
+			  args="--clock -d $(arg bag_delay) $(arg bag_file)"/>
 	</group>
 	
 	<group if="$(arg launch_door_detector)">
 		<group if="$(arg launch_rosbag)">
 			<rosparam param="use_sim_time" subst_value="True"/>
 			<node pkg="rosbag" type="play" name="player" output="screen"
-				  args="--clock -d 4 $(arg bag_file)"/>
+				  args="--clock -d $(arg bag_delay) $(arg bag_file)"/>
 			
 			<node pkg="rviz" type="rviz" name="rviz" output="screen" args="-d $(find tuw_door_detection)/config/rviz/r0_with_localization.rviz"/>
 		</group>
